@@ -12,12 +12,14 @@ pub(crate) mod internal {
 }
 pub mod profile;
 pub mod ticker;
+pub mod download;
 
 pub use client::YfClient;
 pub use error::YfError;
 pub use history::{Action, Candle, HistoryBuilder, HistoryMeta, HistoryResponse, Range, Interval};
 pub use profile::{Address, Company, Fund, Profile};
 pub use ticker::{Ticker, Quote, FastInfo, OptionChain, OptionContract};
+pub use download::{DownloadBuilder, DownloadResult};
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;
