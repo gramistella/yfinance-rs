@@ -1,6 +1,5 @@
 use crate::{YfClient, YfError};
 use serde::Deserialize;
-use url::Url;
 
 /// Postal address for company HQ (when available).
 #[derive(Debug, Clone, PartialEq)]
@@ -39,7 +38,7 @@ pub enum Profile {
     Fund(Fund),
 }
 
-fn iter_json_scripts<'a>(html: &'a str) -> Vec<(&'a str, &'a str)> {
+fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
     let mut res = Vec::new();
     let mut pos = 0usize;
     while let Some(si) = html[pos..].find("<script") {
@@ -134,11 +133,11 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
         if !tag_attrs.contains("data-sveltekit-fetched") {
             continue;
         }
-        if let Ok(outer) = serde_json::from_str::<serde_json::Value>(inner_json) {
-            if let Some(body_str) = outer.get("body").and_then(|v| v.as_str()) {
-                if let Ok(inner) = serde_json::from_str::<serde_json::Value>(body_str) {
-                    if let Some(qs_val) = inner.get("quoteSummary") {
-                        if let Some(store_like) =
+        if let Ok(outer) = serde_json::from_str::<serde_json::Value>(inner_json)
+            && let Some(body_str) = outer.get("body").and_then(|v| v.as_str())
+                && let Ok(inner) = serde_json::from_str::<serde_json::Value>(body_str)
+                    && let Some(qs_val) = inner.get("quoteSummary")
+                        && let Some(store_like) =
                             extract_store_like_from_quote_summary_value(qs_val)
                         {
                             let wrapped = wrap_store_like(store_like)?;
@@ -149,10 +148,6 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
                             }
                             return Ok(wrapped);
                         }
-                    }
-                }
-            }
-        }
     }
 
     // --- Strategy D: Generic JSON scan (incl. Next.js __NEXT_DATA__ and other JSON islands) ---
@@ -180,8 +175,8 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
         }
 
         // D2: Generic "quoteSummary" object with "result[0]" (typical in __NEXT_DATA__)
-        if let Some(qs_val) = find_quote_summary_value_in_value(&val) {
-            if let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
+        if let Some(qs_val) = find_quote_summary_value_in_value(&val)
+            && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
                 let wrapped = wrap_store_like(store_like)?;
                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
                     eprintln!(
@@ -190,7 +185,6 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
                 }
                 return Ok(wrapped);
             }
-        }
     }
 
     if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -200,21 +194,18 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
 }
 
 // Find an object that looks like a QuoteSummaryStore anywhere in a JSON tree.
-fn find_quote_summary_store_in_value<'a>(v: &'a Value) -> Option<&'a Value> {
+fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
     match v {
         Value::Object(map) => {
-            if let Some(qss) = map.get("QuoteSummaryStore") {
-                if qss.is_object() {
+            if let Some(qss) = map.get("QuoteSummaryStore")
+                && qss.is_object() {
                     return Some(qss);
                 }
-            }
-            if let Some(stores) = map.get("stores") {
-                if let Some(qss) = stores.get("QuoteSummaryStore") {
-                    if qss.is_object() {
+            if let Some(stores) = map.get("stores")
+                && let Some(qss) = stores.get("QuoteSummaryStore")
+                    && qss.is_object() {
                         return Some(qss);
                     }
-                }
-            }
             for child in map.values() {
                 if let Some(found) = find_quote_summary_store_in_value(child) {
                     return Some(found);
@@ -235,7 +226,7 @@ fn find_quote_summary_store_in_value<'a>(v: &'a Value) -> Option<&'a Value> {
 }
 
 // Locate a "quoteSummary" object anywhere in the JSON tree.
-fn find_quote_summary_value_in_value<'a>(v: &'a Value) -> Option<&'a Value> {
+fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
     match v {
         Value::Object(map) => {
             if let Some(qs) = map.get("quoteSummary") {
@@ -265,7 +256,7 @@ fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> 
     let result0 = qs_val
         .get("result")
         .and_then(|r| r.as_array())
-        .and_then(|arr| arr.get(0))
+        .and_then(|arr| arr.first())
         .cloned()?;
 
     // Ensure it has quoteType and either profile node
@@ -282,11 +273,10 @@ fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> 
 
 // Normalize: map assetProfile -> summaryProfile so downstream EQUITY path works uniformly.
 fn normalize_store_like(mut store_like: Value) -> Value {
-    if let Some(obj) = store_like.as_object_mut() {
-        if let Some(ap) = obj.remove("assetProfile") {
+    if let Some(obj) = store_like.as_object_mut()
+        && let Some(ap) = obj.remove("assetProfile") {
             obj.insert("summaryProfile".to_string(), ap);
         }
-    }
     store_like
 }
 
@@ -303,7 +293,7 @@ fn wrap_store_like(store_like: Value) -> Result<String, YfError> {
 /// String-aware (ignores braces inside JSON strings).
 fn find_matching_brace(s: &str, start: usize) -> Option<usize> {
     let bytes = s.as_bytes();
-    let mut i = start;
+    let i = start;
     if bytes.get(i).copied()? != b'{' {
         return None;
     }
@@ -434,15 +424,15 @@ impl Profile {
 }
 
 use serde_json::Value;
-use std::{fs, io::Write, path::PathBuf};
+use std::{fs, io::Write};
 
 fn debug_dump_extracted_json(symbol: &str, json: &str) -> std::io::Result<()> {
     let path = std::env::temp_dir().join(format!("yfinance_rs-profile-{}-extracted.json", symbol));
     let mut f = std::fs::File::create(&path)?;
 
     // Try to pretty-print for readability
-    if let Ok(val) = serde_json::from_str::<Value>(json) {
-        if let Ok(pretty) = serde_json::to_string_pretty(&val) {
+    if let Ok(val) = serde_json::from_str::<Value>(json)
+        && let Ok(pretty) = serde_json::to_string_pretty(&val) {
             let _ = f.write_all(pretty.as_bytes());
             eprintln!(
                 "YF_DEBUG: wrote pretty-printed extracted JSON to {}",
@@ -450,7 +440,6 @@ fn debug_dump_extracted_json(symbol: &str, json: &str) -> std::io::Result<()> {
             );
             return Ok(());
         }
-    }
 
     // Fallback to raw string if pretty-printing fails
     let _ = f.write_all(json.as_bytes());
@@ -628,14 +617,12 @@ fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
     if let Some((_, inner)) = iter_json_scripts(html)
         .into_iter()
         .find(|(attrs, _)| attrs.contains("id=\"__NEXT_DATA__\""))
-    {
-        if let Ok(v) = serde_json::from_str::<Value>(inner) {
+        && let Ok(v) = serde_json::from_str::<Value>(inner) {
             let mut f = fs::File::create(&next_path)?;
             let s = serde_json::to_string_pretty(&v).unwrap_or_else(|_| inner.to_string());
             f.write_all(s.as_bytes())?;
             eprintln!("YF_DEBUG: wrote {}", next_path.display());
         }
-    }
 
     // 3) Extract legacy root.App.main JSON (some regions still serve it)
     if let Some(js_obj) = extract_js_object_after("root.App.main =", html) {
