@@ -1,0 +1,38 @@
+HTTP/2 307 
+date: Thu, 14 Aug 2025 17:56:52 GMT
+strict-transport-security: max-age=31536000
+server: ATS
+cache-control: no-store
+content-type: text/html; charset=utf-8
+content-language: en
+x-content-type-options: nosniff
+referrer-policy: no-referrer-when-downgrade
+location: https://guce.yahoo.com/consent?brandType=nonEu&gcrumb=Zg9Mn8Y&done=https%3A%2F%2Ffinance.yahoo.com%2F
+set-cookie: GUCS=AWYPTJ_G; Max-Age=1800; Domain=.yahoo.com; Path=/; Secure
+content-length: 0
+
+HTTP/1.1 302 Found
+Connection: keep-alive
+Server: guce
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Location: https://consent.yahoo.com/v2/collectConsent?sessionId=3_cc-session_358fb88e-04e3-4e12-b165-4a3604b50498
+Content-Length: 0
+Date: Thu, 14 Aug 2025 17:56:53 GMT
+
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Expires: 0
+Cache-Control: no-cache, no-store, must-revalidate
+Content-Security-Policy-Report-Only: default-src 'none'; block-all-mixed-content; connect-src 'self' https://udc.yahoo.com/ https://geo.yahoo.com/ https://ganon.yahoo.com; frame-ancestors 'none'; img-src 'self' https://s.yimg.com; media-src 'none'; script-src 'self' 'nonce-t/LVmHDFrp/LX97ouLv6el/oEx28qP1x' https://s.yimg.com; style-src 'self' 'nonce-t/LVmHDFrp/LX97ouLv6el/oEx28qP1x' https://s.yimg.com; font-src 'self'; object-src 'none'; frame-src 'none'; report-uri https://csp.yahoo.com/beacon/csp?src=guce
+Server: guce
+X-XSS-Protection: 1; mode=block
+Pragma: no-cache
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Date: Thu, 14 Aug 2025 17:56:53 GMT
+Connection: keep-alive
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+Content-Type: text/html;charset=UTF-8
+Content-Length: 14443
+

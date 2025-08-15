@@ -1,0 +1,9 @@
+200
+HTTPS 54.171.21.95:443
+https://consent.yahoo.com/v2/collectConsent?sessionId=3_cc-session_358fb88e-04e3-4e12-b165-4a3604b50498
+namelookup: 0.009438s
+connect:    0.185421s
+appconnect: 0.522109s
+pretransfer:0.522851s
+starttransfer:0.856591s
+total:      0.864082s
