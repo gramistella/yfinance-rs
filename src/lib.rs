@@ -11,11 +11,14 @@ pub(crate) mod internal {
     pub(crate) mod fixtures;
 }
 pub mod profile;
+pub mod ticker;
 
 pub use client::YfClient;
 pub use error::YfError;
-pub use history::{HistoryBuilder, Range, Candle};
+pub use history::{Action, Candle, HistoryBuilder, HistoryResponse, Range, Interval};
 pub use profile::{Address, Company, Fund, Profile};
+pub use ticker::{Ticker, Quote, FastInfo};
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;
+

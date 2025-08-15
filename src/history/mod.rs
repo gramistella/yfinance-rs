@@ -2,7 +2,7 @@ use crate::{error::YfError, YfClient};
 use serde::Deserialize;
 
 mod model;
-pub use model::Candle;
+pub use model::{Action, Candle, HistoryResponse};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Range {
@@ -30,11 +30,51 @@ impl Range {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Interval {
+    I1m,
+    I2m,
+    I5m,
+    I15m,
+    I30m,
+    I60m,
+    I90m,
+    I1h,
+    D1,
+    D5,
+    W1,
+    M1,
+    M3,
+}
+impl Interval {
+    fn as_str(self) -> &'static str {
+        match self {
+            Interval::I1m => "1m",
+            Interval::I2m => "2m",
+            Interval::I5m => "5m",
+            Interval::I15m => "15m",
+            Interval::I30m => "30m",
+            Interval::I60m => "60m",
+            Interval::I90m => "90m",
+            Interval::I1h => "1h",
+            Interval::D1 => "1d",
+            Interval::D5 => "5d",
+            Interval::W1 => "1wk",
+            Interval::M1 => "1mo",
+            Interval::M3 => "3mo",
+        }
+    }
+}
+
 pub struct HistoryBuilder<'a> {
     client: &'a YfClient,
     symbol: String,
     range: Option<Range>,
     period: Option<(i64, i64)>,
+    interval: Interval,
+    auto_adjust: bool,
+    include_prepost: bool,
+    include_actions: bool,
 }
 
 impl<'a> HistoryBuilder<'a> {
@@ -44,6 +84,10 @@ impl<'a> HistoryBuilder<'a> {
             symbol: symbol.into(),
             range: Some(Range::M6),
             period: None,
+            interval: Interval::D1,
+            auto_adjust: false,
+            include_prepost: false,
+            include_actions: true, // keep prior behavior: request events by default
         }
     }
 
@@ -63,7 +107,38 @@ impl<'a> HistoryBuilder<'a> {
         self
     }
 
+    pub fn interval(mut self, interval: Interval) -> Self {
+        self.interval = interval;
+        self
+    }
+
+    /// When true, prices are adjusted for splits and dividends using Yahoo's adjclose series.
+    /// Volume is split-adjusted only.
+    pub fn auto_adjust(mut self, yes: bool) -> Self {
+        self.auto_adjust = yes;
+        self
+    }
+
+    /// Include pre/post market candles when supported (intraday intervals).
+    pub fn prepost(mut self, yes: bool) -> Self {
+        self.include_prepost = yes;
+        self
+    }
+
+    /// Request corporate actions (dividends and splits). Defaults to true.
+    pub fn actions(mut self, yes: bool) -> Self {
+        self.include_actions = yes;
+        self
+    }
+
+    /// Fetch adjusted/unadjusted candles only (backward-compatible with existing API).
     pub async fn fetch(self) -> Result<Vec<Candle>, YfError> {
+        let resp = self.fetch_full().await?;
+        Ok(resp.candles)
+    }
+
+    /// Fetch candles plus parsed corporate actions and whether prices are adjusted.
+    pub async fn fetch_full(self) -> Result<HistoryResponse, YfError> {
         let mut url = self.client.base_chart().join(&self.symbol)?;
         {
             let mut qp = url.query_pairs_mut();
@@ -80,8 +155,15 @@ impl<'a> HistoryBuilder<'a> {
                 return Err(YfError::Data("no range or period set".into()));
             }
 
-            qp.append_pair("interval", "1d");
-            qp.append_pair("events", "div|split");
+            qp.append_pair("interval", self.interval.as_str());
+            if self.include_actions {
+                qp.append_pair("events", "div|split");
+            }
+            // include pre/post market data for intraday if requested
+            qp.append_pair(
+                "includePrePost",
+                if self.include_prepost { "true" } else { "false" },
+            );
         }
 
         let resp = self.client.http().get(url.clone()).send().await?;
@@ -91,9 +173,10 @@ impl<'a> HistoryBuilder<'a> {
                 url: url.to_string(),
             });
         }
-        let body = crate::internal::net::get_text(resp, "history_chart", &self.symbol, "json").await?;
-        let parsed: ChartEnvelope =
-            serde_json::from_str(&body).map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
+        let body =
+            crate::internal::net::get_text(resp, "history_chart", &self.symbol, "json").await?;
+        let parsed: ChartEnvelope = serde_json::from_str(&body)
+            .map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
 
         let chart = parsed
             .chart
@@ -105,7 +188,6 @@ impl<'a> HistoryBuilder<'a> {
                 err.code, err.description
             )));
         }
-        let mut out = Vec::new();
 
         let result = chart
             .result
@@ -121,14 +203,116 @@ impl<'a> HistoryBuilder<'a> {
             .first()
             .ok_or_else(|| YfError::Data("missing quote".into()))?;
 
+        // collect actions (if present)
+        let mut actions_out: Vec<Action> = Vec::new();
+        let mut split_events: Vec<(i64, f64)> = Vec::new(); // (date_ts, ratio as f64)
+
+        if let Some(ev) = r0.events.as_ref() {
+            if let Some(divs) = ev.dividends.as_ref() {
+                for (k, d) in divs {
+                    let ts = k.parse::<i64>().unwrap_or(d.date.unwrap_or(0));
+                    if let Some(amount) = d.amount {
+                        actions_out.push(Action::Dividend { ts, amount });
+                    }
+                }
+            }
+            if let Some(splits) = ev.splits.as_ref() {
+                for (k, s) in splits {
+                    let ts = k.parse::<i64>().unwrap_or(s.date.unwrap_or(0));
+                    let (num, den) = if let (Some(n), Some(d)) = (s.numerator, s.denominator) {
+                        (n as u32, d as u32)
+                    } else if let Some(r) = s.split_ratio.as_deref() {
+                        // e.g., "2/1"
+                        let mut it = r.split('/');
+                        let n = it.next().and_then(|x| x.parse::<u32>().ok()).unwrap_or(1);
+                        let d = it.next().and_then(|x| x.parse::<u32>().ok()).unwrap_or(1);
+                        (n, d)
+                    } else {
+                        (1, 1)
+                    };
+                    actions_out.push(Action::Split {
+                        ts,
+                        numerator: num,
+                        denominator: den,
+                    });
+                    let ratio = if den == 0 { 1.0 } else { (num as f64) / (den as f64) };
+                    split_events.push((ts, ratio));
+                }
+            }
+        }
+        actions_out.sort_by_key(|a| match a {
+            Action::Dividend { ts, .. } => *ts,
+            Action::Split { ts, .. } => *ts,
+        });
+        split_events.sort_by_key(|(ts, _)| *ts);
+
+        // Build arrays for adjustment factors
+        let adj = r0.indicators.adjclose.first();
+        let adj_vec = adj.map(|a| a.adjclose.as_slice()).unwrap_or(&[]);
+
+        // Precompute cumulative split ratio AFTER each candle (product of future split ratios)
+        let mut cum_split_after: Vec<f64> = vec![1.0; ts.len()];
+        if !split_events.is_empty() && !ts.is_empty() {
+            let mut sp = split_events.len() as isize - 1;
+            let mut running: f64 = 1.0;
+            for i in (0..ts.len()).rev() {
+                // include any splits strictly after this timestamp
+                while sp >= 0 && split_events[sp as usize].0 > ts[i] {
+                    running *= split_events[sp as usize].1;
+                    sp -= 1;
+                }
+                cum_split_after[i] = running;
+            }
+        }
+
+        let mut out = Vec::new();
+
         for (i, &t) in ts.iter().enumerate() {
-            let getter = |v: &Vec<Option<f64>>| v.get(i).and_then(|x| *x);
-            let open = getter(&q.open);
-            let high = getter(&q.high);
-            let low = getter(&q.low);
-            let close = getter(&q.close);
-            if let (Some(open), Some(high), Some(low), Some(close)) = (open, high, low, close) {
-                let volume = q.volume.get(i).and_then(|x| *x);
+            let getter_f64 = |v: &Vec<Option<f64>>| v.get(i).and_then(|x| *x);
+            let open = getter_f64(&q.open);
+            let high = getter_f64(&q.high);
+            let low = getter_f64(&q.low);
+            let close = getter_f64(&q.close);
+            if let (Some(mut open), Some(mut high), Some(mut low), Some(mut close)) =
+                (open, high, low, close)
+            {
+                // Price adjustment
+                if self.auto_adjust {
+                    let factor_from_adj = if let Some(adjclose) =
+                        adj_vec.get(i).and_then(|x| *x)
+                    {
+                        if close != 0.0 {
+                            Some(adjclose / close)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+                    let price_factor = factor_from_adj
+                        .unwrap_or_else(|| 1.0 / cum_split_after[i].max(1e-12));
+
+                    open *= price_factor;
+                    high *= price_factor;
+                    low *= price_factor;
+                    close *= price_factor;
+                }
+
+                // Volume (always split-adjust only)
+                let volume = q
+                    .volume
+                    .get(i)
+                    .and_then(|x| *x)
+                    .map(|v| {
+                        let v_adj = (v as f64) * cum_split_after[i];
+                        if v_adj.is_finite() {
+                            v_adj.round() as u64
+                        } else {
+                            v
+                        }
+                    });
+
                 out.push(Candle {
                     ts: t,
                     open,
@@ -139,7 +323,12 @@ impl<'a> HistoryBuilder<'a> {
                 });
             }
         }
-        Ok(out)
+
+        Ok(HistoryResponse {
+            candles: out,
+            actions: actions_out,
+            adjusted: self.auto_adjust,
+        })
     }
 }
 
@@ -166,12 +355,16 @@ struct ChartResult {
     #[serde(default)]
     timestamp: Option<Vec<i64>>,
     indicators: Indicators,
+    #[serde(default)]
+    events: Option<Events>,
 }
 
 #[derive(Deserialize)]
 struct Indicators {
     #[serde(default)]
     quote: Vec<QuoteBlock>,
+    #[serde(default)]
+    adjclose: Vec<AdjCloseBlock>,
 }
 
 #[derive(Deserialize)]
@@ -186,4 +379,33 @@ struct QuoteBlock {
     close: Vec<Option<f64>>,
     #[serde(default)]
     volume: Vec<Option<u64>>,
+}
+
+#[derive(Deserialize)]
+struct AdjCloseBlock {
+    #[serde(default)]
+    adjclose: Vec<Option<f64>>,
+}
+
+#[derive(Deserialize, Default)]
+struct Events {
+    #[serde(default)]
+    dividends: Option<std::collections::BTreeMap<String, DividendEvent>>,
+    #[serde(default)]
+    splits: Option<std::collections::BTreeMap<String, SplitEvent>>,
+}
+
+#[derive(Deserialize)]
+struct DividendEvent {
+    amount: Option<f64>,
+    date: Option<i64>,
+}
+
+#[derive(Deserialize)]
+struct SplitEvent {
+    numerator: Option<u64>,
+    denominator: Option<u64>,
+    #[serde(rename = "splitRatio")]
+    split_ratio: Option<String>,
+    date: Option<i64>,
 }
