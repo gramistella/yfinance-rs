@@ -13,15 +13,15 @@ async fn live_download_smoke() {
         .unwrap();
 
     if !crate::common::is_recording() {
-        assert!(res.series["AAPL"].len() > 0);
-        assert!(res.series["MSFT"].len() > 0);
+        assert!(!res.series["AAPL"].is_empty());
+        assert!(!res.series["MSFT"].is_empty());
     }
 }
 
 #[tokio::test]
 #[ignore]
 async fn live_download_for_record() {
-    // This test is only meant to *record* fixtures.
+    // Only writes fixtures when YF_RECORD=1
     if !crate::common::is_recording() {
         return;
     }
@@ -31,7 +31,6 @@ async fn live_download_for_record() {
     // This will hit Yahoo live and record:
     //   tests/fixtures/history_chart_AAPL.json
     //   tests/fixtures/history_chart_MSFT.json
-    // (same filenames the offline tests replay)
     let _ = yfinance_rs::DownloadBuilder::new(&client)
         .symbols(["AAPL", "MSFT"])
         .run()

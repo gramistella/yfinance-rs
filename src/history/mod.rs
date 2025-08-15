@@ -81,6 +81,7 @@ pub struct HistoryBuilder<'a> {
     auto_adjust: bool,
     include_prepost: bool,
     include_actions: bool,
+    keepna: bool,
 }
 
 impl<'a> HistoryBuilder<'a> {
@@ -91,10 +92,10 @@ impl<'a> HistoryBuilder<'a> {
             range: Some(Range::M6),
             period: None,
             interval: Interval::D1,
-            // Parity with yfinance: default to auto-adjusted prices
             auto_adjust: true,
             include_prepost: false,
             include_actions: true,
+            keepna: false,
         }
     }
 
@@ -131,6 +132,13 @@ impl<'a> HistoryBuilder<'a> {
 
     pub fn actions(mut self, yes: bool) -> Self {
         self.include_actions = yes;
+        self
+    }
+
+    /// Keep rows where OHLC is partially/fully missing, inserting NaN values for missing fields.
+    /// Default is false (drop rows with any missing OHLC).
+    pub fn keepna(mut self, yes: bool) -> Self {
+        self.keepna = yes;
         self
     }
 
@@ -261,59 +269,92 @@ impl<'a> HistoryBuilder<'a> {
         }
 
         let mut out = Vec::new();
+        let mut raw_close_vec = Vec::new();
 
         for (i, &t) in ts.iter().enumerate() {
             let getter_f64 = |v: &Vec<Option<f64>>| v.get(i).and_then(|x| *x);
-            let open = getter_f64(&q.open);
-            let high = getter_f64(&q.high);
-            let low = getter_f64(&q.low);
-            let close = getter_f64(&q.close);
-            if let (Some(mut open), Some(mut high), Some(mut low), Some(mut close)) =
-                (open, high, low, close)
-            {
-                if self.auto_adjust {
-                    let factor_from_adj = if let Some(adjclose) =
-                        adj_vec.get(i).and_then(|x| *x)
-                    {
-                        if close != 0.0 {
-                            Some(adjclose / close)
+            let mut open = getter_f64(&q.open);
+            let mut high = getter_f64(&q.high);
+            let mut low = getter_f64(&q.low);
+            let mut close = getter_f64(&q.close);
+            let volume0 = q.volume.get(i).and_then(|x| *x);
+
+            // capture raw close for back_adjust
+            let raw_close_val = close.unwrap_or(f64::NAN);
+
+            if self.auto_adjust {
+                // compute adjust factor
+                let factor_from_adj = if let Some(adjclose) = adj_vec.get(i).and_then(|x| *x) {
+                    if let Some(c) = close {
+                        if c != 0.0 {
+                            Some(adjclose / c)
                         } else {
                             None
                         }
                     } else {
                         None
-                    };
+                    }
+                } else {
+                    None
+                };
 
-                    let price_factor = factor_from_adj
-                        .unwrap_or_else(|| 1.0 / cum_split_after[i].max(1e-12));
+                let price_factor = factor_from_adj.unwrap_or_else(|| 1.0 / cum_split_after[i].max(1e-12));
 
-                    open *= price_factor;
-                    high *= price_factor;
-                    low *= price_factor;
-                    close *= price_factor;
-                }
+                if let Some(v) = open.as_mut() { *v *= price_factor; }
+                if let Some(v) = high.as_mut() { *v *= price_factor; }
+                if let Some(v) = low.as_mut()  { *v *= price_factor; }
+                if let Some(v) = close.as_mut(){ *v *= price_factor; }
 
-                let volume = q
-                    .volume
-                    .get(i)
-                    .and_then(|x| *x)
-                    .map(|v| {
-                        let v_adj = (v as f64) * cum_split_after[i];
-                        if v_adj.is_finite() {
-                            v_adj.round() as u64
-                        } else {
-                            v
-                        }
-                    });
-
-                out.push(Candle {
-                    ts: t,
-                    open,
-                    high,
-                    low,
-                    close,
-                    volume,
+                // volume adjusts for splits only
+                let volume_adj = volume0.map(|v| {
+                    let v_adj = (v as f64) * cum_split_after[i];
+                    if v_adj.is_finite() { v_adj.round() as u64 } else { v }
                 });
+
+                if open.is_some() && high.is_some() && low.is_some() && close.is_some() {
+                    out.push(Candle {
+                        ts: t,
+                        open: open.unwrap(),
+                        high: high.unwrap(),
+                        low: low.unwrap(),
+                        close: close.unwrap(),
+                        volume: volume_adj,
+                    });
+                    raw_close_vec.push(raw_close_val);
+                } else if self.keepna {
+                    out.push(Candle {
+                        ts: t,
+                        open: open.unwrap_or(f64::NAN),
+                        high: high.unwrap_or(f64::NAN),
+                        low:  low.unwrap_or(f64::NAN),
+                        close: close.unwrap_or(f64::NAN),
+                        volume: volume0, // keep as-is when NA row
+                    });
+                    raw_close_vec.push(raw_close_val);
+                }
+            } else {
+                // no adjustment at all
+                if open.is_some() && high.is_some() && low.is_some() && close.is_some() {
+                    out.push(Candle {
+                        ts: t,
+                        open: open.unwrap(),
+                        high: high.unwrap(),
+                        low:  low.unwrap(),
+                        close: close.unwrap(),
+                        volume: volume0,
+                    });
+                    raw_close_vec.push(raw_close_val);
+                } else if self.keepna {
+                    out.push(Candle {
+                        ts: t,
+                        open: open.unwrap_or(f64::NAN),
+                        high: high.unwrap_or(f64::NAN),
+                        low:  low.unwrap_or(f64::NAN),
+                        close: close.unwrap_or(f64::NAN),
+                        volume: volume0,
+                    });
+                    raw_close_vec.push(raw_close_val);
+                }
             }
         }
 
@@ -327,6 +368,7 @@ impl<'a> HistoryBuilder<'a> {
             actions: actions_out,
             adjusted: self.auto_adjust,
             meta: meta_out,
+            raw_close: Some(raw_close_vec),
         })
     }
 }

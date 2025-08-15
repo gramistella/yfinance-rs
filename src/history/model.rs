@@ -35,4 +35,5 @@ pub struct HistoryResponse {
     pub actions: Vec<Action>,
     pub adjusted: bool,
     pub meta: Option<HistoryMeta>,
+    pub raw_close: Option<Vec<f64>>,
 }

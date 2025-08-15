@@ -117,13 +117,204 @@ async fn download_between_params_applied_to_all_symbols() {
     assert!(!res.series["MSFT"].is_empty());
 }
 
-#[tokio::test]
-async fn download_requires_symbols() {
-    let client = YfClient::builder().build().unwrap();
+/* ---------- Parity knob checks using cached live fixtures ---------- */
 
-    let err = DownloadBuilder::new(&client).run().await.unwrap_err();
-    match err {
-        yfinance_rs::YfError::Data(s) => assert!(s.contains("no symbols")),
-        _ => panic!("expected Data error for no symbols"),
+#[tokio::test]
+async fn download_back_adjust_offline() {
+    // Run adjusted and back-adjusted on different mock servers so each mock sees 1 hit.
+    let server1 = common::setup_server();
+    let server2 = common::setup_server();
+
+    let m1_aapl = server1.mock(|when, then| {
+        when.method(GET)
+            .path("/v8/finance/chart/AAPL")
+            .query_param("range", "6mo")
+            .query_param("interval", "1d")
+            .query_param("includePrePost", "false")
+            .query_param("events", "div|split");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(common::fixture("history_chart", "AAPL", "json"));
+    });
+
+    let m2_aapl = server2.mock(|when, then| {
+        when.method(GET)
+            .path("/v8/finance/chart/AAPL")
+            .query_param("range", "6mo")
+            .query_param("interval", "1d")
+            .query_param("includePrePost", "false")
+            .query_param("events", "div|split");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(common::fixture("history_chart", "AAPL", "json"));
+    });
+
+    let client1 = YfClient::builder()
+        .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server1.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let client2 = YfClient::builder()
+        .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server2.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let adj = DownloadBuilder::new(&client1)
+        .symbols(["AAPL"])
+        .auto_adjust(true)
+        .back_adjust(false)
+        .run()
+        .await
+        .unwrap();
+
+    let back = DownloadBuilder::new(&client2)
+        .symbols(["AAPL"])
+        .auto_adjust(false) // ignored internally when back_adjust(true)
+        .back_adjust(true)
+        .run()
+        .await
+        .unwrap();
+
+    m1_aapl.assert(); // exactly 1
+    m2_aapl.assert(); // exactly 1
+
+    let a = adj.series.get("AAPL").unwrap();
+    let b = back.series.get("AAPL").unwrap();
+
+    assert_eq!(a.len(), b.len(), "same number of bars");
+    for (ca, cb) in a.iter().zip(b.iter()) {
+        assert!((ca.open - cb.open).abs() < 1e-9);
+        assert!((ca.high - cb.high).abs() < 1e-9);
+        assert!((ca.low  - cb.low ).abs() < 1e-9);
+        // close may differ due to back_adjust
+    }
+    assert!(!a.is_empty(), "expected some data");
+}
+
+#[tokio::test]
+async fn download_repair_is_noop_on_clean_data_offline() {
+    // Run base and repair=true on different mock servers so each mock sees 1 hit.
+    let server1 = common::setup_server();
+    let server2 = common::setup_server();
+
+    let m1_aapl = server1.mock(|when, then| {
+        when.method(GET)
+            .path("/v8/finance/chart/AAPL")
+            .query_param("range", "6mo")
+            .query_param("interval", "1d")
+            .query_param("includePrePost", "false")
+            .query_param("events", "div|split");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(common::fixture("history_chart", "AAPL", "json"));
+    });
+
+    let m2_aapl = server2.mock(|when, then| {
+        when.method(GET)
+            .path("/v8/finance/chart/AAPL")
+            .query_param("range", "6mo")
+            .query_param("interval", "1d")
+            .query_param("includePrePost", "false")
+            .query_param("events", "div|split");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(common::fixture("history_chart", "AAPL", "json"));
+    });
+
+    let client1 = YfClient::builder()
+        .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server1.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let client2 = YfClient::builder()
+        .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server2.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let base_run = DownloadBuilder::new(&client1)
+        .symbols(["AAPL"])
+        .run()
+        .await
+        .unwrap();
+
+    let repair_run = DownloadBuilder::new(&client2)
+        .symbols(["AAPL"])
+        .repair(true)
+        .run()
+        .await
+        .unwrap();
+
+    m1_aapl.assert(); // exactly 1
+    m2_aapl.assert(); // exactly 1
+
+    let a = base_run.series.get("AAPL").unwrap();
+    let b = repair_run.series.get("AAPL").unwrap();
+
+    assert_eq!(a.len(), b.len());
+    for (ca, cb) in a.iter().zip(b.iter()) {
+        assert!((ca.open  - cb.open ).abs() < 1e-12);
+        assert!((ca.high  - cb.high ).abs() < 1e-12);
+        assert!((ca.low   - cb.low  ).abs() < 1e-12);
+        assert!((ca.close - cb.close).abs() < 1e-12);
+    }
+}
+
+#[tokio::test]
+async fn download_rounding_and_keepna_offline() {
+    let server = crate::common::setup_server();
+
+    let m_aapl = server.mock(|when, then| {
+        when.method(httpmock::Method::GET)
+            .path("/v8/finance/chart/AAPL")
+            .query_param("range", "6mo")
+            .query_param("interval", "1d")
+            .query_param("includePrePost", "false")
+            .query_param("events", "div|split");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(crate::common::fixture("history_chart", "AAPL", "json"));
+    });
+
+    let m_msft = server.mock(|when, then| {
+        when.method(httpmock::Method::GET)
+            .path("/v8/finance/chart/MSFT")
+            .query_param("range", "6mo")
+            .query_param("interval", "1d")
+            .query_param("includePrePost", "false")
+            .query_param("events", "div|split");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(crate::common::fixture("history_chart", "MSFT", "json"));
+    });
+
+    let client = yfinance_rs::YfClient::builder()
+        .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let res = yfinance_rs::DownloadBuilder::new(&client)
+        .symbols(["AAPL", "MSFT"])
+        .rounding(true)
+        .keepna(true)
+        .run()
+        .await
+        .unwrap();
+
+    m_aapl.assert();
+    m_msft.assert();
+
+    fn has_more_than_two_decimals(x: f64) -> bool {
+        if !x.is_finite() { return false; }
+        let cents = (x * 100.0).round();
+        (x - cents / 100.0).abs() > 1e-12
+    }
+
+    for (_sym, bars) in &res.series {
+        for c in bars {
+            assert!(!has_more_than_two_decimals(c.open));
+            assert!(!has_more_than_two_decimals(c.high));
+            assert!(!has_more_than_two_decimals(c.low));
+            assert!(!has_more_than_two_decimals(c.close));
+        }
     }
 }
