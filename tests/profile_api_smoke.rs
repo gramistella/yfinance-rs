@@ -1,58 +1,25 @@
-use httpmock::{Method::GET, MockServer};
+mod common;
+use crate::common::{mock_profile_api, setup_server};
 use url::Url;
-use yfinance_rs::{Profile, YfClient};
-
-fn api_company_payload() -> String {
-    r#"{
-      "quoteSummary": {
-        "result": [{
-          "assetProfile": {
-            "address1": "One Apple Park Way",
-            "city": "Cupertino",
-            "state": "CA",
-            "country": "United States",
-            "zip": "95014",
-            "sector": "Technology",
-            "industry": "Consumer Electronics",
-            "website": "https://www.apple.com",
-            "longBusinessSummary": "..."
-          },
-          "quoteType": { "quoteType": "EQUITY", "longName": "Apple Inc.", "shortName": "Apple" }
-        }],
-        "error": null
-      }
-    }"#
-    .to_string()
-}
-
-fn api_fund_payload() -> String {
-    r#"{
-      "quoteSummary": {
-        "result": [{
-          "fundProfile": { "legalType": "Exchange Traded Fund", "family": "Invesco" },
-          "quoteType": { "quoteType": "ETF", "longName": "Invesco QQQ Trust" }
-        }],
-        "error": null
-      }
-    }"#
-    .to_string()
-}
+use yfinance_rs::{ApiPreference, Profile, YfClient};
 
 #[tokio::test]
 async fn profile_api_company_happy() {
-    let server = MockServer::start();
+    let server = setup_server();
     let sym = "AAPL";
-    let mock = server.mock(|when, then| {
-        when.method(GET)
-            .path(format!("/{}", sym))
-            .query_param("modules", "assetProfile,quoteType,fundProfile");
-        then.status(200)
-            .header("content-type", "application/json")
-            .body(api_company_payload());
-    });
+    let crumb = "test-crumb";
+    let mock = mock_profile_api(&server, sym, crumb);
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!(
+                "{}/v10/finance/quoteSummary/",
+                server.base_url()
+            ))
+            .unwrap(),
+        )
+        .api_preference(ApiPreference::ApiOnly)
+        .preauth("cookie", crumb)
         .build()
         .unwrap();
 
@@ -72,19 +39,21 @@ async fn profile_api_company_happy() {
 
 #[tokio::test]
 async fn profile_api_fund_happy() {
-    let server = MockServer::start();
+    let server = setup_server();
     let sym = "QQQ";
-    let mock = server.mock(|when, then| {
-        when.method(GET)
-            .path(format!("/{}", sym))
-            .query_param("modules", "assetProfile,quoteType,fundProfile");
-        then.status(200)
-            .header("content-type", "application/json")
-            .body(api_fund_payload());
-    });
+    let crumb = "test-crumb";
+    let mock = mock_profile_api(&server, sym, crumb);
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!(
+                "{}/v10/finance/quoteSummary/",
+                server.base_url()
+            ))
+            .unwrap(),
+        )
+        .api_preference(ApiPreference::ApiOnly)
+        .preauth("cookie", crumb)
         .build()
         .unwrap();
 

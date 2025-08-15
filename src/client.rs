@@ -3,6 +3,17 @@ use reqwest::Client;
 use reqwest::header::SET_COOKIE;
 use url::Url;
 
+#[cfg(feature = "test-mode")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ApiPreference {
+    /// Try the API first, and fall back to scraping on failure (default).
+    ApiThenScrape,
+    /// Only use the API; fail if it's unavailable.
+    ApiOnly,
+    /// Only use the HTML scrape method; do not attempt to use the API.
+    ScrapeOnly,
+}
+
 /// Thin wrapper that holds a configured HTTP client and base URLs.
 #[derive(Clone)]
 pub struct YfClient {
@@ -13,10 +24,13 @@ pub struct YfClient {
     cookie_url: Url,
     crumb_url: Url,
 
-    // Make the client stateful to hold credentials
     cookie: Option<String>,
     crumb: Option<String>,
+
+    #[cfg(feature = "test-mode")]
+    api_preference: ApiPreference,
 }
+
 impl Default for YfClient {
     fn default() -> Self {
         Self::builder().build().expect("default client")
@@ -35,13 +49,16 @@ impl YfClient {
             return Ok(());
         }
 
-        // 1. Get the cookie first.
         self.get_cookie().await?;
 
-        // 2. Use the cookie to get the crumb.
         self.get_crumb_internal().await?;
 
         Ok(())
+    }
+
+    #[cfg(feature = "test-mode")]
+    pub(crate) fn api_preference(&self) -> ApiPreference {
+        self.api_preference
     }
 
     async fn get_cookie(&mut self) -> Result<(), YfError> {
@@ -123,7 +140,15 @@ pub struct YfClientBuilder {
     base_quote_api: Option<Url>,
     cookie_url: Option<Url>,
     crumb_url: Option<Url>,
+
+    #[cfg(feature = "test-mode")]
+    api_preference: Option<ApiPreference>,
+    #[cfg(feature = "test-mode")]
+    preauth_cookie: Option<String>,
+    #[cfg(feature = "test-mode")]
+    preauth_crumb: Option<String>,
 }
+
 
 impl YfClientBuilder {
     /// Override the User-Agent (helpful if Yahoo throttles generic UAs).
@@ -132,6 +157,19 @@ impl YfClientBuilder {
         self
     }
 
+    #[cfg(feature = "test-mode")]
+    pub fn api_preference(mut self, pref: ApiPreference) -> Self {
+        self.api_preference = Some(pref);
+        self
+    }
+
+    #[cfg(feature = "test-mode")]
+    pub fn preauth(mut self, cookie: impl Into<String>, crumb: impl Into<String>) -> Self {
+        self.preauth_cookie = Some(cookie.into());
+        self.preauth_crumb = Some(crumb.into());
+        self
+    }
+    
     pub fn base_quote(mut self, url: Url) -> Self {
         self.base_quote = Some(url);
         self
@@ -191,8 +229,29 @@ impl YfClientBuilder {
             base_quote_api,
             cookie_url,
             crumb_url,
-            cookie: None,
-            crumb: None,
+            cookie: {
+                #[cfg(feature = "test-mode")]
+                {
+                    self.preauth_cookie
+                }
+                #[cfg(not(feature = "test-mode"))]
+                {
+                    None
+                }
+            },
+            crumb: {
+                #[cfg(feature = "test-mode")]
+                {
+                    self.preauth_crumb
+                }
+                #[cfg(not(feature = "test-mode"))]
+                {
+                    None
+                }
+            },
+            #[cfg(feature = "test-mode")]
+            api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
         })
     }
+    
 }

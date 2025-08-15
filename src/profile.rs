@@ -38,30 +38,6 @@ pub enum Profile {
     Fund(Fund),
 }
 
-fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
-    let mut res = Vec::new();
-    let mut pos = 0usize;
-    while let Some(si) = html[pos..].find("<script") {
-        let si = pos + si;
-        let open_end = match html[si..].find('>') {
-            Some(x) => si + x,
-            None => break,
-        };
-        let tag_open = &html[si..=open_end];
-        if !tag_open.contains("type=\"application/json\"") {
-            pos = open_end + 1;
-            continue;
-        }
-        let close = match html[open_end + 1..].find("</script>") {
-            Some(x) => open_end + 1 + x,
-            None => break,
-        };
-        let inner = &html[open_end + 1..close];
-        res.push((tag_open, inner));
-        pos = close + "</script>".len();
-    }
-    res
-}
 
 fn extract_crumb(body: &str) -> Option<String> {
     // A simple string search for the crumb is often the most reliable method.
@@ -77,12 +53,142 @@ fn extract_crumb(body: &str) -> Option<String> {
     })
 }
 
-fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
-    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-        eprintln!("YF_DEBUG [extract_bootstrap_json]: Starting scrape...");
+async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
+
+    let mut url = client.base_quote().join(symbol)?;
+    {
+        let mut qp = url.query_pairs_mut();
+        qp.append_pair("p", symbol);
     }
-    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-        eprintln!("YF_DEBUG [extract_bootstrap_json]: Trying Strategy A (root.App.main)...");
+    let quote_page_resp = client.http().get(url.clone()).send().await?;
+    if !quote_page_resp.status().is_success() {
+        return Err(YfError::Status {
+            status: quote_page_resp.status().as_u16(),
+            url: url.to_string(),
+        });
+    }
+    let body = crate::net::get_text(quote_page_resp, "profile_html", symbol, "html").await?;
+
+    if debug {
+        let _ = debug_dump_html(symbol, &body);
+    }
+
+    let json_str = extract_bootstrap_json(&body)?;
+    if debug {
+        let _ = debug_dump_extracted_json(symbol, &json_str);
+    }
+
+    // NOTE: Our extractor may return a QuoteSummaryStore that *doesn't* include `quoteType`.
+    // We therefore model it with Option and infer when missing.
+    let boot: Bootstrap = serde_json::from_str(&json_str)
+        .map_err(|e| YfError::Data(format!("bootstrap json parse: {e}")))?;
+
+    let store = boot.context.dispatcher.stores.quote_summary_store;
+
+    // Name resolution: prefer quoteType.longName/shortName, else price.longName/shortName, else symbol.
+    let name = store
+        .quote_type
+        .as_ref()
+        .and_then(|qt| qt.long_name.clone().or(qt.short_name.clone()))
+        .or_else(|| {
+            store
+                .price
+                .as_ref()
+                .and_then(|p| p.long_name.clone().or(p.short_name.clone()))
+        })
+        .unwrap_or_else(|| symbol.to_string());
+
+    // Kind resolution:
+    // 1) If quoteType.kind exists, use it.
+    // 2) Else infer: presence of fundProfile => "ETF", summaryProfile => "EQUITY".
+    let inferred_kind = if store.fund_profile.is_some() {
+        Some("ETF")
+    } else if store.summary_profile.is_some() {
+        Some("EQUITY")
+    } else {
+        None
+    };
+    let kind = store
+        .quote_type
+        .as_ref()
+        .and_then(|qt| qt.kind.as_deref())
+        .or(inferred_kind)
+        .unwrap_or("");
+
+    if debug {
+        eprintln!(
+            "YF_DEBUG [load_from_scrape]: resolved kind=`{}`, name=`{}` (quote_type_present={}, price_present={}, has_summary_profile={}, has_fund_profile={})",
+            kind,
+            name,
+            store.quote_type.is_some(),
+            store.price.is_some(),
+            store.summary_profile.is_some(),
+            store.fund_profile.is_some()
+        );
+    }
+
+    match kind {
+        "EQUITY" => {
+            let sp = store
+                .summary_profile
+                .ok_or_else(|| YfError::Data("summaryProfile missing".into()))?;
+            let address = Address {
+                street1: sp.address1,
+                street2: sp.address2,
+                city: sp.city,
+                state: sp.state,
+                country: sp.country,
+                zip: sp.zip,
+            };
+            Ok(Profile::Company(Company {
+                name,
+                sector: sp.sector,
+                industry: sp.industry,
+                website: sp.website,
+                summary: sp.long_business_summary,
+                address: Some(address),
+            }))
+        }
+        "ETF" => {
+            let fp = store
+                .fund_profile
+                .ok_or_else(|| YfError::Data("fundProfile missing".into()))?;
+            Ok(Profile::Fund(Fund {
+                name,
+                family: fp.family,
+                kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
+            }))
+        }
+        other => Err(YfError::Data(format!(
+            "unsupported or unknown quoteType: {other}"
+        ))),
+    }
+}
+
+fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
+    let trunc = |s: &str, n: usize| -> String {
+        if s.len() <= n {
+            s.to_string()
+        } else {
+            let mut out = String::with_capacity(n + 16);
+            out.push_str(&s[..n]);
+            out.push_str(" …[trunc]");
+            out
+        }
+    };
+
+    if debug {
+        eprintln!(
+            "YF_DEBUG [extract_bootstrap_json]: starting, body.len()={}",
+            body.len()
+        );
+    }
+
+    /* Strategy A: legacy root.App.main = {...}; */
+    if debug {
+        eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy A (root.App.main)...");
     }
     if let Some(start) = body.find("root.App.main") {
         let after = &body[start..];
@@ -93,18 +199,21 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
             let segment = &payload[..end_script];
             if let Some(semi) = segment.rfind(';') {
                 let json_str = segment[..semi].trim();
-                if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                    eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy A succeeded.");
+                if debug {
+                    eprintln!(
+                        "YF_DEBUG [extract_bootstrap_json]: Strategy A hit; json.len={} preview=`{}`",
+                        json_str.len(),
+                        trunc(json_str, 160)
+                    );
                 }
                 return Ok(json_str.to_string());
             }
         }
     }
 
-    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-        eprintln!(
-            "YF_DEBUG [extract_bootstrap_json]: Trying Strategy B (QuoteSummaryStore in HTML)..."
-        );
+    /* Strategy B: find a literal "QuoteSummaryStore": { ... } object and wrap it */
+    if debug {
+        eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy B (QuoteSummaryStore literal)...");
     }
     let key = "\"QuoteSummaryStore\"";
     if let Some(pos) = body.find(key) {
@@ -116,96 +225,442 @@ fn extract_bootstrap_json(body: &str) -> Result<String, YfError> {
                 let wrapped = format!(
                     r#"{{"context":{{"dispatcher":{{"stores":{{"QuoteSummaryStore":{obj}}}}}}}}}"#
                 );
-                if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                    eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy B succeeded.");
+                if debug {
+                    eprintln!(
+                        "YF_DEBUG [extract_bootstrap_json]: Strategy B hit; obj.len={} preview=`{}`",
+                        obj.len(),
+                        trunc(obj, 160)
+                    );
                 }
                 return Ok(wrapped);
+            } else if debug {
+                eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy B found start but failed to match closing brace.");
             }
         }
     }
 
-    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+    /* Strategy C: SvelteKit data-sveltekit-fetched blobs.
+       Two sub-forms:
+         - Older: JSON array with nodes[*].data
+         - Modern: JSON object with a 'body' field (stringified JSON or inline object)
+    */
+    if debug {
+        eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy C (SvelteKit fetched JSON)...");
+    }
+    let scripts = iter_json_scripts(body);
+    if debug {
         eprintln!(
-            "YF_DEBUG [extract_bootstrap_json]: Trying Strategy C (SvelteKit data-sveltekit-fetched)..."
+            "YF_DEBUG [extract_bootstrap_json]: Strategy C inspecting {} JSON scripts...",
+            scripts.len()
         );
     }
-    for (i, (tag_attrs, inner_json)) in iter_json_scripts(body).iter().enumerate() {
-        if !tag_attrs.contains("data-sveltekit-fetched") {
+
+    for (i, (tag_attrs, inner_json)) in scripts.iter().enumerate() {
+        let is_svelte = tag_attrs.contains("data-sveltekit-fetched");
+        if !is_svelte {
             continue;
         }
-        if let Ok(outer) = serde_json::from_str::<serde_json::Value>(inner_json)
-            && let Some(body_str) = outer.get("body").and_then(|v| v.as_str())
-                && let Ok(inner) = serde_json::from_str::<serde_json::Value>(body_str)
-                    && let Some(qs_val) = inner.get("quoteSummary")
-                        && let Some(store_like) =
+
+        if debug {
+            eprintln!(
+                "YF_DEBUG [extract_bootstrap_json]: C[{}] attrs=`{}` inner.len={} preview=`{}`",
+                i,
+                trunc(tag_attrs, 160),
+                inner_json.len(),
+                trunc(inner_json, 120)
+            );
+        }
+
+        // C1) Older SvelteKit: inner_json is an array having nodes[*].data
+        if let Ok(outer_array) = serde_json::from_str::<Vec<Value>>(inner_json) {
+            if debug {
+                eprintln!(
+                    "YF_DEBUG [extract_bootstrap_json]: C[{}] parsed as ARRAY (len={})",
+                    i,
+                    outer_array.len()
+                );
+            }
+            for (ai, outer_obj) in outer_array.into_iter().enumerate() {
+                if let Some(nodes) = outer_obj.get("nodes").and_then(|n| n.as_array()) {
+                    if debug {
+                        eprintln!("YF_DEBUG [extract_bootstrap_json]: C[{}][{}] nodes.len={}", i, ai, nodes.len());
+                    }
+                    for (ni, node) in nodes.iter().enumerate() {
+                        if let Some(data) = node.get("data") {
+                            if let Some(store_like) =
+                                extract_store_like_from_quote_summary_value(data)
+                            {
+                                let wrapped = wrap_store_like(store_like)?;
+                                if debug {
+                                    eprintln!(
+                                        "YF_DEBUG [extract_bootstrap_json]: C[{}][{}] SUCCESS via nodes[{}].data -> wrapped.len={}",
+                                        i, ai, ni, wrapped.len()
+                                    );
+                                }
+                                return Ok(wrapped);
+                            } else if debug {
+                                eprintln!(
+                                    "YF_DEBUG [extract_bootstrap_json]: C[{}][{}] nodes[{}].data did not match expected shape.",
+                                    i, ai, ni
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // C2) Modern SvelteKit: inner_json is an object with "body" that is either JSON string or object.
+        let parsed_obj = match serde_json::from_str::<Value>(inner_json) {
+            Ok(v @ Value::Object(_)) => Some(v),
+            Ok(_) => None,
+            Err(e) => {
+                if debug {
+                    eprintln!(
+                        "YF_DEBUG [extract_bootstrap_json]: C[{}] parse-as-OBJECT failed: {}",
+                        i, e
+                    );
+                }
+                None
+            }
+        };
+
+        if let Some(mut outer_obj) = parsed_obj {
+            let body_val_opt = {
+                if let Some(b) = outer_obj.get_mut("body") {
+                    Some(b.take())
+                } else {
+                    None
+                }
+            };
+
+            if body_val_opt.is_none() && debug {
+                eprintln!("YF_DEBUG [extract_bootstrap_json]: C[{}] no 'body' field.", i);
+            }
+
+            if let Some(body_val) = body_val_opt {
+                let payload_opt = match body_val {
+                    Value::String(s) => {
+                        if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: C[{}] body is STRING (len={}), preview=`{}`",
+                                i,
+                                s.len(),
+                                trunc(&s, 160)
+                            );
+                        }
+                        serde_json::from_str::<Value>(&s).ok()
+                    }
+                    Value::Object(_) | Value::Array(_) => {
+                        if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: C[{}] body is already JSON (type={}).",
+                                i,
+                                match &body_val {
+                                    Value::Object(_) => "object",
+                                    Value::Array(_) => "array",
+                                    _ => "other",
+                                }
+                            );
+                        }
+                        Some(body_val)
+                    }
+                    other => {
+                        if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: C[{}] body is unsupported type: {:?}",
+                                i, other
+                            );
+                        }
+                        None
+                    }
+                };
+
+                if let Some(payload) = payload_opt {
+                    if debug {
+                        let preview = match &payload {
+                            Value::String(s) => trunc(s, 160),
+                            _ => {
+                                let s = serde_json::to_string(&payload).unwrap_or_default();
+                                trunc(&s, 160)
+                            }
+                        };
+                        eprintln!(
+                            "YF_DEBUG [extract_bootstrap_json]: C[{}] payload ready; preview=`{}`",
+                            i, preview
+                        );
+                    }
+
+                    if let Some(qss) = find_quote_summary_store_in_value(&payload) {
+                        let store_like = normalize_store_like(qss.clone());
+                        let wrapped = wrap_store_like(store_like)?;
+                        if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: C[{}] SUCCESS via QuoteSummaryStore path; wrapped.len={}",
+                                i, wrapped.len()
+                            );
+                        }
+                        return Ok(wrapped);
+                    }
+
+                    if let Some(qs_val) = find_quote_summary_value_in_value(&payload) {
+                        if let Some(store_like) =
                             extract_store_like_from_quote_summary_value(qs_val)
                         {
                             let wrapped = wrap_store_like(store_like)?;
-                            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                            if debug {
                                 eprintln!(
-                                    "YF_DEBUG [extract_bootstrap_json]: Strategy C succeeded using blob #{i}."
+                                    "YF_DEBUG [extract_bootstrap_json]: C[{}] SUCCESS via quoteSummary->result; wrapped.len={}",
+                                    i, wrapped.len()
                                 );
                             }
                             return Ok(wrapped);
+                        } else if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: C[{}] quoteSummary present but missing expected fields.",
+                                i
+                            );
                         }
+                    } else if debug {
+                        eprintln!(
+                            "YF_DEBUG [extract_bootstrap_json]: C[{}] no quoteSummary or QuoteSummaryStore found in payload.",
+                            i
+                        );
+                    }
+                } else if debug {
+                    eprintln!(
+                        "YF_DEBUG [extract_bootstrap_json]: C[{}] body -> payload parse failed or unsupported.",
+                        i
+                    );
+                }
+            }
+        }
     }
 
-    // --- Strategy D: Generic JSON scan (incl. Next.js __NEXT_DATA__ and other JSON islands) ---
-    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-        eprintln!(
-            "YF_DEBUG [extract_bootstrap_json]: Trying Strategy D (generic JSON scan incl. __NEXT_DATA__)..."
-        );
+    /* Strategy D: scan ALL application/json scripts generically (incl. "__NEXT_DATA__" if any) */
+    if debug {
+        eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy D (generic JSON scan)...");
     }
-    for (i, (_attrs, inner_json)) in iter_json_scripts(body).iter().enumerate() {
+    for (i, (_attrs, inner_json)) in scripts.iter().enumerate() {
         let val = match serde_json::from_str::<Value>(inner_json) {
             Ok(v) => v,
-            Err(_) => continue,
+            Err(e) => {
+                if debug {
+                    eprintln!(
+                        "YF_DEBUG [extract_bootstrap_json]: D[{}] parse failed: {} (preview=`{}`)",
+                        i,
+                        e,
+                        trunc(inner_json, 120)
+                    );
+                }
+                continue;
+            }
         };
 
-        // D1: Direct or nested QuoteSummaryStore object
         if let Some(qss) = find_quote_summary_store_in_value(&val) {
             let store_like = normalize_store_like(qss.clone());
             let wrapped = wrap_store_like(store_like)?;
-            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+            if debug {
                 eprintln!(
-                    "YF_DEBUG [extract_bootstrap_json]: Strategy D succeeded via QuoteSummaryStore in JSON script #{i}."
+                    "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via QuoteSummaryStore; wrapped.len={}",
+                    i, wrapped.len()
                 );
             }
             return Ok(wrapped);
         }
 
-        // D2: Generic "quoteSummary" object with "result[0]" (typical in __NEXT_DATA__)
-        if let Some(qs_val) = find_quote_summary_value_in_value(&val)
-            && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
+        if let Some(qs_val) = find_quote_summary_value_in_value(&val) {
+            if let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
                 let wrapped = wrap_store_like(store_like)?;
-                if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                if debug {
                     eprintln!(
-                        "YF_DEBUG [extract_bootstrap_json]: Strategy D succeeded via quoteSummary->result in JSON script #{i}."
+                        "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via quoteSummary->result; wrapped.len={}",
+                        i, wrapped.len()
                     );
                 }
                 return Ok(wrapped);
             }
+        }
+
+        if let Some(body_val) = val.get("body") {
+            let payload_opt = match body_val {
+                Value::String(s) => serde_json::from_str::<Value>(s).ok(),
+                Value::Object(_) | Value::Array(_) => Some(body_val.clone()),
+                _ => None,
+            };
+
+            if let Some(payload) = payload_opt {
+                if let Some(qss) = find_quote_summary_store_in_value(&payload) {
+                    let store_like = normalize_store_like(qss.clone());
+                    let wrapped = wrap_store_like(store_like)?;
+                    if debug {
+                        eprintln!(
+                            "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via body->QuoteSummaryStore; wrapped.len={}",
+                            i, wrapped.len()
+                        );
+                    }
+                    return Ok(wrapped);
+                }
+
+                if let Some(qs_val) = find_quote_summary_value_in_value(&payload) {
+                    if let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
+                        let wrapped = wrap_store_like(store_like)?;
+                        if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via body->quoteSummary->result; wrapped.len={}",
+                                i, wrapped.len()
+                            );
+                        }
+                        return Ok(wrapped);
+                    }
+                }
+            }
+        }
     }
 
-    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-        eprintln!("YF_DEBUG [extract_bootstrap_json]: All strategies failed.");
+    if debug {
+        eprintln!("YF_DEBUG [extract_bootstrap_json]: All strategies exhausted; bootstrap not found.");
     }
     Err(YfError::Data("bootstrap not found".into()))
 }
 
+fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
+    if debug {
+        eprintln!(
+            "YF_DEBUG [iter_json_scripts]: html.len()={}; scanning for <script> blocks...",
+            html.len()
+        );
+    }
+
+    let mut res = Vec::new();
+    let mut pos = 0usize;
+    let mut total_scripts = 0usize;
+    let mut total_json_scripts = 0usize;
+    let mut total_svelte_fetched = 0usize;
+
+    while let Some(si) = html[pos..].find("<script") {
+        let si = pos + si;
+        total_scripts += 1;
+
+        let open_end = match html[si..].find('>') {
+            Some(x) => si + x,
+            None => break,
+        };
+        let tag_open = &html[si..=open_end];
+
+        let is_json = tag_open.contains("type=\"application/json\"");
+        if is_json {
+            total_json_scripts += 1;
+            if tag_open.contains("data-sveltekit-fetched") {
+                total_svelte_fetched += 1;
+            }
+        }
+
+        let close = match html[open_end + 1..].find("</script>") {
+            Some(x) => open_end + 1 + x,
+            None => break,
+        };
+        let inner = &html[open_end + 1..close];
+
+        if is_json {
+            res.push((tag_open, inner));
+        }
+        pos = close + "</script>".len();
+    }
+
+    if debug {
+        eprintln!(
+            "YF_DEBUG [iter_json_scripts]: total_scripts={}, total_json_scripts={}, svelte_fetched={}",
+            total_scripts, total_json_scripts, total_svelte_fetched
+        );
+        if let Some((attrs, body)) = res.get(0) {
+            let a = if attrs.len() > 180 { &attrs[..180] } else { attrs };
+            let b = if body.len() > 120 { &body[..120] } else { body };
+            eprintln!(
+                "YF_DEBUG [iter_json_scripts]: first JSON script attrs[trunc]=`{}` body[trunc]=`{}`",
+                a, b
+            );
+        }
+    }
+    res
+}
+
+fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
+
+    let summary = qs_val.get("quoteSummary").unwrap_or(qs_val);
+
+    let result0 = summary
+        .get("result")
+        .and_then(|r| r.as_array())
+        .and_then(|arr| arr.first())
+        .cloned();
+
+    if result0.is_none() {
+        if debug {
+            eprintln!(
+                "YF_DEBUG [extract_store_like]: quoteSummary.result[0] missing or not an array."
+            );
+        }
+        return None;
+    }
+    let result0 = result0.unwrap();
+
+    let has_quote_type = result0.get("quoteType").is_some();
+    let has_profile =
+        result0.get("assetProfile").is_some() || result0.get("summaryProfile").is_some();
+    let has_fund = result0.get("fundProfile").is_some();
+
+    if debug {
+        eprintln!(
+            "YF_DEBUG [extract_store_like]: has_quoteType={}, has_profile={}, has_fund={}",
+            has_quote_type, has_profile, has_fund
+        );
+    }
+    if !has_quote_type && !(has_profile || has_fund) {
+        if debug {
+            eprintln!("YF_DEBUG [extract_store_like]: shape not acceptable.");
+        }
+        return None;
+    }
+
+    let norm = normalize_store_like(result0);
+    if debug {
+        let keys = norm
+            .as_object()
+            .map(|m| {
+                let mut v: Vec<_> = m.keys().cloned().collect();
+                v.sort();
+                v.join(",")
+            })
+            .unwrap_or_default();
+        eprintln!("YF_DEBUG [extract_store_like]: SUCCESS; normalized keys={}", keys);
+    }
+    Some(norm)
+}
+
 // Find an object that looks like a QuoteSummaryStore anywhere in a JSON tree.
 fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
+
     match v {
         Value::Object(map) => {
             if let Some(qss) = map.get("QuoteSummaryStore")
                 && qss.is_object() {
-                    return Some(qss);
+                if debug {
+                    eprintln!("YF_DEBUG [find_qss]: found direct 'QuoteSummaryStore' object.");
                 }
+                return Some(qss);
+            }
             if let Some(stores) = map.get("stores")
                 && let Some(qss) = stores.get("QuoteSummaryStore")
                     && qss.is_object() {
-                        return Some(qss);
-                    }
+                if debug {
+                    eprintln!("YF_DEBUG [find_qss]: found 'stores.QuoteSummaryStore' object.");
+                }
+                return Some(qss);
+            }
             for child in map.values() {
                 if let Some(found) = find_quote_summary_store_in_value(child) {
                     return Some(found);
@@ -227,9 +682,19 @@ fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
 
 // Locate a "quoteSummary" object anywhere in the JSON tree.
 fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
+
     match v {
         Value::Object(map) => {
             if let Some(qs) = map.get("quoteSummary") {
+                if debug {
+                    let got_res = qs.get("result").is_some();
+                    let got_err = qs.get("error").is_some();
+                    eprintln!(
+                        "YF_DEBUG [find_qs]: found 'quoteSummary' (has result? {}, has error? {})",
+                        got_res, got_err
+                    );
+                }
                 return Some(qs);
             }
             for child in map.values() {
@@ -251,39 +716,45 @@ fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
     }
 }
 
-// Given a "quoteSummary" value, extract the first result object and normalize into a store-like object.
-fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> {
-    let result0 = qs_val
-        .get("result")
-        .and_then(|r| r.as_array())
-        .and_then(|arr| arr.first())
-        .cloned()?;
-
-    // Ensure it has quoteType and either profile node
-    let has_quote_type = result0.get("quoteType").is_some();
-    let has_profile =
-        result0.get("assetProfile").is_some() || result0.get("summaryProfile").is_some();
-    let has_fund = result0.get("fundProfile").is_some();
-    if !has_quote_type || !(has_profile || has_fund) {
-        return None;
+fn parse_jsonish_string(s: &str) -> Option<serde_json::Value> {
+    let t = s.trim();
+    if t.starts_with('{') || t.starts_with('[') {
+        serde_json::from_str::<serde_json::Value>(t).ok()
+    } else {
+        None
     }
-
-    Some(normalize_store_like(result0))
 }
 
 // Normalize: map assetProfile -> summaryProfile so downstream EQUITY path works uniformly.
 fn normalize_store_like(mut store_like: Value) -> Value {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
     if let Some(obj) = store_like.as_object_mut()
         && let Some(ap) = obj.remove("assetProfile") {
-            obj.insert("summaryProfile".to_string(), ap);
+        if debug {
+            eprintln!("YF_DEBUG [normalize_store_like]: moved assetProfile -> summaryProfile");
         }
+        obj.insert("summaryProfile".to_string(), ap);
+    }
     store_like
 }
 
 // Wrap the store-like object into the shape our Bootstrap deserializer expects.
 fn wrap_store_like(store_like: Value) -> Result<String, YfError> {
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
     let store_json = serde_json::to_string(&store_like)
         .map_err(|e| YfError::Data(format!("re-serialize: {e}")))?;
+    if debug {
+        let preview = if store_json.len() > 160 {
+            format!("{} …[trunc]", &store_json[..160])
+        } else {
+            store_json.clone()
+        };
+        eprintln!(
+            "YF_DEBUG [wrap_store_like]: wrapping store_like (len={}), preview=`{}`",
+            store_json.len(),
+            preview
+        );
+    }
     Ok(format!(
         r#"{{"context":{{"dispatcher":{{"stores":{{"QuoteSummaryStore":{store_json}}}}}}}}}"#
     ))
@@ -340,85 +811,46 @@ fn find_matching_brace(s: &str, start: usize) -> Option<usize> {
 impl Profile {
     /// Load a profile for `symbol` by scraping the Yahoo quote page bootstrap JSON.
     pub async fn load(client: &mut YfClient, symbol: &str) -> Result<Profile, YfError> {
-        // First, ensure the client has valid credentials.
-        client.ensure_credentials().await?;
+        #[cfg(not(feature = "test-mode"))]
+        {
+            client.ensure_credentials().await?;
 
-        // Try to load from the API.
-        match load_from_quote_summary_api(client, symbol).await {
-            Ok(p) => return Ok(p),
-            Err(e) => {
-                // If the API fails, fall back to scraping.
-                if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                    eprintln!("YF_DEBUG: API call failed ({e}), falling back to scrape.");
+            match load_from_quote_summary_api(client, symbol).await {
+                Ok(p) => return Ok(p),
+                Err(e) => {
+                    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                        eprintln!("YF_DEBUG: API call failed ({e}), falling back to scrape.");
+                    }
                 }
             }
+
+            load_from_scrape(client, symbol).await
         }
 
-        // --- SCRAPING FALLBACK LOGIC ---
-        // (This part remains the same as before)
-        let mut url = client.base_quote().join(symbol)?;
+        #[cfg(feature = "test-mode")]
         {
-            let mut qp = url.query_pairs_mut();
-            qp.append_pair("p", symbol);
-        }
-        let quote_page_resp = client.http().get(url.clone()).send().await?;
-        let body = quote_page_resp.text().await?;
-
-        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-            let _ = debug_dump_html(symbol, &body);
-        }
-
-        let json_str = extract_bootstrap_json(&body)?;
-
-        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-            let _ = debug_dump_extracted_json(symbol, &json_str);
-        }
-
-        let boot: Bootstrap = serde_json::from_str(&json_str)
-            .map_err(|e| YfError::Data(format!("bootstrap json parse: {e}")))?;
-
-        let store = boot.context.dispatcher.stores.quote_summary_store;
-
-        let kind = store.quote_type.kind.as_deref().unwrap_or("");
-        let name = store
-            .quote_type
-            .long_name
-            .or(store.quote_type.short_name)
-            .unwrap_or_else(|| symbol.to_string());
-
-        match kind {
-            "EQUITY" => {
-                let sp = store
-                    .summary_profile
-                    .ok_or_else(|| YfError::Data("summaryProfile missing".into()))?;
-                let address = Address {
-                    street1: sp.address1,
-                    street2: sp.address2,
-                    city: sp.city,
-                    state: sp.state,
-                    country: sp.country,
-                    zip: sp.zip,
-                };
-                Ok(Profile::Company(Company {
-                    name,
-                    sector: sp.sector,
-                    industry: sp.industry,
-                    website: sp.website,
-                    summary: sp.long_business_summary,
-                    address: Some(address),
-                }))
+            use crate::client::ApiPreference;
+            match client.api_preference() {
+                ApiPreference::ApiThenScrape => {
+                    client.ensure_credentials().await?;
+                    match load_from_quote_summary_api(client, symbol).await {
+                        Ok(p) => return Ok(p),
+                        Err(e) => {
+                            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                                eprintln!(
+                                    "YF_DEBUG: API call failed ({e}), falling back to scrape."
+                                );
+                            }
+                        }
+                    }
+                    load_from_scrape(client, symbol).await
+                }
+                ApiPreference::ApiOnly => {
+                    client.ensure_credentials().await?;
+                    load_from_quote_summary_api(client, symbol).await
+                }
+                ApiPreference::ScrapeOnly => load_from_scrape(client, symbol).await,
             }
-            "ETF" => {
-                let fp = store
-                    .fund_profile
-                    .ok_or_else(|| YfError::Data("fundProfile missing".into()))?;
-                Ok(Profile::Fund(Fund {
-                    name,
-                    family: fp.family,
-                    kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
-                }))
-            }
-            other => Err(YfError::Data(format!("unsupported quoteType: {other}"))),
         }
     }
 }
@@ -662,7 +1094,6 @@ async fn load_from_quote_summary_api(
     symbol: &str,
 ) -> Result<Profile, YfError> {
     for i in 0..=1 {
-        // Allow one retry
         let crumb = client
             .crumb()
             .ok_or(YfError::Data("Crumb is not set".into()))?;
@@ -674,7 +1105,7 @@ async fn load_from_quote_summary_api(
         }
 
         let resp = client.http().get(url.clone()).send().await?;
-        let text = resp.text().await?;
+        let text = crate::net::get_text(resp, "profile_api", symbol, "json").await?;
 
         let env: V10Envelope = serde_json::from_str(&text)
             .map_err(|e| YfError::Data(format!("quoteSummary json parse: {e}")))?;
@@ -686,7 +1117,6 @@ async fn load_from_quote_summary_api(
                         "YF_DEBUG: Invalid crumb detected. Refreshing credentials and retrying."
                     );
                 }
-                // Clear the invalid crumb and retry the credential fetching process
                 client.clear_crumb();
                 client.ensure_credentials().await?;
                 continue;
@@ -775,8 +1205,13 @@ struct Stores {
 
 #[derive(Deserialize)]
 struct QuoteSummaryStore {
+    // CHANGED: make quoteType optional (Yahoo pages sometimes omit it in this blob).
     #[serde(rename = "quoteType")]
-    quote_type: QuoteTypeNode,
+    quote_type: Option<QuoteTypeNode>,
+
+    // CHANGED: include price node (for fallback longName/shortName).
+    #[serde(default)]
+    price: Option<PriceNode>,
 
     #[serde(rename = "summaryProfile")]
     summary_profile: Option<SummaryProfileNode>,
@@ -793,6 +1228,14 @@ struct QuoteTypeNode {
     #[serde(rename = "longName")]
     long_name: Option<String>,
 
+    #[serde(rename = "shortName")]
+    short_name: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct PriceNode {
+    #[serde(rename = "longName")]
+    long_name: Option<String>,
     #[serde(rename = "shortName")]
     short_name: Option<String>,
 }

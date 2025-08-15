@@ -68,7 +68,6 @@ impl<'a> HistoryBuilder<'a> {
     }
 
     pub async fn fetch(self) -> Result<Vec<Candle>, YfError> {
-        // Build URL: <base>/<symbol>?...(either range or period1/period2)...&interval=1d&events=div|split
         let mut url = self.client.base_chart().join(&self.symbol)?;
         {
             let mut qp = url.query_pairs_mut();
@@ -82,7 +81,6 @@ impl<'a> HistoryBuilder<'a> {
             } else if let Some(r) = self.range {
                 qp.append_pair("range", r.as_str());
             } else {
-                // Shouldn't happen, but be defensive.
                 return Err(YfError::Data("no range or period set".into()));
             }
 
@@ -97,7 +95,7 @@ impl<'a> HistoryBuilder<'a> {
                 url: url.to_string(),
             });
         }
-        let body = resp.text().await?;
+        let body = crate::net::get_text(resp, "history_chart", &self.symbol, "json").await?;
         let parsed: ChartEnvelope = serde_json::from_str(&body)
             .map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
 
@@ -125,7 +123,6 @@ impl<'a> HistoryBuilder<'a> {
             .quote.first()
             .ok_or_else(|| YfError::Data("missing quote".into()))?;
 
-        // Defensive: lengths should align; skip rows that are None or out-of-bounds.
         for (i, &t) in ts.iter().enumerate() {
             let getter = |v: &Vec<Option<f64>>| v.get(i).and_then(|x| *x);
             let open = getter(&q.open);
