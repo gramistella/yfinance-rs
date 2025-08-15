@@ -1,7 +1,9 @@
-use crate::{YfClient, error::YfError, types::Candle};
+use crate::{error::YfError, YfClient};
 use serde::Deserialize;
 
-/// Common ranges Yahoo accepts for daily data.
+mod model;
+pub use model::Candle;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Range {
     D5,
@@ -28,13 +30,11 @@ impl Range {
     }
 }
 
-/// Builder for history queries (room to add params later).
 pub struct HistoryBuilder<'a> {
     client: &'a YfClient,
     symbol: String,
-    // If `period` is set, we use period1/period2; otherwise we use `range`.
     range: Option<Range>,
-    period: Option<(i64, i64)>, // (period1, period2) in seconds UTC
+    period: Option<(i64, i64)>,
 }
 
 impl<'a> HistoryBuilder<'a> {
@@ -47,16 +47,12 @@ impl<'a> HistoryBuilder<'a> {
         }
     }
 
-    /// Use a predefined relative range (e.g., 6 months).
-    /// Calling this clears any absolute period previously set.
     pub fn range(mut self, range: Range) -> Self {
         self.period = None;
         self.range = Some(range);
         self
     }
 
-    /// Use absolute UTC dates. `start < end` is required.
-    /// This takes precedence over any previously set `.range(...)`.
     pub fn between(
         mut self,
         start: chrono::DateTime<chrono::Utc>,
@@ -95,9 +91,9 @@ impl<'a> HistoryBuilder<'a> {
                 url: url.to_string(),
             });
         }
-        let body = crate::net::get_text(resp, "history_chart", &self.symbol, "json").await?;
-        let parsed: ChartEnvelope = serde_json::from_str(&body)
-            .map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
+        let body = crate::internal::net::get_text(resp, "history_chart", &self.symbol, "json").await?;
+        let parsed: ChartEnvelope =
+            serde_json::from_str(&body).map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
 
         let chart = parsed
             .chart
@@ -114,13 +110,15 @@ impl<'a> HistoryBuilder<'a> {
         let result = chart
             .result
             .ok_or_else(|| YfError::Data("missing result".into()))?;
-        let r0 = result.first()
+        let r0 = result
+            .first()
             .ok_or_else(|| YfError::Data("empty result".into()))?;
 
         let ts = r0.timestamp.as_deref().unwrap_or(&[]);
         let q = r0
             .indicators
-            .quote.first()
+            .quote
+            .first()
             .ok_or_else(|| YfError::Data("missing quote".into()))?;
 
         for (i, &t) in ts.iter().enumerate() {
