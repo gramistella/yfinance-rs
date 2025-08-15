@@ -1,4 +1,4 @@
-mod common;
+use crate::common;
 use crate::common::{mock_history_chart, setup_server};
 use url::Url;
 use yfinance_rs::{HistoryBuilder, Range, YfClient};

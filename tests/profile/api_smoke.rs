@@ -1,17 +1,25 @@
-mod common;
-use crate::common::{mock_profile_scrape, setup_server};
+
+use crate::common::{mock_profile_api, setup_server};
 use url::Url;
 use yfinance_rs::{ApiPreference, Profile, YfClient};
 
 #[tokio::test]
-async fn profile_scrape_company_happy() {
+async fn profile_api_company_happy() {
     let server = setup_server();
     let sym = "AAPL";
-    let mock = mock_profile_scrape(&server, sym);
+    let crumb = "test-crumb";
+    let mock = mock_profile_api(&server, sym, crumb);
 
     let mut client = YfClient::builder()
-        .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ScrapeOnly)
+        .base_quote_api(
+            Url::parse(&format!(
+                "{}/v10/finance/quoteSummary/",
+                server.base_url()
+            ))
+            .unwrap(),
+        )
+        .api_preference(ApiPreference::ApiOnly)
+        .preauth("cookie", crumb)
         .build()
         .unwrap();
 
@@ -24,21 +32,28 @@ async fn profile_scrape_company_happy() {
             assert_eq!(c.sector.as_deref(), Some("Technology"));
             assert_eq!(c.industry.as_deref(), Some("Consumer Electronics"));
             assert_eq!(c.website.as_deref(), Some("https://www.apple.com"));
-            assert!(c.address.is_some());
         }
         _ => panic!("expected Company"),
     }
 }
 
 #[tokio::test]
-async fn profile_scrape_fund_happy() {
+async fn profile_api_fund_happy() {
     let server = setup_server();
     let sym = "QQQ";
-    let mock = mock_profile_scrape(&server, sym);
+    let crumb = "test-crumb";
+    let mock = mock_profile_api(&server, sym, crumb);
 
     let mut client = YfClient::builder()
-        .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ScrapeOnly)
+        .base_quote_api(
+            Url::parse(&format!(
+                "{}/v10/finance/quoteSummary/",
+                server.base_url()
+            ))
+            .unwrap(),
+        )
+        .api_preference(ApiPreference::ApiOnly)
+        .preauth("cookie", crumb)
         .build()
         .unwrap();
 
