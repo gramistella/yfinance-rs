@@ -17,8 +17,9 @@ pub use client::YfClient;
 pub use error::YfError;
 pub use history::{Action, Candle, HistoryBuilder, HistoryMeta, HistoryResponse, Range, Interval};
 pub use profile::{Address, Company, Fund, Profile};
-pub use ticker::{Ticker, Quote, FastInfo};
+pub use ticker::{Ticker, Quote, FastInfo, OptionChain, OptionContract};
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;
+
 

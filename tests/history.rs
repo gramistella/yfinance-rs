@@ -9,3 +9,4 @@ mod common;
 #[path = "history/adjust.rs"] mod history_adjust;
 #[path = "history/ranges_new.rs"] mod history_ranges_new;
 #[path = "history/meta.rs"] mod history_meta;
+#[path = "history/offline.rs"] mod history_offline;

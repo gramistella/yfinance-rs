@@ -61,3 +61,56 @@ pub fn mock_profile_scrape<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<
             .body(fixture("profile_html", symbol, "html"));
     })
 }
+
+pub fn mock_quote_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
+    server.mock(|when, then| {
+        when.method(GET)
+            .path("/v7/finance/quote")
+            .query_param("symbols", symbol);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(fixture("quote_v7", symbol, "json"));
+    })
+}
+
+pub fn mock_options_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
+    server.mock(|when, then| {
+        when.method(GET)
+            .path(format!("/v7/finance/options/{}", symbol))
+            .matches(|req| {
+                for group in &req.query_params {
+                    for (k, _) in group {
+                        if k == "date" {
+                            return false;
+                        }
+                    }
+                }
+                true
+            });
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(fixture("options_v7", symbol, "json"));
+    })
+}
+
+
+pub fn mock_options_v7_for_date<'a>(server: &'a MockServer, symbol: &'a str, date: i64) -> Mock<'a> {
+    server.mock(|when, then| {
+        when.method(GET)
+            .path(format!("/v7/finance/options/{}", symbol))
+            .query_param("date", &date.to_string());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(fixture("options_v7", &format!("{}_{}", symbol, date), "json"));
+    })
+}
+
+pub fn live_or_record_enabled() -> bool {
+    let live = std::env::var("YF_LIVE").ok().as_deref() == Some("1");
+    let record = std::env::var("YF_RECORD").ok().as_deref() == Some("1");
+    live || record
+}
+
+pub fn is_recording() -> bool {
+    std::env::var("YF_RECORD").ok().as_deref() == Some("1")
+}

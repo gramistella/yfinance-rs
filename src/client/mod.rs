@@ -53,14 +53,6 @@ impl YfClient {
 
     /* -------- internal getters used by other modules -------- */
 
-    pub(crate) fn cookie_url(&self) -> &url::Url {
-        &self.cookie_url
-    }
-
-    pub(crate) fn crumb_url(&self) -> &url::Url {
-        &self.crumb_url
-    }
-
     pub(crate) fn http(&self) -> &Client {
         &self.http
     }

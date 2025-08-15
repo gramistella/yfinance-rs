@@ -2,31 +2,26 @@ use crate::{history::HistoryBuilder, internal::net, YfClient, YfError};
 use serde::Deserialize;
 use url::Url;
 
-/// Default Yahoo Finance v7 quote endpoint.
-/// Example: https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL,MSFT
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
+const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
 
-/// High-level façade similar to yfinance's `Ticker`.
-/// Keeps a reference to your client and a symbol, and exposes convenient methods.
 pub struct Ticker<'a> {
     client: &'a mut YfClient,
     symbol: String,
     quote_base: Url,
+    options_base: Url,
 }
 
 impl<'a> Ticker<'a> {
-    /// Construct with the default Yahoo v7 quote endpoint.
     pub fn new(client: &'a mut YfClient, symbol: impl Into<String>) -> Result<Self, YfError> {
         Ok(Self {
             client,
             symbol: symbol.into(),
             quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
+            options_base: Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
         })
     }
 
-    /// Construct with a custom base URL for v7 quotes (useful for tests/mocks).
-    ///
-    /// Example base: `{mock_server}/v7/finance/quote`
     pub fn with_quote_base(
         client: &'a mut YfClient,
         symbol: impl Into<String>,
@@ -36,25 +31,46 @@ impl<'a> Ticker<'a> {
             client,
             symbol: symbol.into(),
             quote_base: base,
+            options_base: Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
         })
     }
 
-    /// Minimal convenience to start building a history request for this ticker.
+    /// Set a custom base URL for the options endpoint (useful for tests/mocking).
+    pub fn with_options_base(
+        client: &'a mut YfClient,
+        symbol: impl Into<String>,
+        base: Url,
+    ) -> Result<Self, YfError> {
+        Ok(Self {
+            client,
+            symbol: symbol.into(),
+            quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
+            options_base: base,
+        })
+    }
+
+    /// Set custom bases for both quote and options endpoints.
+    pub fn with_bases(
+        client: &'a mut YfClient,
+        symbol: impl Into<String>,
+        quote_base: Url,
+        options_base: Url,
+    ) -> Result<Self, YfError> {
+        Ok(Self {
+            client,
+            symbol: symbol.into(),
+            quote_base,
+            options_base,
+        })
+    }
+
     pub fn history_builder(&self) -> HistoryBuilder<'_> {
-        // reborrow &mut YfClient as &YfClient for the builder
         HistoryBuilder::new(&*self.client, &self.symbol)
     }
 
-    /// Fetch a lightweight "quote snapshot" for this ticker from the v7 quote endpoint.
-    ///
-    /// First attempt: no crumb/cookie preflight (works for most cases and for synthetic tests).
-    /// If we get a 401/403, we fetch credentials (cookie + crumb) and retry once with `crumb=...`.
     pub async fn quote(&mut self) -> Result<Quote, YfError> {
-        // Clone the reqwest client up front so we don't hold an immutable borrow of `self.client`
-        // across any await where we later need `&mut self.client` for ensure_credentials().
         let http = self.client.http().clone();
 
-        // attempt #1 (no crumb)
         let mut url = self.quote_base.clone();
         {
             let mut qp = url.query_pairs_mut();
@@ -79,7 +95,6 @@ impl<'a> Ticker<'a> {
             });
         }
 
-        // attempt #2: ensure cookie + crumb, then include crumb in query and retry
         self.client.ensure_credentials().await?;
         let crumb = match self.client.crumb() {
             Some(c) => c.to_string(),
@@ -139,10 +154,6 @@ impl<'a> Ticker<'a> {
         })
     }
 
-    /// A tiny derived struct similar to yfinance's `fast_info`.
-    ///
-    /// `last_price` is taken from `regularMarketPrice`. If that is missing, we fall back to
-    /// `regularMarketPreviousClose` to avoid hard errors; if both are missing, it's an error.
     pub async fn fast_info(&mut self) -> Result<FastInfo, YfError> {
         let q = self.quote().await?;
         let last = q
@@ -160,8 +171,6 @@ impl<'a> Ticker<'a> {
         })
     }
 
-    /// yfinance-style convenience: fetch history with optional range/interval,
-    /// defaulting to auto-adjusted daily bars and no pre/post.
     pub async fn history(
         &self,
         range: Option<crate::Range>,
@@ -179,8 +188,6 @@ impl<'a> Ticker<'a> {
         hb.fetch().await
     }
 
-    /// Convenience: return all corporate actions (splits/dividends) over a range.
-    /// If range is None, defaults to `Range::Max`.
     pub async fn actions(
         &self,
         range: Option<crate::Range>,
@@ -191,7 +198,6 @@ impl<'a> Ticker<'a> {
         Ok(resp.actions)
     }
 
-    /// Convenience: only dividends (ts, amount)
     pub async fn dividends(
         &self,
         range: Option<crate::Range>,
@@ -206,7 +212,6 @@ impl<'a> Ticker<'a> {
             .collect())
     }
 
-    /// Convenience: only splits (ts, numerator, denominator)
     pub async fn splits(
         &self,
         range: Option<crate::Range>,
@@ -221,7 +226,6 @@ impl<'a> Ticker<'a> {
             .collect())
     }
 
-    /// Convenience: read minimal metadata (timezone/gmtoffset) from the chart meta.
     pub async fn get_history_metadata(
         &self,
         range: Option<crate::Range>,
@@ -233,6 +237,149 @@ impl<'a> Ticker<'a> {
         let resp = hb.fetch_full().await?;
         Ok(resp.meta)
     }
+
+    /* ---------------- Options API ---------------- */
+
+    /// Return available option expiration timestamps (Unix seconds) for the ticker.
+    pub async fn options(&mut self) -> Result<Vec<i64>, YfError> {
+        let (body, _) = self.fetch_options_raw(None).await?;
+        let env: OptEnvelope = serde_json::from_str(&body)
+            .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
+        let first = env.option_chain
+            .and_then(|oc| oc.result)
+            .and_then(|mut v| v.pop())
+            .ok_or_else(|| YfError::Data("empty options result".into()))?;
+        Ok(first.expiration_dates.unwrap_or_default())
+    }
+
+    /// Return the full option chain (calls & puts) for a specific expiration date.
+    /// If `date` is None, Yahoo returns the nearest expiry.
+    pub async fn option_chain(&mut self, date: Option<i64>) -> Result<OptionChain, YfError> {
+        let (body, used_url) = self.fetch_options_raw(date).await?;
+        let env: OptEnvelope = serde_json::from_str(&body)
+            .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
+
+        let first = env.option_chain
+            .and_then(|oc| oc.result)
+            .and_then(|mut v| v.pop())
+            .ok_or_else(|| YfError::Data("empty options result".into()))?;
+
+        // Yahoo returns an array "options" where each entry corresponds to one expiration date.
+        let od = match first.options.and_then(|mut v| v.pop()) {
+            Some(x) => x,
+            None => {
+                // No options data; return empty chain.
+                return Ok(OptionChain { calls: vec![], puts: vec![] });
+            }
+        };
+
+        let expiration = od.expiration_date.unwrap_or_else(|| {
+            // Best-effort: try to infer from the URL query param if present.
+            // (Purely for completeness; tests will always provide explicit expiration in payload.)
+            if let Some(q) = used_url.query() {
+                for kv in q.split('&') {
+                    if let Some(v) = kv.strip_prefix("date=")
+                        && let Ok(ts) = v.parse::<i64>() { return ts }
+                }
+            }
+            0
+        });
+
+        let map = |side: Option<Vec<OptContractNode>>| -> Vec<OptionContract> {
+            side.unwrap_or_default()
+                .into_iter()
+                .map(|c| OptionContract {
+                    contract_symbol: c.contract_symbol.unwrap_or_default(),
+                    strike: c.strike.unwrap_or(0.0),
+                    last_price: c.last_price,
+                    bid: c.bid,
+                    ask: c.ask,
+                    volume: c.volume,
+                    open_interest: c.open_interest,
+                    implied_volatility: c.implied_volatility,
+                    in_the_money: c.in_the_money.unwrap_or(false),
+                    expiration,
+                })
+                .collect()
+        };
+
+        Ok(OptionChain {
+            calls: map(od.calls),
+            puts: map(od.puts),
+        })
+    }
+
+    async fn fetch_options_raw(&mut self, date: Option<i64>) -> Result<(String, Url), YfError> {
+        let http = self.client.http().clone();
+
+        let mut url = self.options_base.join(&self.symbol)?;
+        {
+            let mut qp = url.query_pairs_mut();
+            if let Some(d) = date {
+                qp.append_pair("date", &d.to_string());
+            }
+        }
+
+        let mut resp = http
+            .get(url.clone())
+            .header("accept", "application/json")
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            // record with a stable, date-scoped filename if applicable
+            let fixture_symbol = match date {
+                Some(d) => format!("{}_{}", self.symbol, d),
+                None => self.symbol.clone(),
+            };
+            let body = net::get_text(resp, "options_v7", &fixture_symbol, "json").await?;
+            return Ok((body, url));
+        }
+
+        let code = resp.status().as_u16();
+        if code != 401 && code != 403 {
+            return Err(YfError::Status {
+                status: code,
+                url: url.to_string(),
+            });
+        }
+
+        self.client.ensure_credentials().await?;
+        let crumb = self.client.crumb().ok_or_else(|| YfError::Status {
+            status: code,
+            url: url.to_string(),
+        })?;
+
+        let mut url2 = self.options_base.join(&self.symbol)?;
+        {
+            let mut qp = url2.query_pairs_mut();
+            if let Some(d) = date {
+                qp.append_pair("date", &d.to_string());
+            }
+            qp.append_pair("crumb", crumb);
+        }
+
+        resp = http
+            .get(url2.clone())
+            .header("accept", "application/json")
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            return Err(YfError::Status {
+                status: resp.status().as_u16(),
+                url: url2.to_string(),
+            });
+        }
+
+        let fixture_symbol = match date {
+            Some(d) => format!("{}_{}", self.symbol, d),
+            None => self.symbol.clone(),
+        };
+        let body = net::get_text(resp, "options_v7", &fixture_symbol, "json").await?;
+        Ok((body, url2))
+    }
+
 }
 
 /* ---------------- Public models ---------------- */
@@ -255,6 +402,26 @@ pub struct FastInfo {
     pub currency: Option<String>,
     pub exchange: Option<String>,
     pub market_state: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptionContract {
+    pub contract_symbol: String,
+    pub strike: f64,
+    pub last_price: Option<f64>,
+    pub bid: Option<f64>,
+    pub ask: Option<f64>,
+    pub volume: Option<u64>,
+    pub open_interest: Option<u64>,
+    pub implied_volatility: Option<f64>,
+    pub in_the_money: bool,
+    pub expiration: i64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptionChain {
+    pub calls: Vec<OptionContract>,
+    pub puts: Vec<OptionContract>,
 }
 
 /* ---------------- Minimal serde mapping for v7 quote ---------------- */
@@ -283,7 +450,6 @@ struct V7QuoteNode {
     regular_market_previous_close: Option<f64>,
     currency: Option<String>,
 
-    // exchange-ish fields (not all always present)
     #[serde(rename = "fullExchangeName")]
     full_exchange_name: Option<String>,
     exchange: Option<String>,
@@ -293,4 +459,52 @@ struct V7QuoteNode {
 
     #[serde(rename = "marketState")]
     market_state: Option<String>,
+}
+
+/* ---------------- Minimal serde mapping for v7 options ---------------- */
+
+#[derive(Deserialize)]
+struct OptEnvelope {
+    #[serde(rename = "optionChain")]
+    option_chain: Option<OptChainNode>,
+}
+
+#[derive(Deserialize)]
+struct OptChainNode {
+    result: Option<Vec<OptResultNode>>,
+    #[allow(dead_code)]
+    error: Option<serde_json::Value>,
+}
+
+#[derive(Deserialize)]
+struct OptResultNode {
+    #[serde(rename = "expirationDates")]
+    expiration_dates: Option<Vec<i64>>,
+    options: Option<Vec<OptByDateNode>>,
+}
+
+#[derive(Deserialize)]
+struct OptByDateNode {
+    #[serde(rename = "expirationDate")]
+    expiration_date: Option<i64>,
+    calls: Option<Vec<OptContractNode>>,
+    puts: Option<Vec<OptContractNode>>,
+}
+
+#[derive(Deserialize)]
+struct OptContractNode {
+    #[serde(rename = "contractSymbol")]
+    contract_symbol: Option<String>,
+    strike: Option<f64>,
+    #[serde(rename = "lastPrice")]
+    last_price: Option<f64>,
+    bid: Option<f64>,
+    ask: Option<f64>,
+    volume: Option<u64>,
+    #[serde(rename = "openInterest")]
+    open_interest: Option<u64>,
+    #[serde(rename = "impliedVolatility")]
+    implied_volatility: Option<f64>,
+    #[serde(rename = "inTheMoney")]
+    in_the_money: Option<bool>,
 }

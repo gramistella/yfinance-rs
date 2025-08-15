@@ -1,19 +1,14 @@
-// tests/profile_live.rs
 #[tokio::test]
 #[ignore]
 async fn live_profile_company() {
-    if std::env::var("YF_LIVE").ok().as_deref() != Some("1")
-        && std::env::var("YF_RECORD").ok().as_deref() != Some("1")
-    {
+    if !crate::common::live_or_record_enabled() {
         return;
     }
 
     let mut client = yfinance_rs::YfClient::builder().build().unwrap();
-    let prof = yfinance_rs::Profile::load(&mut client, "AAPL")
-        .await
-        .unwrap();
+    let prof = yfinance_rs::Profile::load(&mut client, "AAPL").await.unwrap();
 
-    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
+    if !crate::common::is_recording() {
         match prof {
             yfinance_rs::Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
             _ => panic!("expected Company"),
@@ -24,7 +19,7 @@ async fn live_profile_company() {
 #[tokio::test]
 #[ignore]
 async fn live_profile_fund_for_record() {
-    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
+    if !crate::common::is_recording() {
         return;
     }
     let mut client = yfinance_rs::YfClient::builder().build().unwrap();
@@ -34,7 +29,7 @@ async fn live_profile_fund_for_record() {
 #[tokio::test]
 #[ignore]
 async fn live_profile_company_scrape_for_record() {
-    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
+    if !crate::common::is_recording() {
         return;
     }
     let mut client = yfinance_rs::YfClient::builder()
@@ -47,7 +42,7 @@ async fn live_profile_company_scrape_for_record() {
 #[tokio::test]
 #[ignore]
 async fn live_profile_fund_scrape_for_record() {
-    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
+    if !crate::common::is_recording() {
         return;
     }
     let mut client = yfinance_rs::YfClient::builder()
