@@ -159,6 +159,80 @@ impl<'a> Ticker<'a> {
             market_state: q.market_state,
         })
     }
+
+    /// yfinance-style convenience: fetch history with optional range/interval,
+    /// defaulting to auto-adjusted daily bars and no pre/post.
+    pub async fn history(
+        &self,
+        range: Option<crate::Range>,
+        interval: Option<crate::Interval>,
+        prepost: bool,
+    ) -> Result<Vec<crate::Candle>, YfError> {
+        let mut hb = self.history_builder();
+        if let Some(r) = range {
+            hb = hb.range(r);
+        }
+        if let Some(i) = interval {
+            hb = hb.interval(i);
+        }
+        hb = hb.auto_adjust(true).prepost(prepost).actions(true);
+        hb.fetch().await
+    }
+
+    /// Convenience: return all corporate actions (splits/dividends) over a range.
+    /// If range is None, defaults to `Range::Max`.
+    pub async fn actions(
+        &self,
+        range: Option<crate::Range>,
+    ) -> Result<Vec<crate::Action>, YfError> {
+        let mut hb = self.history_builder();
+        hb = hb.range(range.unwrap_or(crate::Range::Max));
+        let resp = hb.auto_adjust(true).actions(true).fetch_full().await?;
+        Ok(resp.actions)
+    }
+
+    /// Convenience: only dividends (ts, amount)
+    pub async fn dividends(
+        &self,
+        range: Option<crate::Range>,
+    ) -> Result<Vec<(i64, f64)>, YfError> {
+        let acts = self.actions(range).await?;
+        Ok(acts
+            .into_iter()
+            .filter_map(|a| match a {
+                crate::Action::Dividend { ts, amount } => Some((ts, amount)),
+                _ => None,
+            })
+            .collect())
+    }
+
+    /// Convenience: only splits (ts, numerator, denominator)
+    pub async fn splits(
+        &self,
+        range: Option<crate::Range>,
+    ) -> Result<Vec<(i64, u32, u32)>, YfError> {
+        let acts = self.actions(range).await?;
+        Ok(acts
+            .into_iter()
+            .filter_map(|a| match a {
+                crate::Action::Split { ts, numerator, denominator } => Some((ts, numerator, denominator)),
+                _ => None,
+            })
+            .collect())
+    }
+
+    /// Convenience: read minimal metadata (timezone/gmtoffset) from the chart meta.
+    pub async fn get_history_metadata(
+        &self,
+        range: Option<crate::Range>,
+    ) -> Result<Option<crate::HistoryMeta>, YfError> {
+        let mut hb = self.history_builder();
+        if let Some(r) = range {
+            hb = hb.range(r);
+        }
+        let resp = hb.fetch_full().await?;
+        Ok(resp.meta)
+    }
 }
 
 /* ---------------- Public models ---------------- */

@@ -24,9 +24,15 @@ pub enum Action {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct HistoryMeta {
+    pub timezone: Option<String>,
+    pub gmtoffset: Option<i64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct HistoryResponse {
     pub candles: Vec<Candle>,
     pub actions: Vec<Action>,
-    /// true when prices are auto-adjusted (for splits & dividends)
     pub adjusted: bool,
+    pub meta: Option<HistoryMeta>,
 }

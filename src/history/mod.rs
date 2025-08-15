@@ -2,10 +2,11 @@ use crate::{error::YfError, YfClient};
 use serde::Deserialize;
 
 mod model;
-pub use model::{Action, Candle, HistoryResponse};
+pub use model::{Action, Candle, HistoryMeta, HistoryResponse};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Range {
+    D1,
     D5,
     M1,
     M3,
@@ -13,11 +14,14 @@ pub enum Range {
     Y1,
     Y2,
     Y5,
+    Y10,
+    Ytd,
     Max,
 }
 impl Range {
     fn as_str(self) -> &'static str {
         match self {
+            Range::D1 => "1d",
             Range::D5 => "5d",
             Range::M1 => "1mo",
             Range::M3 => "3mo",
@@ -25,6 +29,8 @@ impl Range {
             Range::Y1 => "1y",
             Range::Y2 => "2y",
             Range::Y5 => "5y",
+            Range::Y10 => "10y",
+            Range::Ytd => "ytd",
             Range::Max => "max",
         }
     }
@@ -85,9 +91,10 @@ impl<'a> HistoryBuilder<'a> {
             range: Some(Range::M6),
             period: None,
             interval: Interval::D1,
-            auto_adjust: false,
+            // Parity with yfinance: default to auto-adjusted prices
+            auto_adjust: true,
             include_prepost: false,
-            include_actions: true, // keep prior behavior: request events by default
+            include_actions: true,
         }
     }
 
@@ -112,32 +119,26 @@ impl<'a> HistoryBuilder<'a> {
         self
     }
 
-    /// When true, prices are adjusted for splits and dividends using Yahoo's adjclose series.
-    /// Volume is split-adjusted only.
     pub fn auto_adjust(mut self, yes: bool) -> Self {
         self.auto_adjust = yes;
         self
     }
 
-    /// Include pre/post market candles when supported (intraday intervals).
     pub fn prepost(mut self, yes: bool) -> Self {
         self.include_prepost = yes;
         self
     }
 
-    /// Request corporate actions (dividends and splits). Defaults to true.
     pub fn actions(mut self, yes: bool) -> Self {
         self.include_actions = yes;
         self
     }
 
-    /// Fetch adjusted/unadjusted candles only (backward-compatible with existing API).
     pub async fn fetch(self) -> Result<Vec<Candle>, YfError> {
         let resp = self.fetch_full().await?;
         Ok(resp.candles)
     }
 
-    /// Fetch candles plus parsed corporate actions and whether prices are adjusted.
     pub async fn fetch_full(self) -> Result<HistoryResponse, YfError> {
         let mut url = self.client.base_chart().join(&self.symbol)?;
         {
@@ -159,7 +160,6 @@ impl<'a> HistoryBuilder<'a> {
             if self.include_actions {
                 qp.append_pair("events", "div|split");
             }
-            // include pre/post market data for intraday if requested
             qp.append_pair(
                 "includePrePost",
                 if self.include_prepost { "true" } else { "false" },
@@ -203,9 +203,8 @@ impl<'a> HistoryBuilder<'a> {
             .first()
             .ok_or_else(|| YfError::Data("missing quote".into()))?;
 
-        // collect actions (if present)
         let mut actions_out: Vec<Action> = Vec::new();
-        let mut split_events: Vec<(i64, f64)> = Vec::new(); // (date_ts, ratio as f64)
+        let mut split_events: Vec<(i64, f64)> = Vec::new();
 
         if let Some(ev) = r0.events.as_ref() {
             if let Some(divs) = ev.dividends.as_ref() {
@@ -222,7 +221,6 @@ impl<'a> HistoryBuilder<'a> {
                     let (num, den) = if let (Some(n), Some(d)) = (s.numerator, s.denominator) {
                         (n as u32, d as u32)
                     } else if let Some(r) = s.split_ratio.as_deref() {
-                        // e.g., "2/1"
                         let mut it = r.split('/');
                         let n = it.next().and_then(|x| x.parse::<u32>().ok()).unwrap_or(1);
                         let d = it.next().and_then(|x| x.parse::<u32>().ok()).unwrap_or(1);
@@ -246,17 +244,14 @@ impl<'a> HistoryBuilder<'a> {
         });
         split_events.sort_by_key(|(ts, _)| *ts);
 
-        // Build arrays for adjustment factors
         let adj = r0.indicators.adjclose.first();
         let adj_vec = adj.map(|a| a.adjclose.as_slice()).unwrap_or(&[]);
 
-        // Precompute cumulative split ratio AFTER each candle (product of future split ratios)
         let mut cum_split_after: Vec<f64> = vec![1.0; ts.len()];
         if !split_events.is_empty() && !ts.is_empty() {
             let mut sp = split_events.len() as isize - 1;
             let mut running: f64 = 1.0;
             for i in (0..ts.len()).rev() {
-                // include any splits strictly after this timestamp
                 while sp >= 0 && split_events[sp as usize].0 > ts[i] {
                     running *= split_events[sp as usize].1;
                     sp -= 1;
@@ -276,7 +271,6 @@ impl<'a> HistoryBuilder<'a> {
             if let (Some(mut open), Some(mut high), Some(mut low), Some(mut close)) =
                 (open, high, low, close)
             {
-                // Price adjustment
                 if self.auto_adjust {
                     let factor_from_adj = if let Some(adjclose) =
                         adj_vec.get(i).and_then(|x| *x)
@@ -299,7 +293,6 @@ impl<'a> HistoryBuilder<'a> {
                     close *= price_factor;
                 }
 
-                // Volume (always split-adjust only)
                 let volume = q
                     .volume
                     .get(i)
@@ -324,10 +317,16 @@ impl<'a> HistoryBuilder<'a> {
             }
         }
 
+        let meta_out = r0.meta.as_ref().map(|m| HistoryMeta {
+            timezone: m.timezone.clone(),
+            gmtoffset: m.gmtoffset,
+        });
+
         Ok(HistoryResponse {
             candles: out,
             actions: actions_out,
             adjusted: self.auto_adjust,
+            meta: meta_out,
         })
     }
 }
@@ -353,10 +352,20 @@ struct ChartError {
 #[derive(Deserialize)]
 struct ChartResult {
     #[serde(default)]
+    meta: Option<MetaNode>,
+    #[serde(default)]
     timestamp: Option<Vec<i64>>,
     indicators: Indicators,
     #[serde(default)]
     events: Option<Events>,
+}
+
+#[derive(Deserialize)]
+struct MetaNode {
+    #[serde(default)]
+    timezone: Option<String>,
+    #[serde(default)]
+    gmtoffset: Option<i64>,
 }
 
 #[derive(Deserialize)]

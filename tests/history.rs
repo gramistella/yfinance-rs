@@ -7,3 +7,5 @@ mod common;
 #[path = "history/nulls_synthetic.rs"] mod history_nulls_synth;
 #[path = "history/intervals.rs"] mod history_intervals;
 #[path = "history/adjust.rs"] mod history_adjust;
+#[path = "history/ranges_new.rs"] mod history_ranges_new;
+#[path = "history/meta.rs"] mod history_meta;
