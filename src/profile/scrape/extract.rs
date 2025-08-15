@@ -121,8 +121,8 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                         eprintln!("YF_DEBUG [extract_bootstrap_json]: C[{}][{}] nodes.len={}", i, ai, nodes.len());
                     }
                     for (ni, node) in nodes.iter().enumerate() {
-                        if let Some(data) = node.get("data") {
-                            if let Some(store_like) =
+                        if let Some(data) = node.get("data")
+                            && let Some(store_like) =
                                 extract_store_like_from_quote_summary_value(data)
                             {
                                 let wrapped = wrap_store_like(store_like)?;
@@ -134,7 +134,6 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                                 }
                                 return Ok(wrapped);
                             }
-                        }
                     }
                 }
             }
@@ -156,11 +155,7 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
 
         if let Some(mut outer_obj) = parsed_obj {
             let body_val_opt = {
-                if let Some(b) = outer_obj.get_mut("body") {
-                    Some(b.take())
-                } else {
-                    None
-                }
+                outer_obj.get_mut("body").map(|b| b.take())
             };
 
             if let Some(body_val) = body_val_opt {
@@ -183,8 +178,8 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                         return Ok(wrapped);
                     }
 
-                    if let Some(qs_val) = find_quote_summary_value_in_value(&payload) {
-                        if let Some(store_like) =
+                    if let Some(qs_val) = find_quote_summary_value_in_value(&payload)
+                        && let Some(store_like) =
                             extract_store_like_from_quote_summary_value(qs_val)
                         {
                             let wrapped = wrap_store_like(store_like)?;
@@ -196,7 +191,6 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                             }
                             return Ok(wrapped);
                         }
-                    }
                 }
             }
         }
@@ -238,8 +232,8 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
             return Ok(wrapped);
         }
 
-        if let Some(qs_val) = find_quote_summary_value_in_value(&val) {
-            if let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
+        if let Some(qs_val) = find_quote_summary_value_in_value(&val)
+            && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
                 let wrapped = wrap_store_like(store_like)?;
                 if debug {
                     eprintln!(
@@ -249,7 +243,6 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                 }
                 return Ok(wrapped);
             }
-        }
 
         if let Some(body_val) = val.get("body") {
             let payload_opt = match body_val {
@@ -271,8 +264,8 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                     return Ok(wrapped);
                 }
 
-                if let Some(qs_val) = find_quote_summary_value_in_value(&payload) {
-                    if let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
+                if let Some(qs_val) = find_quote_summary_value_in_value(&payload)
+                    && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
                         let wrapped = wrap_store_like(store_like)?;
                         if debug {
                             eprintln!(
@@ -282,7 +275,6 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                         }
                         return Ok(wrapped);
                     }
-                }
             }
         }
     }
@@ -327,7 +319,7 @@ fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> 
             has_quote_type, has_profile, has_fund
         );
     }
-    if !has_quote_type && !(has_profile || has_fund) {
+    if !(has_quote_type || has_profile || has_fund) {
         if debug {
             eprintln!("YF_DEBUG [extract_store_like]: shape not acceptable.");
         }

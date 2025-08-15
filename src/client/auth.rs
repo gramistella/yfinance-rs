@@ -1,9 +1,7 @@
 //! Cookie & crumb acquisition for Yahoo endpoints.
 
-use super::constants::USER_AGENT;
 use crate::error::YfError;
 use reqwest::header::SET_COOKIE;
-use url::Url;
 
 impl super::YfClient {
     /// Ensure we have a valid cookie + crumb pair.
@@ -24,11 +22,6 @@ impl super::YfClient {
     /// Get the crumb string (if any).
     pub(crate) fn crumb(&self) -> Option<&str> {
         self.crumb.as_deref()
-    }
-
-    /// Get the cookie string (if any).
-    pub(crate) fn cookie(&self) -> Option<&str> {
-        self.cookie.as_deref()
     }
 
     async fn get_cookie(&mut self) -> Result<(), YfError> {

@@ -1,6 +1,6 @@
 //! Scrape the Yahoo quote HTML and extract profile data.
 
-use crate::{internal::net, YfClient, YfError};
+use crate::{YfClient, YfError};
 use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};

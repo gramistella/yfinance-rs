@@ -15,7 +15,7 @@ pub fn fixture(endpoint: &str, symbol: &str, ext: &str) -> String {
         .unwrap_or_else(|e| panic!("failed to read fixture {}: {}", path.display(), e))
 }
 
-pub fn mock_cookie_crumb(server: &MockServer) -> (Mock, Mock) {
+pub fn mock_cookie_crumb(server: &'_ MockServer) -> (Mock<'_>, Mock<'_>) {
     let cookie_mock = server.mock(|when, then| {
         when.method(GET).path("/consent");
         then.status(200).header(

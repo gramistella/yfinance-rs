@@ -39,13 +39,11 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
             return s;
         }
         let mut out = String::new();
-        let mut n = 0usize;
-        for ch in s.chars() {
+        for (n, ch) in s.chars().enumerate(){
             if n >= max_chars {
                 break;
             }
             out.push(ch);
-            n += 1;
         }
         out.push_str("\n… [truncated]");
         out
@@ -115,11 +113,10 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
         min_html.push_str(&format!("<h1>title</h1><pre>{}</pre>\n", escape_html(&t)));
     }
 
-    let mut svelte_count = 0usize;
     for (attrs, inner) in iter_json_scripts(html) {
         let parsed = serde_json::from_str::<Value>(inner).ok();
 
-        let mut pretty = String::new();
+        let pretty;
         if let Some(v) = parsed.as_ref() {
             if let Some(u) = v
                 .get("body")
@@ -127,7 +124,6 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
                 .and_then(parse_jsonish_string)
             {
                 pretty = pretty_limit(&u, 5_000);
-                svelte_count += 1;
             } else {
                 pretty = pretty_limit(v, 5_000);
             }
