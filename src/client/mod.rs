@@ -23,7 +23,7 @@ pub enum ApiPreference {
     ScrapeOnly,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct YfClient {
     http: Client,
     base_chart: Url,
