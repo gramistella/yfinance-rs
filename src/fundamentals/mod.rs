@@ -1,6 +1,10 @@
 mod api;
 mod model;
 
+/* new: split internals */
+mod fetch;
+mod wire;
+
 pub use model::{
     BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps,
     EarningsYear, IncomeStatementRow, Num,
@@ -8,7 +12,6 @@ pub use model::{
 
 use crate::{YfClient, YfError};
 
-/// Public convenience fns (for users who work directly with a client)
 pub async fn income_statement(
     client: &mut YfClient,
     symbol: &str,

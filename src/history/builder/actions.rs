@@ -1,4 +1,4 @@
-use crate::history::model::Action;
+use crate::core::models::Action;
 use crate::history::wire::Events;
 
 pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64, f64)>) {
@@ -47,10 +47,10 @@ pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64
         }
     }
 
-    out.sort_by_key(|a| match a {
-        Action::Dividend { ts, .. } => *ts,
-        Action::Split { ts, .. } => *ts,
+    out.sort_by_key(|a| match *a {
+        Action::Dividend { ts, .. } | Action::Split { ts, .. } => ts,
     });
+    split_events.sort_by_key(|p| p.0);
     split_events.sort_by_key(|(ts, _)| *ts);
 
     (out, split_events)

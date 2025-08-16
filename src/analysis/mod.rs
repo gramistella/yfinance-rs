@@ -1,6 +1,10 @@
 mod api;
 mod model;
 
+/* new: split internals */
+mod fetch;
+mod wire;
+
 pub use model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 
 use crate::{YfClient, YfError};

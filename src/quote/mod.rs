@@ -1,7 +1,9 @@
 use serde::Deserialize;
 use url::Url;
 
-use crate::{YfClient, YfError, core::net, ticker::Quote};
+use crate::core::Quote;
+use crate::core::net;
+use crate::core::{YfClient, YfError};
 
 /* ---------------- Public API ---------------- */
 

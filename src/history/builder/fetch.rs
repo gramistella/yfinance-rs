@@ -1,6 +1,5 @@
-use crate::history::params::{Interval, Range};
+use crate::core::{Interval, Range, YfClient, YfError};
 use crate::history::wire::{ChartEnvelope, Events, MetaNode, QuoteBlock};
-use crate::{YfClient, core::YfError};
 
 pub(crate) struct Fetched {
     pub ts: Vec<i64>,

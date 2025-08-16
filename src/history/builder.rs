@@ -3,10 +3,9 @@ mod adjust;
 mod assemble;
 mod fetch;
 
-use crate::history::model::{Action, Candle, HistoryMeta, HistoryResponse};
-use crate::history::params::{Interval, Range};
+use crate::core::models::{Action, Candle, HistoryMeta, HistoryResponse};
+use crate::core::{Interval, Range, YfClient, YfError};
 use crate::history::wire::MetaNode;
-use crate::{YfClient, core::YfError};
 
 use actions::extract_actions;
 use adjust::cumulative_split_after;
@@ -116,9 +115,8 @@ impl<'a> HistoryBuilder<'a> {
         );
 
         // ensure actions sorted (extract_actions already sorts, keep consistent)
-        actions_out.sort_by_key(|a| match a {
-            Action::Dividend { ts, .. } => *ts,
-            Action::Split { ts, .. } => *ts,
+        actions_out.sort_by_key(|a| match *a {
+            Action::Dividend { ts, .. } | Action::Split { ts, .. } => ts,
         });
 
         // 5) Map metadata

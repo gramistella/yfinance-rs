@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use futures::future::try_join_all;
 
 use crate::{
-    Action, Candle, YfClient, YfError,
-    history::{HistoryBuilder, HistoryMeta, HistoryResponse, Interval, Range},
+    Action, Candle, HistoryMeta, HistoryResponse, Interval, Range, YfClient, YfError,
+    history::HistoryBuilder,
 };
 
 /// Result of a multi-symbol download.

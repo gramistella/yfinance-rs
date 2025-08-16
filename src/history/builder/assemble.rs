@@ -1,4 +1,4 @@
-use crate::history::model::Candle;
+use crate::core::models::Candle;
 use crate::history::wire::QuoteBlock;
 
 use super::adjust::price_factor_for_row;
