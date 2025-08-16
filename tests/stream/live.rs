@@ -17,13 +17,14 @@ async fn live_stream_smoke() {
 
     let (handle, mut rx) = builder.start().unwrap();
 
-    use tokio::time::{timeout, Duration};
+    use tokio::time::{Duration, timeout};
     let got = timeout(Duration::from_secs(8), rx.recv()).await;
 
     handle.abort();
 
-    let update = got.expect("no live update within timeout")
-                    .expect("stream closed without emitting");
+    let update = got
+        .expect("no live update within timeout")
+        .expect("stream closed without emitting");
     assert_eq!(update.symbol, "AAPL");
     assert!(update.last_price.unwrap_or(0.0) > 0.0);
 }

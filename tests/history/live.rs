@@ -25,6 +25,10 @@ async fn live_history_for_record() {
     }
 
     let client = yfinance_rs::YfClient::builder().build().unwrap();
-    let _ = yfinance_rs::HistoryBuilder::new(&client, "AAPL").fetch().await;
-    let _ = yfinance_rs::HistoryBuilder::new(&client, "MSFT").fetch().await;
+    let _ = yfinance_rs::HistoryBuilder::new(&client, "AAPL")
+        .fetch()
+        .await;
+    let _ = yfinance_rs::HistoryBuilder::new(&client, "MSFT")
+        .fetch()
+        .await;
 }

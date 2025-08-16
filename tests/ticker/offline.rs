@@ -12,7 +12,8 @@ async fn offline_quote_uses_recorded_fixture() {
         &mut client,
         sym,
         Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let q = t.quote().await.unwrap();
     mock.assert();
@@ -35,12 +36,16 @@ async fn offline_options_uses_recorded_fixtures() {
         &mut client,
         sym,
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let expiries = t.options().await.unwrap();
     mock_exp.assert();
 
-    assert!(!expiries.is_empty(), "record expirations via YF_RECORD=1 first");
+    assert!(
+        !expiries.is_empty(),
+        "record expirations via YF_RECORD=1 first"
+    );
 
     // Chain for the first date (date-scoped fixture)
     let d = expiries[0];

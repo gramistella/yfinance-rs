@@ -92,7 +92,10 @@ async fn fast_info_derives_last_price() {
     mock.assert();
 
     assert_eq!(fi.symbol, "MSFT");
-    assert!((fi.last_price - 421.00).abs() < 1e-9, "fallback to previous close");
+    assert!(
+        (fi.last_price - 421.00).abs() < 1e-9,
+        "fallback to previous close"
+    );
     assert_eq!(fi.currency.as_deref(), Some("USD"));
     assert_eq!(fi.exchange.as_deref(), Some("NasdaqGS"));
     assert_eq!(fi.market_state.as_deref(), Some("CLOSED"));

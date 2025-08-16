@@ -13,7 +13,8 @@ async fn missing_set_cookie_header_is_an_error() {
         when.method(GET).path("/consent");
         then.status(200); // no set-cookie
     });
-    let crumb = server.mock(|when, then| { // won't be reached, but good to have
+    let crumb = server.mock(|when, then| {
+        // won't be reached, but good to have
         when.method(GET).path("/v1/test/getcrumb");
         then.status(200).body("crumb-value");
     });
@@ -28,11 +29,14 @@ async fn missing_set_cookie_header_is_an_error() {
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiOnly)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let err = Profile::load(&mut client, sym).await.unwrap_err();
     cookie.assert();
@@ -41,8 +45,16 @@ async fn missing_set_cookie_header_is_an_error() {
         YfError::Data(s) => assert!(s.contains("No cookie received"), "unexpected error: {s}"),
         other => panic!("expected Data error, got {other:?}"),
     }
-    assert_eq!(crumb.hits(), 0, "crumb endpoint should not be called if cookie fails");
-    assert_eq!(api.hits(), 0, "API should not be called if credentials fail");
+    assert_eq!(
+        crumb.hits(),
+        0,
+        "crumb endpoint should not be called if cookie fails"
+    );
+    assert_eq!(
+        api.hits(),
+        0,
+        "API should not be called if credentials fail"
+    );
 }
 
 #[tokio::test]
@@ -62,11 +74,14 @@ async fn invalid_crumb_body_is_an_error() {
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiOnly)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let err = Profile::load(&mut client, sym).await.unwrap_err();
 

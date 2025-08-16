@@ -20,16 +20,21 @@ async fn history_keepna_preserves_null_rows() {
 
     let mock = server.mock(|when, then| {
         when.method(GET).path("/v8/finance/chart/AAPL");
-        then.status(200).header("content-type","application/json").body(body);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
     });
 
     let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let bars = HistoryBuilder::new(&client, "AAPL")
         .keepna(true)
-        .fetch().await.unwrap();
+        .fetch()
+        .await
+        .unwrap();
 
     mock.assert();
 

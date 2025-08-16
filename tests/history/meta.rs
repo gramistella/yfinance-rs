@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Ticker, YfClient, Range};
+use yfinance_rs::{Range, Ticker, YfClient};
 
 fn meta_body() -> String {
     r#"{
@@ -18,7 +18,8 @@ fn meta_body() -> String {
         ],
         "error": null
       }
-    }"#.to_string()
+    }"#
+    .to_string()
 }
 
 #[tokio::test]
@@ -31,7 +32,9 @@ async fn get_history_metadata_returns_timezone() {
             .query_param("range", "1d")
             .query_param("interval", "1d")
             .query_param("events", "div|split");
-        then.status(200).header("content-type","application/json").body(meta_body());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(meta_body());
     });
 
     let mut client = YfClient::builder()

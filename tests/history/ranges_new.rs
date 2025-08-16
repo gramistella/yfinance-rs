@@ -26,7 +26,9 @@ async fn history_range_1d_ytd_10y() {
             .query_param("range", "1d")
             .query_param("interval", "1d")
             .query_param("events", "div|split");
-        then.status(200).header("content-type","application/json").body(minimal_ok_body());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(minimal_ok_body());
     });
 
     let mytd = server.mock(|when, then| {
@@ -35,7 +37,9 @@ async fn history_range_1d_ytd_10y() {
             .query_param("range", "ytd")
             .query_param("interval", "1d")
             .query_param("events", "div|split");
-        then.status(200).header("content-type","application/json").body(minimal_ok_body());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(minimal_ok_body());
     });
 
     let m10y = server.mock(|when, then| {
@@ -44,7 +48,9 @@ async fn history_range_1d_ytd_10y() {
             .query_param("range", "10y")
             .query_param("interval", "1d")
             .query_param("events", "div|split");
-        then.status(200).header("content-type","application/json").body(minimal_ok_body());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(minimal_ok_body());
     });
 
     let client = YfClient::builder()
@@ -52,9 +58,21 @@ async fn history_range_1d_ytd_10y() {
         .build()
         .unwrap();
 
-    let _ = HistoryBuilder::new(&client, "AAPL").range(Range::D1).fetch().await.unwrap();
-    let _ = HistoryBuilder::new(&client, "AAPL").range(Range::Ytd).fetch().await.unwrap();
-    let _ = HistoryBuilder::new(&client, "AAPL").range(Range::Y10).fetch().await.unwrap();
+    let _ = HistoryBuilder::new(&client, "AAPL")
+        .range(Range::D1)
+        .fetch()
+        .await
+        .unwrap();
+    let _ = HistoryBuilder::new(&client, "AAPL")
+        .range(Range::Ytd)
+        .fetch()
+        .await
+        .unwrap();
+    let _ = HistoryBuilder::new(&client, "AAPL")
+        .range(Range::Y10)
+        .fetch()
+        .await
+        .unwrap();
 
     m1d.assert();
     mytd.assert();

@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Ticker, YfClient, Range};
+use yfinance_rs::{Range, Ticker, YfClient};
 
 fn body_with_actions() -> String {
     r#"{
@@ -31,7 +31,8 @@ fn body_with_actions() -> String {
         ],
         "error":null
       }
-    }"#.to_string()
+    }"#
+    .to_string()
 }
 
 #[tokio::test]
@@ -44,7 +45,9 @@ async fn ticker_actions_dividends_splits() {
             .query_param("range", "max")
             .query_param("interval", "1d")
             .query_param("events", "div|split");
-        then.status(200).header("content-type","application/json").body(body_with_actions());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body_with_actions());
     });
 
     let mut client = YfClient::builder()

@@ -19,12 +19,14 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
             .query_param("modules", "recommendationTrend")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("analysis_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -49,12 +51,14 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
             .query_param("modules", "recommendationTrend,recommendationMean")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("analysis_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -81,12 +85,14 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
             .query_param("modules", "upgradeDowngradeHistory")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("analysis_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()

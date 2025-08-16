@@ -1,7 +1,7 @@
 //! HTML extraction helpers for QuoteSummaryStore / quoteSummary payloads.
 
+use crate::profile::scrape::utils::{find_matching_brace, iter_json_scripts};
 use serde_json::Value;
-use crate::profile::scrape::utils::{iter_json_scripts, find_matching_brace};
 
 /// Pulls a bootstrapped JSON blob from the Yahoo quote HTML.
 /// Returns a *wrapped* JSON string with a `QuoteSummaryStore` under:
@@ -74,7 +74,9 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                 }
                 return Ok(wrapped);
             } else if debug {
-                eprintln!("YF_DEBUG [extract_bootstrap_json]: Strategy B found start but failed to match closing brace.");
+                eprintln!(
+                    "YF_DEBUG [extract_bootstrap_json]: Strategy B found start but failed to match closing brace."
+                );
             }
         }
     }
@@ -118,22 +120,30 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
             for (ai, outer_obj) in outer_array.into_iter().enumerate() {
                 if let Some(nodes) = outer_obj.get("nodes").and_then(|n| n.as_array()) {
                     if debug {
-                        eprintln!("YF_DEBUG [extract_bootstrap_json]: C[{}][{}] nodes.len={}", i, ai, nodes.len());
+                        eprintln!(
+                            "YF_DEBUG [extract_bootstrap_json]: C[{}][{}] nodes.len={}",
+                            i,
+                            ai,
+                            nodes.len()
+                        );
                     }
                     for (ni, node) in nodes.iter().enumerate() {
                         if let Some(data) = node.get("data")
                             && let Some(store_like) =
                                 extract_store_like_from_quote_summary_value(data)
-                            {
-                                let wrapped = wrap_store_like(store_like)?;
-                                if debug {
-                                    eprintln!(
-                                        "YF_DEBUG [extract_bootstrap_json]: C[{}][{}] SUCCESS via nodes[{}].data -> wrapped.len={}",
-                                        i, ai, ni, wrapped.len()
-                                    );
-                                }
-                                return Ok(wrapped);
+                        {
+                            let wrapped = wrap_store_like(store_like)?;
+                            if debug {
+                                eprintln!(
+                                    "YF_DEBUG [extract_bootstrap_json]: C[{}][{}] SUCCESS via nodes[{}].data -> wrapped.len={}",
+                                    i,
+                                    ai,
+                                    ni,
+                                    wrapped.len()
+                                );
                             }
+                            return Ok(wrapped);
+                        }
                     }
                 }
             }
@@ -154,9 +164,7 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
         };
 
         if let Some(mut outer_obj) = parsed_obj {
-            let body_val_opt = {
-                outer_obj.get_mut("body").map(|b| b.take())
-            };
+            let body_val_opt = { outer_obj.get_mut("body").map(|b| b.take()) };
 
             if let Some(body_val) = body_val_opt {
                 let payload_opt = match body_val {
@@ -172,7 +180,8 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                         if debug {
                             eprintln!(
                                 "YF_DEBUG [extract_bootstrap_json]: C[{}] SUCCESS via QuoteSummaryStore path; wrapped.len={}",
-                                i, wrapped.len()
+                                i,
+                                wrapped.len()
                             );
                         }
                         return Ok(wrapped);
@@ -181,16 +190,17 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                     if let Some(qs_val) = find_quote_summary_value_in_value(&payload)
                         && let Some(store_like) =
                             extract_store_like_from_quote_summary_value(qs_val)
-                        {
-                            let wrapped = wrap_store_like(store_like)?;
-                            if debug {
-                                eprintln!(
-                                    "YF_DEBUG [extract_bootstrap_json]: C[{}] SUCCESS via quoteSummary->result; wrapped.len={}",
-                                    i, wrapped.len()
-                                );
-                            }
-                            return Ok(wrapped);
+                    {
+                        let wrapped = wrap_store_like(store_like)?;
+                        if debug {
+                            eprintln!(
+                                "YF_DEBUG [extract_bootstrap_json]: C[{}] SUCCESS via quoteSummary->result; wrapped.len={}",
+                                i,
+                                wrapped.len()
+                            );
                         }
+                        return Ok(wrapped);
+                    }
                 }
             }
         }
@@ -226,23 +236,26 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
             if debug {
                 eprintln!(
                     "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via QuoteSummaryStore; wrapped.len={}",
-                    i, wrapped.len()
+                    i,
+                    wrapped.len()
                 );
             }
             return Ok(wrapped);
         }
 
         if let Some(qs_val) = find_quote_summary_value_in_value(&val)
-            && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
-                let wrapped = wrap_store_like(store_like)?;
-                if debug {
-                    eprintln!(
-                        "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via quoteSummary->result; wrapped.len={}",
-                        i, wrapped.len()
-                    );
-                }
-                return Ok(wrapped);
+            && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val)
+        {
+            let wrapped = wrap_store_like(store_like)?;
+            if debug {
+                eprintln!(
+                    "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via quoteSummary->result; wrapped.len={}",
+                    i,
+                    wrapped.len()
+                );
             }
+            return Ok(wrapped);
+        }
 
         if let Some(body_val) = val.get("body") {
             let payload_opt = match body_val {
@@ -258,29 +271,34 @@ pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfErro
                     if debug {
                         eprintln!(
                             "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via body->QuoteSummaryStore; wrapped.len={}",
-                            i, wrapped.len()
+                            i,
+                            wrapped.len()
                         );
                     }
                     return Ok(wrapped);
                 }
 
                 if let Some(qs_val) = find_quote_summary_value_in_value(&payload)
-                    && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val) {
-                        let wrapped = wrap_store_like(store_like)?;
-                        if debug {
-                            eprintln!(
-                                "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via body->quoteSummary->result; wrapped.len={}",
-                                i, wrapped.len()
-                            );
-                        }
-                        return Ok(wrapped);
+                    && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val)
+                {
+                    let wrapped = wrap_store_like(store_like)?;
+                    if debug {
+                        eprintln!(
+                            "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via body->quoteSummary->result; wrapped.len={}",
+                            i,
+                            wrapped.len()
+                        );
                     }
+                    return Ok(wrapped);
+                }
             }
         }
     }
 
     if debug {
-        eprintln!("YF_DEBUG [extract_bootstrap_json]: All strategies exhausted; bootstrap not found.");
+        eprintln!(
+            "YF_DEBUG [extract_bootstrap_json]: All strategies exhausted; bootstrap not found."
+        );
     }
     Err(crate::YfError::Data("bootstrap not found".into()))
 }
@@ -336,7 +354,10 @@ fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> 
                 v.join(",")
             })
             .unwrap_or_default();
-        eprintln!("YF_DEBUG [extract_store_like]: SUCCESS; normalized keys={}", keys);
+        eprintln!(
+            "YF_DEBUG [extract_store_like]: SUCCESS; normalized keys={}",
+            keys
+        );
     }
     Some(norm)
 }
@@ -345,12 +366,14 @@ fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
     match v {
         Value::Object(map) => {
             if let Some(qss) = map.get("QuoteSummaryStore")
-                && qss.is_object() {
+                && qss.is_object()
+            {
                 return Some(qss);
             }
             if let Some(stores) = map.get("stores")
                 && let Some(qss) = stores.get("QuoteSummaryStore")
-                    && qss.is_object() {
+                && qss.is_object()
+            {
                 return Some(qss);
             }
             for child in map.values() {
@@ -399,15 +422,16 @@ fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
 
 fn normalize_store_like(mut store_like: Value) -> Value {
     if let Some(obj) = store_like.as_object_mut()
-        && let Some(ap) = obj.remove("assetProfile") {
+        && let Some(ap) = obj.remove("assetProfile")
+    {
         obj.insert("summaryProfile".to_string(), ap);
     }
     store_like
 }
 
 fn wrap_store_like(store_like: Value) -> Result<String, crate::YfError> {
-    let store_json =
-        serde_json::to_string(&store_like).map_err(|e| crate::YfError::Data(format!("re-serialize: {e}")))?;
+    let store_json = serde_json::to_string(&store_like)
+        .map_err(|e| crate::YfError::Data(format!("re-serialize: {e}")))?;
     Ok(format!(
         r#"{{"context":{{"dispatcher":{{"stores":{{"QuoteSummaryStore":{store_json}}}}}}}}}"#
     ))

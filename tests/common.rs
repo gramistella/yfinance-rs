@@ -1,9 +1,14 @@
 #![allow(dead_code)]
 
 use httpmock::{Method::GET, Mock, MockServer};
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-pub fn setup_server() -> MockServer { MockServer::start() }
+pub fn setup_server() -> MockServer {
+    MockServer::start()
+}
 
 fn fixture_dir() -> PathBuf {
     std::env::var("YF_FIXDIR")
@@ -35,8 +40,10 @@ pub fn mock_cookie_crumb(server: &'_ MockServer) -> (Mock<'_>, Mock<'_>) {
 
 pub fn mock_history_chart<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
     server.mock(|when, then| {
-        when.method(GET).path(format!("/v8/finance/chart/{}", symbol));
-        then.status(200).header("content-type","application/json")
+        when.method(GET)
+            .path(format!("/v8/finance/chart/{}", symbol));
+        then.status(200)
+            .header("content-type", "application/json")
             .body(fixture("history_chart", symbol, "json"));
     })
 }
@@ -47,7 +54,8 @@ pub fn mock_profile_api<'a>(server: &'a MockServer, symbol: &'a str, crumb: &'a 
             .path(format!("/v10/finance/quoteSummary/{}", symbol))
             .query_param("modules", "assetProfile,quoteType,fundProfile")
             .query_param("crumb", crumb);
-        then.status(200).header("content-type","application/json")
+        then.status(200)
+            .header("content-type", "application/json")
             .body(fixture("profile_api", symbol, "json"));
     })
 }
@@ -57,7 +65,8 @@ pub fn mock_profile_scrape<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<
         when.method(GET)
             .path(format!("/quote/{}", symbol))
             .query_param("p", symbol);
-        then.status(200).header("content-type","text/html")
+        then.status(200)
+            .header("content-type", "text/html")
             .body(fixture("profile_html", symbol, "html"));
     })
 }
@@ -104,15 +113,22 @@ pub fn mock_options_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> 
     })
 }
 
-
-pub fn mock_options_v7_for_date<'a>(server: &'a MockServer, symbol: &'a str, date: i64) -> Mock<'a> {
+pub fn mock_options_v7_for_date<'a>(
+    server: &'a MockServer,
+    symbol: &'a str,
+    date: i64,
+) -> Mock<'a> {
     server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v7/finance/options/{}", symbol))
             .query_param("date", date.to_string());
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("options_v7", &format!("{}_{}", symbol, date), "json"));
+            .body(fixture(
+                "options_v7",
+                &format!("{}_{}", symbol, date),
+                "json",
+            ));
     })
 }
 

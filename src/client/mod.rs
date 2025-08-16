@@ -144,25 +144,17 @@ impl YfClientBuilder {
     }
 
     pub fn build(self) -> Result<YfClient, YfError> {
-        let base_chart = self
-            .base_chart
-            .unwrap_or(Url::parse(DEFAULT_BASE_CHART)?);
+        let base_chart = self.base_chart.unwrap_or(Url::parse(DEFAULT_BASE_CHART)?);
 
-        let base_quote = self
-            .base_quote
-            .unwrap_or(Url::parse(DEFAULT_BASE_QUOTE)?);
+        let base_quote = self.base_quote.unwrap_or(Url::parse(DEFAULT_BASE_QUOTE)?);
 
         let base_quote_api = self
             .base_quote_api
             .unwrap_or(Url::parse(DEFAULT_BASE_QUOTE_API)?);
 
-        let cookie_url = self
-            .cookie_url
-            .unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
+        let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
 
-        let crumb_url = self
-            .crumb_url
-            .unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
+        let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
         let http = reqwest::Client::builder()
             .user_agent(self.user_agent.as_deref().unwrap_or(USER_AGENT))
@@ -197,9 +189,7 @@ impl YfClientBuilder {
                 }
             },
             #[cfg(feature = "test-mode")]
-            api_preference: self
-                .api_preference
-                .unwrap_or(ApiPreference::ApiThenScrape),
+            api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
         })
     }
 }

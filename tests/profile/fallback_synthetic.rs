@@ -21,7 +21,9 @@ async fn api_then_scrape_fallback_on_other_error() {
     let scrape = common::mock_profile_scrape(&server, sym);
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiThenScrape)
         .preauth("cookie", "crumb")
@@ -32,5 +34,8 @@ async fn api_then_scrape_fallback_on_other_error() {
     api_err.assert();
     scrape.assert();
 
-    match p { Profile::Company(c) => assert_eq!(c.name, "Apple Inc."), _ => panic!("expected Company") }
+    match p {
+        Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
+        _ => panic!("expected Company"),
+    }
 }

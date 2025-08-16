@@ -33,24 +33,29 @@ async fn download_repair_simple_100x_fix() {
 
     let mock = server.mock(|when, then| {
         when.method(GET).path(format!("/v8/finance/chart/{}", sym));
-        then.status(200).header("content-type","application/json").body(body);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
     });
 
     let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let res = yfinance_rs::DownloadBuilder::new(&client)
         .symbols([sym])
         .repair(true)
-        .run().await.unwrap();
+        .run()
+        .await
+        .unwrap();
 
     mock.assert();
 
     let v = res.series.get(sym).unwrap();
     // middle row scaled ~0.01
     assert!((v[1].close - 10.5).abs() < 1e-9);
-    assert!((v[1].open  - 10.0).abs() < 1e-9);
-    assert!((v[1].high  - 11.0).abs() < 1e-9);
-    assert!((v[1].low   -  9.0).abs() < 1e-9);
+    assert!((v[1].open - 10.0).abs() < 1e-9);
+    assert!((v[1].high - 11.0).abs() < 1e-9);
+    assert!((v[1].low - 9.0).abs() < 1e-9);
 }

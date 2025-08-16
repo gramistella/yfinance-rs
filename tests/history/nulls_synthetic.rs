@@ -20,7 +20,9 @@ async fn history_skips_points_with_null_ohlc() {
 
     let mock = server.mock(|when, then| {
         when.method(GET).path("/v8/finance/chart/AAPL");
-        then.status(200).header("content-type","application/json").body(body);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
     });
 
     let client = YfClient::builder()
@@ -30,7 +32,11 @@ async fn history_skips_points_with_null_ohlc() {
 
     let bars = HistoryBuilder::new(&client, "AAPL").fetch().await.unwrap();
     mock.assert();
-    assert_eq!(bars.len(), 1, "second point with null open should be filtered out");
+    assert_eq!(
+        bars.len(),
+        1,
+        "second point with null open should be filtered out"
+    );
     assert_eq!(bars[0].open, 100.0);
     assert_eq!(bars[0].close, 100.5);
     assert_eq!(bars[0].volume, Some(1_000_000));

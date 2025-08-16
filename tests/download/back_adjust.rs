@@ -24,17 +24,22 @@ async fn download_back_adjust_sets_close_to_raw() {
 
     let mock = server.mock(|when, then| {
         when.method(GET).path(format!("/v8/finance/chart/{}", sym));
-        then.status(200).header("content-type","application/json").body(body);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
     });
 
     let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let res = yfinance_rs::DownloadBuilder::new(&client)
         .symbols([sym])
         .back_adjust(true)
-        .run().await.unwrap();
+        .run()
+        .await
+        .unwrap();
 
     mock.assert();
 

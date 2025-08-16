@@ -1,22 +1,23 @@
 //! Debug dump helpers for development / troubleshooting.
 
+use crate::profile::scrape::utils::{escape_html, iter_json_scripts, parse_jsonish_string};
 use serde_json::Value;
 use std::io::Write;
-use crate::profile::scrape::utils::{iter_json_scripts, parse_jsonish_string, escape_html};
 
 pub fn debug_dump_extracted_json(symbol: &str, json: &str) -> std::io::Result<()> {
     let path = std::env::temp_dir().join(format!("yfinance_rs-profile-{}-extracted.json", symbol));
     let mut f = std::fs::File::create(&path)?;
 
     if let Ok(val) = serde_json::from_str::<Value>(json)
-        && let Ok(pretty) = serde_json::to_string_pretty(&val) {
-            let _ = f.write_all(pretty.as_bytes());
-            eprintln!(
-                "YF_DEBUG: wrote pretty-printed extracted JSON to {}",
-                path.display()
-            );
-            return Ok(());
-        }
+        && let Ok(pretty) = serde_json::to_string_pretty(&val)
+    {
+        let _ = f.write_all(pretty.as_bytes());
+        eprintln!(
+            "YF_DEBUG: wrote pretty-printed extracted JSON to {}",
+            path.display()
+        );
+        return Ok(());
+    }
 
     let _ = f.write_all(json.as_bytes());
     eprintln!("YF_DEBUG: wrote raw extracted JSON to {}", path.display());
@@ -39,7 +40,7 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
             return s;
         }
         let mut out = String::new();
-        for (n, ch) in s.chars().enumerate(){
+        for (n, ch) in s.chars().enumerate() {
             if n >= max_chars {
                 break;
             }
@@ -155,12 +156,13 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
     if let Some((_, inner)) = iter_json_scripts(html)
         .into_iter()
         .find(|(attrs, _)| attrs.contains("id=\"__NEXT_DATA__\""))
-        && let Ok(v) = serde_json::from_str::<Value>(inner) {
-            let mut f = fs::File::create(&next_path)?;
-            let s = serde_json::to_string_pretty(&v).unwrap_or_else(|_| inner.to_string());
-            f.write_all(s.as_bytes())?;
-            eprintln!("YF_DEBUG: wrote {}", next_path.display());
-        }
+        && let Ok(v) = serde_json::from_str::<Value>(inner)
+    {
+        let mut f = fs::File::create(&next_path)?;
+        let s = serde_json::to_string_pretty(&v).unwrap_or_else(|_| inner.to_string());
+        f.write_all(s.as_bytes())?;
+        eprintln!("YF_DEBUG: wrote {}", next_path.display());
+    }
 
     if let Some(js_obj) = extract_js_object_after("root.App.main =", html) {
         if let Ok(v) = serde_json::from_str::<Value>(&js_obj) {

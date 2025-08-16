@@ -22,7 +22,9 @@ async fn api_fetches_cookie_and_crumb_first() {
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiOnly)
@@ -34,7 +36,10 @@ async fn api_fetches_cookie_and_crumb_first() {
     cookie_mock.assert();
     crumb_mock.assert();
 
-    match p { Profile::Company(c) => assert_eq!(c.name, "Apple Inc."), _ => panic!("expected Company") }
+    match p {
+        Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
+        _ => panic!("expected Company"),
+    }
 }
 
 #[tokio::test]
@@ -43,7 +48,9 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
 
     // start with a stale crumb so first call fails
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiOnly)
@@ -83,5 +90,8 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
     crumb_mock.assert();
     ok.assert();
 
-    match p { Profile::Company(c) => assert_eq!(c.name, "Apple Inc."), _ => panic!("expected Company") }
+    match p {
+        Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
+        _ => panic!("expected Company"),
+    }
 }

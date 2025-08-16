@@ -36,17 +36,22 @@ async fn history_auto_adjust_uses_splits_when_adjclose_missing() {
 
     let mock = server.mock(|when, then| {
         when.method(GET).path("/v8/finance/chart/TEST");
-        then.status(200).header("content-type","application/json").body(body);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
     });
 
     let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let resp = HistoryBuilder::new(&client, "TEST")
         .interval(Interval::D1)
         .auto_adjust(true)
-        .fetch_full().await.unwrap();
+        .fetch_full()
+        .await
+        .unwrap();
 
     mock.assert();
 

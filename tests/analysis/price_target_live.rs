@@ -17,7 +17,10 @@ async fn live_price_target_smoke() {
 
     // Basic sanity: at least one of the fields should show up.
     assert!(
-        pt.mean.is_some() || pt.high.is_some() || pt.low.is_some() || pt.number_of_analysts.is_some(),
+        pt.mean.is_some()
+            || pt.high.is_some()
+            || pt.low.is_some()
+            || pt.number_of_analysts.is_some(),
         "expected at least one price target field to be present"
     );
 }

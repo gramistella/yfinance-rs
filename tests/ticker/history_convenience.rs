@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{YfClient, Range, Interval};
+use yfinance_rs::{Interval, Range, YfClient};
 
 fn minimal_ok_body() -> String {
     r#"{
@@ -30,7 +30,9 @@ async fn ticker_history_convenience_builds_expected_query() {
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
             .query_param("events", "div|split");
-        then.status(200).header("content-type","application/json").body(minimal_ok_body());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(minimal_ok_body());
     });
 
     let mut client = YfClient::builder()
@@ -39,7 +41,10 @@ async fn ticker_history_convenience_builds_expected_query() {
         .unwrap();
 
     let ticker = yfinance_rs::Ticker::new(&mut client, "AAPL").unwrap();
-    let bars = ticker.history(Some(Range::Ytd), Some(Interval::D1), false).await.unwrap();
+    let bars = ticker
+        .history(Some(Range::Ytd), Some(Interval::D1), false)
+        .await
+        .unwrap();
 
     mock.assert();
     assert_eq!(bars.len(), 1);

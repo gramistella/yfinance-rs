@@ -22,7 +22,7 @@ async fn offline_search_uses_recorded_fixture() {
             .query_param("newsCount", "0")
             .query_param("listsCount", "0");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("search_v1", query));
     });
 
@@ -37,7 +37,15 @@ async fn offline_search_uses_recorded_fixture() {
 
     mock.assert();
     // Count should reflect the number of quotes in the fixture
-    assert_eq!(resp.count, Some(resp.quotes.len() as u32), "record with YF_RECORD=1 first");
+    assert_eq!(
+        resp.count,
+        Some(resp.quotes.len() as u32),
+        "record with YF_RECORD=1 first"
+    );
     assert!(!resp.quotes.is_empty(), "record with YF_RECORD=1 first");
-    assert!(resp.quotes.iter().any(|q| q.symbol == "AAPL" || q.shortname.as_deref() == Some("Apple Inc.")));
+    assert!(
+        resp.quotes
+            .iter()
+            .any(|q| q.symbol == "AAPL" || q.shortname.as_deref() == Some("Apple Inc."))
+    );
 }

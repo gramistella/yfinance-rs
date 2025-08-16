@@ -31,14 +31,16 @@ async fn cashflow_computes_fcf_when_missing() {
             .query_param("modules", "cashflowStatementHistory")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(body);
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie","crumb")
+        .preauth("cookie", "crumb")
         .build()
         .unwrap();
 

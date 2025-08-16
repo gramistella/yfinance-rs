@@ -1,4 +1,4 @@
-use crate::{history::HistoryBuilder, internal::net, YfClient, YfError};
+use crate::{YfClient, YfError, history::HistoryBuilder, internal::net};
 use serde::Deserialize;
 use url::Url;
 
@@ -100,7 +100,7 @@ impl<'a> Ticker<'a> {
                 return Err(YfError::Status {
                     status: code,
                     url: url.to_string(),
-                })
+                });
             }
         };
 
@@ -129,8 +129,8 @@ impl<'a> Ticker<'a> {
 
     async fn parse_quote(&self, resp: reqwest::Response) -> Result<Quote, YfError> {
         let body = net::get_text(resp, "quote_v7", &self.symbol, "json").await?;
-        let env: V7Envelope =
-            serde_json::from_str(&body).map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
+        let env: V7Envelope = serde_json::from_str(&body)
+            .map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
 
         let result = env
             .quote_response
@@ -196,10 +196,7 @@ impl<'a> Ticker<'a> {
         Ok(resp.actions)
     }
 
-    pub async fn dividends(
-        &self,
-        range: Option<crate::Range>,
-    ) -> Result<Vec<(i64, f64)>, YfError> {
+    pub async fn dividends(&self, range: Option<crate::Range>) -> Result<Vec<(i64, f64)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
             .into_iter()
@@ -218,7 +215,11 @@ impl<'a> Ticker<'a> {
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::Split { ts, numerator, denominator } => Some((ts, numerator, denominator)),
+                crate::Action::Split {
+                    ts,
+                    numerator,
+                    denominator,
+                } => Some((ts, numerator, denominator)),
                 _ => None,
             })
             .collect())
@@ -236,14 +237,14 @@ impl<'a> Ticker<'a> {
         Ok(resp.meta)
     }
 
-    
     /* ---------------- Options API ---------------- */
 
     pub async fn options(&mut self) -> Result<Vec<i64>, YfError> {
         let (body, _) = self.fetch_options_raw(None).await?;
         let env: OptEnvelope = serde_json::from_str(&body)
             .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
-        let first = env.option_chain
+        let first = env
+            .option_chain
             .and_then(|oc| oc.result)
             .and_then(|mut v| v.pop())
             .ok_or_else(|| YfError::Data("empty options result".into()))?;
@@ -255,7 +256,8 @@ impl<'a> Ticker<'a> {
         let env: OptEnvelope = serde_json::from_str(&body)
             .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
 
-        let first = env.option_chain
+        let first = env
+            .option_chain
             .and_then(|oc| oc.result)
             .and_then(|mut v| v.pop())
             .ok_or_else(|| YfError::Data("empty options result".into()))?;
@@ -263,7 +265,10 @@ impl<'a> Ticker<'a> {
         let od = match first.options.and_then(|mut v| v.pop()) {
             Some(x) => x,
             None => {
-                return Ok(OptionChain { calls: vec![], puts: vec![] });
+                return Ok(OptionChain {
+                    calls: vec![],
+                    puts: vec![],
+                });
             }
         };
 
@@ -271,7 +276,10 @@ impl<'a> Ticker<'a> {
             if let Some(q) = used_url.query() {
                 for kv in q.split('&') {
                     if let Some(v) = kv.strip_prefix("date=")
-                        && let Ok(ts) = v.parse::<i64>() { return ts }
+                        && let Ok(ts) = v.parse::<i64>()
+                    {
+                        return ts;
+                    }
                 }
             }
             0
@@ -377,11 +385,15 @@ impl<'a> Ticker<'a> {
         crate::analysis::recommendations(self.client, &self.symbol).await
     }
 
-    pub async fn recommendations_summary(&mut self) -> Result<crate::RecommendationSummary, YfError> {
+    pub async fn recommendations_summary(
+        &mut self,
+    ) -> Result<crate::RecommendationSummary, YfError> {
         crate::analysis::recommendations_summary(self.client, &self.symbol).await
     }
 
-    pub async fn upgrades_downgrades(&mut self) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
+    pub async fn upgrades_downgrades(
+        &mut self,
+    ) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
         crate::analysis::upgrades_downgrades(self.client, &self.symbol).await
     }
 

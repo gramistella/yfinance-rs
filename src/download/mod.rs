@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use futures::future::try_join_all;
 
 use crate::{
-    history::{HistoryBuilder, HistoryMeta, HistoryResponse, Interval, Range},
     Action, Candle, YfClient, YfError,
+    history::{HistoryBuilder, HistoryMeta, HistoryResponse, Interval, Range},
 };
 
 /// Result of a multi-symbol download.
@@ -175,10 +175,14 @@ impl<'a> DownloadBuilder<'a> {
 
             if let Some((p1, p2)) = self.period {
                 use chrono::{TimeZone, Utc};
-                let start = Utc.timestamp_opt(p1, 0).single()
+                let start = Utc
+                    .timestamp_opt(p1, 0)
+                    .single()
                     .ok_or(YfError::Data("invalid period1".into()))
                     .unwrap();
-                let end = Utc.timestamp_opt(p2, 0).single()
+                let end = Utc
+                    .timestamp_opt(p2, 0)
+                    .single()
                     .ok_or(YfError::Data("invalid period2".into()))
                     .unwrap();
                 hb = hb.between(start, end);
@@ -205,18 +209,19 @@ impl<'a> DownloadBuilder<'a> {
 
             // back_adjust: override Close with raw (unadjusted) close values.
             if self.back_adjust
-                && let Some(raw) = resp.raw_close.take() {
-                    for (i, c) in v.iter_mut().enumerate() {
-                        if let Some(&rc) = raw.get(i) {
-                            if rc.is_finite() {
-                                c.close = rc;
-                            } else {
-                                // keep as-is (NaN stays if keepna)
-                                c.close = rc;
-                            }
+                && let Some(raw) = resp.raw_close.take()
+            {
+                for (i, c) in v.iter_mut().enumerate() {
+                    if let Some(&rc) = raw.get(i) {
+                        if rc.is_finite() {
+                            c.close = rc;
+                        } else {
+                            // keep as-is (NaN stays if keepna)
+                            c.close = rc;
                         }
                     }
                 }
+            }
 
             // repair: fix 100× outliers in place
             if self.repair {
@@ -226,10 +231,18 @@ impl<'a> DownloadBuilder<'a> {
             // rounding: round prices to 2 dp
             if self.rounding {
                 for c in &mut v {
-                    if c.open.is_finite()  { c.open  = round2(c.open); }
-                    if c.high.is_finite()  { c.high  = round2(c.high); }
-                    if c.low.is_finite()   { c.low   = round2(c.low); }
-                    if c.close.is_finite() { c.close = round2(c.close); }
+                    if c.open.is_finite() {
+                        c.open = round2(c.open);
+                    }
+                    if c.high.is_finite() {
+                        c.high = round2(c.high);
+                    }
+                    if c.low.is_finite() {
+                        c.low = round2(c.low);
+                    }
+                    if c.close.is_finite() {
+                        c.close = round2(c.close);
+                    }
                 }
             }
 
@@ -292,14 +305,22 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
 
         // ~100× high
         if ratio > 50.0 && ratio < 200.0 {
-            let scale = if (80.0..125.0).contains(&ratio) { 0.01 } else { 1.0 / ratio };
+            let scale = if (80.0..125.0).contains(&ratio) {
+                0.01
+            } else {
+                1.0 / ratio
+            };
             scale_row_prices(cur, scale);
             continue;
         }
 
         // ~100× low
         if ratio > 0.0 && ratio < 0.02 {
-            let scale = if (0.008..0.0125).contains(&ratio) { 100.0 } else { 1.0 / ratio };
+            let scale = if (0.008..0.0125).contains(&ratio) {
+                100.0
+            } else {
+                1.0 / ratio
+            };
             scale_row_prices(cur, scale);
             continue;
         }
@@ -307,8 +328,16 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
 }
 
 fn scale_row_prices(c: &mut Candle, scale: f64) {
-    if c.open.is_finite()  { c.open  *= scale; }
-    if c.high.is_finite()  { c.high  *= scale; }
-    if c.low.is_finite()   { c.low   *= scale; }
-    if c.close.is_finite() { c.close *= scale; }
+    if c.open.is_finite() {
+        c.open *= scale;
+    }
+    if c.high.is_finite() {
+        c.high *= scale;
+    }
+    if c.low.is_finite() {
+        c.low *= scale;
+    }
+    if c.close.is_finite() {
+        c.close *= scale;
+    }
 }

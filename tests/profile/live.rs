@@ -6,7 +6,9 @@ async fn live_profile_company() {
     }
 
     let mut client = yfinance_rs::YfClient::builder().build().unwrap();
-    let prof = yfinance_rs::Profile::load(&mut client, "AAPL").await.unwrap();
+    let prof = yfinance_rs::Profile::load(&mut client, "AAPL")
+        .await
+        .unwrap();
 
     if !crate::common::is_recording() {
         match prof {

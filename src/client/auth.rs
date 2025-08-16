@@ -30,9 +30,7 @@ impl super::YfClient {
         let cookie = resp
             .headers()
             .get(SET_COOKIE)
-            .ok_or(YfError::Data(
-                "No cookie received from fc.yahoo.com".into(),
-            ))?
+            .ok_or(YfError::Data("No cookie received from fc.yahoo.com".into()))?
             .to_str()
             .map_err(|_| YfError::Data("Invalid cookie header format".into()))?
             .to_string();

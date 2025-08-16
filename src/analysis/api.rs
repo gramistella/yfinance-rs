@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
-use crate::{internal::net, YfClient, YfError};
 use crate::analysis::model::PriceTarget;
+use crate::{YfClient, YfError, internal::net};
 
 #[cfg(any(debug_assertions, feature = "debug-dumps"))]
 use crate::profile::debug::debug_dump_api;
@@ -62,7 +62,12 @@ pub async fn recommendation_summary(
 
     let (mean, mean_key) = root
         .recommendation_mean
-        .map(|m| (m.recommendation_mean.and_then(|r| r.raw), m.recommendation_key))
+        .map(|m| {
+            (
+                m.recommendation_mean.and_then(|r| r.raw),
+                m.recommendation_key,
+            )
+        })
         .unwrap_or((None, None));
 
     Ok(super::RecommendationSummary {
@@ -161,11 +166,7 @@ async fn call_quote_summary(
             Err(e) => return Err(YfError::Data(format!("quoteSummary json parse: {e}"))),
         };
 
-        if let Some(error) = env
-            .quote_summary
-            .as_ref()
-            .and_then(|qs| qs.error.as_ref())
-        {
+        if let Some(error) = env.quote_summary.as_ref().and_then(|qs| qs.error.as_ref()) {
             let desc = error.description.to_ascii_lowercase();
             if desc.contains("invalid crumb") && attempt == 0 {
                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {

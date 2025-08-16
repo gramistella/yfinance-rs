@@ -25,7 +25,7 @@ async fn fast_info_uses_previous_close_when_price_missing() {
             .path("/v7/finance/quote")
             .query_param("symbols", "AAPL");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(body);
     });
 
@@ -34,7 +34,8 @@ async fn fast_info_uses_previous_close_when_price_missing() {
         &mut client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let fi = t.fast_info().await.unwrap();
     mock.assert();

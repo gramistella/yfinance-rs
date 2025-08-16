@@ -1,7 +1,12 @@
 use chrono::Utc;
 use serde::Deserialize;
 use std::{collections::HashMap, time::Duration};
-use tokio::{select, sync::{mpsc, oneshot}, task::JoinHandle, time::interval};
+use tokio::{
+    select,
+    sync::{mpsc, oneshot},
+    task::JoinHandle,
+    time::interval,
+};
 use url::Url;
 
 use crate::{YfClient, YfError};
@@ -268,7 +273,10 @@ async fn fetch_quotes_multi(
     parse_v7_multi(resp, fixture_key).await
 }
 
-async fn parse_v7_multi(resp: reqwest::Response, fixture_key: &str) -> Result<Vec<V7QuoteNode>, YfError> {
+async fn parse_v7_multi(
+    resp: reqwest::Response,
+    fixture_key: &str,
+) -> Result<Vec<V7QuoteNode>, YfError> {
     // IMPORTANT: the fixture key *must* map to your live recording.
     // For single-symbol streams this is exactly the same as Ticker::quote ("AAPL"),
     // so the stream happily reuses quote_v7/AAPL.json recorded during live runs.

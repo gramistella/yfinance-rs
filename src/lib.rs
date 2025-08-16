@@ -6,35 +6,33 @@ pub mod client;
 pub mod error;
 pub mod history;
 pub(crate) mod internal {
-    pub(crate) mod net;
     #[cfg(feature = "test-mode")]
     pub(crate) mod fixtures;
+    pub(crate) mod net;
 }
-pub mod profile;
-pub mod ticker;
+pub mod analysis;
 pub mod download;
 pub mod fundamentals;
-pub mod analysis;
-pub mod stream;
+pub mod profile;
 pub mod quote;
 pub mod search;
+pub mod stream;
+pub mod ticker;
 
+pub use analysis::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 pub use client::YfClient;
-pub use error::YfError;
-pub use history::{Action, Candle, HistoryBuilder, HistoryMeta, HistoryResponse, Range, Interval};
-pub use profile::{Address, Company, Fund, Profile};
-pub use ticker::{Ticker, Quote, FastInfo, OptionChain, OptionContract};
 pub use download::{DownloadBuilder, DownloadResult};
+pub use error::YfError;
 pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
     EarningsQuarterEps, EarningsYear, IncomeStatementRow, Num,
 };
-pub use analysis::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow, PriceTarget};
-pub use stream::{StreamBuilder, StreamConfig, StreamHandle, QuoteUpdate};
-pub use quote::{quotes, QuotesBuilder};
-pub use search::{SearchBuilder, SearchResponse, SearchQuote};
+pub use history::{Action, Candle, HistoryBuilder, HistoryMeta, HistoryResponse, Interval, Range};
+pub use profile::{Address, Company, Fund, Profile};
+pub use quote::{QuotesBuilder, quotes};
+pub use search::{SearchBuilder, SearchQuote, SearchResponse};
+pub use stream::{QuoteUpdate, StreamBuilder, StreamConfig, StreamHandle};
+pub use ticker::{FastInfo, OptionChain, OptionContract, Quote, Ticker};
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;
-
-

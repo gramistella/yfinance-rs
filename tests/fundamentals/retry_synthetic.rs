@@ -15,7 +15,7 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
             .query_param("modules", "earnings")
             .query_param("crumb", "stale");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(r#"{"quoteSummary":{"result":null,"error":{"description":"Invalid Crumb"}}}"#);
     });
 
@@ -39,8 +39,9 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
             .query_param("modules", "earnings")
             .query_param("crumb", "fresh");
         then.status(200)
-            .header("content-type","application/json")
-            .body(r#"{
+            .header("content-type", "application/json")
+            .body(
+                r#"{
               "quoteSummary": {
                 "result": [{
                   "earnings": {
@@ -55,11 +56,14 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
                 }],
                 "error": null
               }
-            }"#);
+            }"#,
+            );
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiOnly)

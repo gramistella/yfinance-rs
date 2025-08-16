@@ -42,7 +42,9 @@ async fn history_auto_adjust_and_actions() {
 
     let mock = server.mock(|when, then| {
         when.method(GET).path("/v8/finance/chart/TEST");
-        then.status(200).header("content-type","application/json").body(body);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
     });
 
     let client = YfClient::builder()
@@ -82,6 +84,10 @@ async fn history_auto_adjust_and_actions() {
 
     // actions parsed and sorted
     assert_eq!(resp.actions.len(), 2);
-    assert!(matches!(resp.actions[0], Action::Split { ts, numerator:2, denominator:1 } if ts==2000));
-    assert!(matches!(resp.actions[1], Action::Dividend { ts, amount } if ts==3000 && (amount-1.0).abs()<1e-9));
+    assert!(
+        matches!(resp.actions[0], Action::Split { ts, numerator:2, denominator:1 } if ts==2000)
+    );
+    assert!(
+        matches!(resp.actions[1], Action::Dividend { ts, amount } if ts==3000 && (amount-1.0).abs()<1e-9)
+    );
 }

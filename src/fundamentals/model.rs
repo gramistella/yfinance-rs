@@ -7,7 +7,7 @@ pub type Num = f64;
 /// Statement row for Income Statement (annual or quarterly).
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct IncomeStatementRow {
-    pub period_end: i64,                // unix ts (UTC) of period end
+    pub period_end: i64, // unix ts (UTC) of period end
     pub total_revenue: Option<Num>,
     pub gross_profit: Option<Num>,
     pub operating_income: Option<Num>,
@@ -70,7 +70,7 @@ pub struct EarningsQuarterEps {
 /// Company “calendar” fields (from calendarEvents.earnings)
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Calendar {
-    pub earnings_dates: Vec<i64>,        // usually 1–2 dates
+    pub earnings_dates: Vec<i64>, // usually 1–2 dates
     pub ex_dividend_date: Option<i64>,
     pub dividend_date: Option<i64>,
 }

@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use url::Url;
 
-use crate::{internal::net, ticker::Quote, YfClient, YfError};
+use crate::{YfClient, YfError, internal::net, ticker::Quote};
 
 /* ---------------- Public API ---------------- */
 
@@ -12,10 +12,7 @@ where
     I: IntoIterator<Item = S>,
     S: Into<String>,
 {
-    QuotesBuilder::new(client)?
-        .symbols(symbols)
-        .fetch()
-        .await
+    QuotesBuilder::new(client)?.symbols(symbols).fetch().await
 }
 
 /// Builder for batch quote snapshots.
@@ -67,9 +64,10 @@ impl<'a> QuotesBuilder<'a> {
             fetch_v7_multi_raw(self.client, &self.quote_base, &self.symbols, None).await?;
 
         if let Some(code) = maybe_status
-            && (code == 401 || code == 403) {
-                return self.fetch_with_auth().await;
-            }
+            && (code == 401 || code == 403)
+        {
+            return self.fetch_with_auth().await;
+        }
 
         parse_v7_quotes(&body).map(|nodes| nodes.into_iter().map(map_v7_to_public).collect())
     }

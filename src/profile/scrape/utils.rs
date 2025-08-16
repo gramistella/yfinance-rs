@@ -49,7 +49,11 @@ pub(crate) fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
             total_scripts, total_json_scripts, total_svelte_fetched
         );
         if let Some((attrs, body)) = res.first() {
-            let a = if attrs.len() > 180 { &attrs[..180] } else { attrs };
+            let a = if attrs.len() > 180 {
+                &attrs[..180]
+            } else {
+                attrs
+            };
             let b = if body.len() > 120 { &body[..120] } else { body };
             eprintln!(
                 "YF_DEBUG [iter_json_scripts]: first JSON script attrs[trunc]=`{}` body[trunc]=`{}`",

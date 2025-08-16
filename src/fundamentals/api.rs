@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{internal::net, YfClient, YfError};
+use crate::{YfClient, YfError, internal::net};
 
 use super::{
     BalanceSheetRow, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps, EarningsYear,
@@ -124,7 +124,9 @@ pub async fn cashflow(
 pub async fn earnings(client: &mut YfClient, symbol: &str) -> Result<Earnings, YfError> {
     let env = call_quote_summary(client, symbol, "earnings").await?;
     let root = get_first_result(env)?;
-    let e = root.earnings.ok_or_else(|| YfError::Data("earnings missing".into()))?;
+    let e = root
+        .earnings
+        .ok_or_else(|| YfError::Data("earnings missing".into()))?;
 
     let yearly = e
         .financials_chart
@@ -178,10 +180,7 @@ pub async fn earnings(client: &mut YfClient, symbol: &str) -> Result<Earnings, Y
     })
 }
 
-pub async fn calendar(
-    client: &mut YfClient,
-    symbol: &str,
-) -> Result<super::Calendar, YfError> {
+pub async fn calendar(client: &mut YfClient, symbol: &str) -> Result<super::Calendar, YfError> {
     let env = call_quote_summary(client, symbol, "calendarEvents").await?;
     let root = get_first_result(env)?;
     let c = root
@@ -238,11 +237,7 @@ async fn call_quote_summary(
             Err(e) => return Err(YfError::Data(format!("quoteSummary json parse: {e}"))),
         };
 
-        if let Some(error) = env
-            .quote_summary
-            .as_ref()
-            .and_then(|qs| qs.error.as_ref())
-        {
+        if let Some(error) = env.quote_summary.as_ref().and_then(|qs| qs.error.as_ref()) {
             let desc = error.description.to_ascii_lowercase();
             if desc.contains("invalid crumb") && attempt == 0 {
                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -257,7 +252,9 @@ async fn call_quote_summary(
         return Ok(env);
     }
 
-    Err(YfError::Data("fundamentals API call failed after retry".into()))
+    Err(YfError::Data(
+        "fundamentals API call failed after retry".into(),
+    ))
 }
 
 fn get_first_result(env: V10Envelope) -> Result<V10Result, YfError> {

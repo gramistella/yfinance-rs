@@ -13,9 +13,13 @@ async fn history_returns_status_error_on_non_2xx() {
 
     let client = yfinance_rs::YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
-        .build().unwrap();
+        .build()
+        .unwrap();
 
-    let err = yfinance_rs::HistoryBuilder::new(&client, "FAIL").fetch().await.unwrap_err();
+    let err = yfinance_rs::HistoryBuilder::new(&client, "FAIL")
+        .fetch()
+        .await
+        .unwrap_err();
     mock.assert();
 
     match err {

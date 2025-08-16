@@ -28,12 +28,14 @@ async fn offline_price_target_happy() {
             .query_param("modules", "financialData")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(body);
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -46,7 +48,7 @@ async fn offline_price_target_happy() {
 
     assert_eq!(pt.mean, Some(200.0));
     assert_eq!(pt.high, Some(250.0));
-    assert_eq!(pt.low,  Some(150.0));
+    assert_eq!(pt.low, Some(150.0));
     assert_eq!(pt.number_of_analysts, Some(31));
 }
 
@@ -61,7 +63,7 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
             .query_param("modules", "financialData")
             .query_param("crumb", "stale");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(r#"{"quoteSummary":{"result":null,"error":{"description":"Invalid Crumb"}}}"#);
     });
 
@@ -84,8 +86,9 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
             .query_param("modules", "financialData")
             .query_param("crumb", "fresh");
         then.status(200)
-            .header("content-type","application/json")
-            .body(r#"{
+            .header("content-type", "application/json")
+            .body(
+                r#"{
               "quoteSummary": {
                 "result": [{
                   "financialData": {
@@ -97,11 +100,14 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
                 }],
                 "error": null
               }
-            }"#);
+            }"#,
+            );
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .api_preference(ApiPreference::ApiOnly)
@@ -119,6 +125,6 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
 
     assert_eq!(pt.mean, Some(123.45));
     assert_eq!(pt.high, Some(150.0));
-    assert_eq!(pt.low,  Some(100.0));
+    assert_eq!(pt.low, Some(100.0));
     assert_eq!(pt.number_of_analysts, Some(20));
 }

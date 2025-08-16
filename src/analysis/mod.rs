@@ -1,7 +1,7 @@
 mod api;
 mod model;
 
-pub use model::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow, PriceTarget};
+pub use model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 
 use crate::{YfClient, YfError};
 

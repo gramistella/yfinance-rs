@@ -28,14 +28,16 @@ async fn upgrades_downgrades_are_sorted_by_ts() {
             .query_param("modules", "upgradeDowngradeHistory")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(body);
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie","crumb")
+        .preauth("cookie", "crumb")
         .build()
         .unwrap();
 

@@ -21,12 +21,14 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
             .query_param("modules", "incomeStatementHistoryQuarterly")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("fundamentals_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -53,12 +55,14 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
             .query_param("modules", "balanceSheetHistory")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("fundamentals_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -85,12 +89,14 @@ async fn offline_cashflow_annual_uses_recorded_fixture() {
             .query_param("modules", "cashflowStatementHistory")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("fundamentals_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -117,12 +123,14 @@ async fn offline_earnings_uses_recorded_fixture() {
             .query_param("modules", "earnings")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("fundamentals_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -132,8 +140,10 @@ async fn offline_earnings_uses_recorded_fixture() {
     let e = t.earnings().await.unwrap();
 
     mock.assert();
-    assert!( !e.yearly.is_empty() || !e.quarterly.is_empty() || !e.quarterly_eps.is_empty(),
-        "record with YF_RECORD=1 first");
+    assert!(
+        !e.yearly.is_empty() || !e.quarterly.is_empty() || !e.quarterly_eps.is_empty(),
+        "record with YF_RECORD=1 first"
+    );
 }
 
 /* ---------------- calendar ---------------- */
@@ -150,12 +160,14 @@ async fn offline_calendar_uses_recorded_fixture() {
             .query_param("modules", "calendarEvents")
             .query_param("crumb", "crumb");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(fixture("fundamentals_api", sym));
     });
 
     let mut client = YfClient::builder()
-        .base_quote_api(Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap())
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
@@ -165,8 +177,10 @@ async fn offline_calendar_uses_recorded_fixture() {
     let cal = t.calendar().await.unwrap();
 
     mock.assert();
-    assert!( !cal.earnings_dates.is_empty()
-        || cal.ex_dividend_date.is_some()
-        || cal.dividend_date.is_some(),
-        "record with YF_RECORD=1 first");
+    assert!(
+        !cal.earnings_dates.is_empty()
+            || cal.ex_dividend_date.is_some()
+            || cal.dividend_date.is_some(),
+        "record with YF_RECORD=1 first"
+    );
 }

@@ -2,7 +2,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use url::Url;
 
-use crate::{internal::net, YfClient, YfError};
+use crate::{YfClient, YfError, internal::net};
 
 /* ---------------- Public API ---------------- */
 
@@ -92,7 +92,11 @@ impl<'a> SearchBuilder<'a> {
         }
 
         let http = self.client.http().clone();
-        let mut resp = http.get(url.clone()).header("accept", "application/json").send().await?;
+        let mut resp = http
+            .get(url.clone())
+            .header("accept", "application/json")
+            .send()
+            .await?;
 
         if !resp.status().is_success() {
             let code = resp.status().as_u16();
@@ -104,7 +108,10 @@ impl<'a> SearchBuilder<'a> {
                 let crumb = self
                     .client
                     .crumb()
-                    .ok_or_else(|| YfError::Status { status: code, url: url.to_string() })?
+                    .ok_or_else(|| YfError::Status {
+                        status: code,
+                        url: url.to_string(),
+                    })?
                     .to_string();
 
                 let mut url2 = self.base.clone();
@@ -129,9 +136,16 @@ impl<'a> SearchBuilder<'a> {
                     qp.append_pair("crumb", &crumb);
                 }
 
-                resp = http.get(url2.clone()).header("accept", "application/json").send().await?;
+                resp = http
+                    .get(url2.clone())
+                    .header("accept", "application/json")
+                    .send()
+                    .await?;
                 if !resp.status().is_success() {
-                    return Err(YfError::Status { status: resp.status().as_u16(), url: url2.to_string() });
+                    return Err(YfError::Status {
+                        status: resp.status().as_u16(),
+                        url: url2.to_string(),
+                    });
                 }
 
                 return parse_search(resp, &self.query).await;
@@ -139,7 +153,10 @@ impl<'a> SearchBuilder<'a> {
 
             // Other non-success
             // let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
-            return Err(YfError::Status { status: code, url: url.to_string() })
+            return Err(YfError::Status {
+                status: code,
+                url: url.to_string(),
+            });
         }
 
         parse_search(resp, &self.query).await
@@ -169,10 +186,13 @@ pub struct SearchQuote {
 
 const DEFAULT_BASE_SEARCH_V1: &str = "https://query2.finance.yahoo.com/v1/finance/search";
 
-async fn parse_search(resp: reqwest::Response, fixture_key: &str) -> Result<SearchResponse, YfError> {
+async fn parse_search(
+    resp: reqwest::Response,
+    fixture_key: &str,
+) -> Result<SearchResponse, YfError> {
     let body = net::get_text(resp, "search_v1", fixture_key, "json").await?;
-    let env: V1SearchEnvelope =
-        serde_json::from_str(&body).map_err(|e| YfError::Data(format!("search json parse: {e}")))?;
+    let env: V1SearchEnvelope = serde_json::from_str(&body)
+        .map_err(|e| YfError::Data(format!("search json parse: {e}")))?;
 
     let count = env.count.map(|c| c as u32);
     let quotes = env.quotes.unwrap_or_default();

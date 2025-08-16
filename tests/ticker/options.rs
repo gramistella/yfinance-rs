@@ -21,10 +21,9 @@ async fn options_expirations_happy() {
     }"#;
 
     let mock = server.mock(|when, then| {
-        when.method(GET)
-            .path("/v7/finance/options/AAPL");
+        when.method(GET).path("/v7/finance/options/AAPL");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(body);
     });
 
@@ -33,7 +32,8 @@ async fn options_expirations_happy() {
         &mut client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let expiries = t.options().await.unwrap();
     mock.assert();
@@ -90,7 +90,7 @@ async fn option_chain_for_specific_date() {
             .path("/v7/finance/options/AAPL")
             .query_param("date", date.to_string());
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(body);
     });
 
@@ -99,7 +99,8 @@ async fn option_chain_for_specific_date() {
         &mut client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let chain = t.option_chain(Some(date)).await.unwrap();
     mock.assert();
@@ -188,7 +189,7 @@ async fn options_retry_with_crumb_on_403() {
             .query_param("date", date.to_string())
             .query_param("crumb", "crumb-value");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(ok_body);
     });
 
@@ -202,7 +203,8 @@ async fn options_retry_with_crumb_on_403() {
         &mut client,
         "MSFT",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let chain = t.option_chain(Some(date)).await.unwrap();
     assert!(chain.calls.is_empty() && chain.puts.is_empty());

@@ -1,4 +1,4 @@
-use crate::{error::YfError, YfClient};
+use crate::{YfClient, error::YfError};
 use serde::Deserialize;
 
 mod model;
@@ -170,7 +170,11 @@ impl<'a> HistoryBuilder<'a> {
             }
             qp.append_pair(
                 "includePrePost",
-                if self.include_prepost { "true" } else { "false" },
+                if self.include_prepost {
+                    "true"
+                } else {
+                    "false"
+                },
             );
         }
 
@@ -241,7 +245,11 @@ impl<'a> HistoryBuilder<'a> {
                         numerator: num,
                         denominator: den,
                     });
-                    let ratio = if den == 0 { 1.0 } else { (num as f64) / (den as f64) };
+                    let ratio = if den == 0 {
+                        1.0
+                    } else {
+                        (num as f64) / (den as f64)
+                    };
                     split_events.push((ts, ratio));
                 }
             }
@@ -286,11 +294,7 @@ impl<'a> HistoryBuilder<'a> {
                 // compute adjust factor
                 let factor_from_adj = if let Some(adjclose) = adj_vec.get(i).and_then(|x| *x) {
                     if let Some(c) = close {
-                        if c != 0.0 {
-                            Some(adjclose / c)
-                        } else {
-                            None
-                        }
+                        if c != 0.0 { Some(adjclose / c) } else { None }
                     } else {
                         None
                     }
@@ -298,20 +302,35 @@ impl<'a> HistoryBuilder<'a> {
                     None
                 };
 
-                let price_factor = factor_from_adj.unwrap_or_else(|| 1.0 / cum_split_after[i].max(1e-12));
+                let price_factor =
+                    factor_from_adj.unwrap_or_else(|| 1.0 / cum_split_after[i].max(1e-12));
 
-                if let Some(v) = open.as_mut() { *v *= price_factor; }
-                if let Some(v) = high.as_mut() { *v *= price_factor; }
-                if let Some(v) = low.as_mut()  { *v *= price_factor; }
-                if let Some(v) = close.as_mut(){ *v *= price_factor; }
+                if let Some(v) = open.as_mut() {
+                    *v *= price_factor;
+                }
+                if let Some(v) = high.as_mut() {
+                    *v *= price_factor;
+                }
+                if let Some(v) = low.as_mut() {
+                    *v *= price_factor;
+                }
+                if let Some(v) = close.as_mut() {
+                    *v *= price_factor;
+                }
 
                 // volume adjusts for splits only
                 let volume_adj = volume0.map(|v| {
                     let v_adj = (v as f64) * cum_split_after[i];
-                    if v_adj.is_finite() { v_adj.round() as u64 } else { v }
+                    if v_adj.is_finite() {
+                        v_adj.round() as u64
+                    } else {
+                        v
+                    }
                 });
 
-                if let (Some(open_v), Some(high_v), Some(low_v), Some(close_v)) = (open, high, low, close) {
+                if let (Some(open_v), Some(high_v), Some(low_v), Some(close_v)) =
+                    (open, high, low, close)
+                {
                     out.push(Candle {
                         ts: t,
                         open: open_v,
@@ -326,7 +345,7 @@ impl<'a> HistoryBuilder<'a> {
                         ts: t,
                         open: open.unwrap_or(f64::NAN),
                         high: high.unwrap_or(f64::NAN),
-                        low:  low.unwrap_or(f64::NAN),
+                        low: low.unwrap_or(f64::NAN),
                         close: close.unwrap_or(f64::NAN),
                         volume: volume0, // keep as-is when NA row
                     });
@@ -334,12 +353,14 @@ impl<'a> HistoryBuilder<'a> {
                 }
             } else {
                 // no adjustment at all
-                if let (Some(open_v), Some(high_v), Some(low_v), Some(close_v)) = (open, high, low, close) {
+                if let (Some(open_v), Some(high_v), Some(low_v), Some(close_v)) =
+                    (open, high, low, close)
+                {
                     out.push(Candle {
                         ts: t,
                         open: open_v,
                         high: high_v,
-                        low:  low_v,
+                        low: low_v,
                         close: close_v,
                         volume: volume0,
                     });
@@ -349,7 +370,7 @@ impl<'a> HistoryBuilder<'a> {
                         ts: t,
                         open: open.unwrap_or(f64::NAN),
                         high: high.unwrap_or(f64::NAN),
-                        low:  low.unwrap_or(f64::NAN),
+                        low: low.unwrap_or(f64::NAN),
                         close: close.unwrap_or(f64::NAN),
                         volume: volume0,
                     });

@@ -8,21 +8,17 @@ pub(crate) const USER_AGENT: &str = concat!(
 );
 
 /// Yahoo chart API base (symbol is appended).
-pub(crate) const DEFAULT_BASE_CHART: &str =
-    "https://query1.finance.yahoo.com/v8/finance/chart/";
+pub(crate) const DEFAULT_BASE_CHART: &str = "https://query1.finance.yahoo.com/v8/finance/chart/";
 
 /// Yahoo quote HTML base (symbol is appended).
-pub(crate) const DEFAULT_BASE_QUOTE: &str =
-    "https://finance.yahoo.com/quote/";
+pub(crate) const DEFAULT_BASE_QUOTE: &str = "https://finance.yahoo.com/quote/";
 
 /// Yahoo quoteSummary API base (symbol is appended).
 pub(crate) const DEFAULT_BASE_QUOTE_API: &str =
     "https://query1.finance.yahoo.com/v10/finance/quoteSummary/";
 
 /// A URL that returns a Set-Cookie header for Yahoo domains.
-pub(crate) const DEFAULT_COOKIE_URL: &str =
-    "https://fc.yahoo.com/consent";
+pub(crate) const DEFAULT_COOKIE_URL: &str = "https://fc.yahoo.com/consent";
 
 /// URL to fetch a crumb (requires cookie from `DEFAULT_COOKIE_URL`).
-pub(crate) const DEFAULT_CRUMB_URL: &str =
-    "https://query1.finance.yahoo.com/v1/test/getcrumb";
+pub(crate) const DEFAULT_CRUMB_URL: &str = "https://query1.finance.yahoo.com/v1/test/getcrumb";

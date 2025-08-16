@@ -1,4 +1,4 @@
-use tokio::time::{timeout, Duration};
+use tokio::time::{Duration, timeout};
 use url::Url;
 
 #[tokio::test]
@@ -12,7 +12,7 @@ async fn stream_offline_uses_recorded_fixture() {
             .path("/v7/finance/quote")
             .query_param("symbols", "AAPL");
         then.status(200)
-            .header("content-type","application/json")
+            .header("content-type", "application/json")
             .body(crate::common::fixture("quote_v7", "MULTI", "json"));
     });
 
@@ -32,9 +32,13 @@ async fn stream_offline_uses_recorded_fixture() {
 
     mock.assert();
 
-    let update = got.expect("timed out waiting for cached stream update")
-                    .expect("stream closed without emitting an update");
+    let update = got
+        .expect("timed out waiting for cached stream update")
+        .expect("stream closed without emitting an update");
 
     assert_eq!(update.symbol, "AAPL");
-    assert!(update.last_price.unwrap_or(0.0) > 0.0, "cached price should be > 0");
+    assert!(
+        update.last_price.unwrap_or(0.0) > 0.0,
+        "cached price should be > 0"
+    );
 }

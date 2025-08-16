@@ -1,4 +1,3 @@
-
 use crate::common::{mock_profile_api, setup_server};
 use url::Url;
 use yfinance_rs::{ApiPreference, Profile, YfClient};
@@ -12,11 +11,7 @@ async fn profile_api_company_happy() {
 
     let mut client = YfClient::builder()
         .base_quote_api(
-            Url::parse(&format!(
-                "{}/v10/finance/quoteSummary/",
-                server.base_url()
-            ))
-            .unwrap(),
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", crumb)
@@ -46,11 +41,7 @@ async fn profile_api_fund_happy() {
 
     let mut client = YfClient::builder()
         .base_quote_api(
-            Url::parse(&format!(
-                "{}/v10/finance/quoteSummary/",
-                server.base_url()
-            ))
-            .unwrap(),
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
         .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", crumb)

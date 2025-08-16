@@ -19,8 +19,15 @@ impl Candle {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Action {
-    Dividend { ts: i64, amount: f64 },
-    Split { ts: i64, numerator: u32, denominator: u32 },
+    Dividend {
+        ts: i64,
+        amount: f64,
+    },
+    Split {
+        ts: i64,
+        numerator: u32,
+        denominator: u32,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]

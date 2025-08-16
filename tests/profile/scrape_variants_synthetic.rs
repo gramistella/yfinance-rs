@@ -3,10 +3,13 @@ use url::Url;
 use yfinance_rs::{Profile, YfClient};
 
 fn svelte_html(payload: &str) -> String {
-    format!(r#"<!doctype html>
+    format!(
+        r#"<!doctype html>
 <html><body>
 <script type="application/json" data-sveltekit-fetched="1">{}</script>
-</body></html>"#, payload)
+</body></html>"#,
+        payload
+    )
 }
 
 #[tokio::test]
@@ -21,14 +24,19 @@ async fn scrape_sveltekit_equity() {
     }]}}}]}]"#;
 
     let mock = server.mock(|when, then| {
-        when.method(GET).path(format!("/quote/{}", sym)).query_param("p", sym);
-        then.status(200).header("content-type","text/html").body(svelte_html(payload));
+        when.method(GET)
+            .path(format!("/quote/{}", sym))
+            .query_param("p", sym);
+        then.status(200)
+            .header("content-type", "text/html")
+            .body(svelte_html(payload));
     });
 
     let mut client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let prof = yfinance_rs::Profile::load(&mut client, sym).await.unwrap();
     mock.assert();
@@ -53,14 +61,19 @@ async fn scrape_infers_equity_when_quote_type_missing() {
     }]}}}]}]"#;
 
     let mock = server.mock(|when, then| {
-        when.method(GET).path(format!("/quote/{}", sym)).query_param("p", sym);
-        then.status(200).header("content-type","text/html").body(svelte_html(payload));
+        when.method(GET)
+            .path(format!("/quote/{}", sym))
+            .query_param("p", sym);
+        then.status(200)
+            .header("content-type", "text/html")
+            .body(svelte_html(payload));
     });
 
     let mut client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let prof = yfinance_rs::Profile::load(&mut client, sym).await.unwrap();
     mock.assert();

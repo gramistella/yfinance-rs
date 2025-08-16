@@ -9,7 +9,6 @@
 mod api;
 mod scrape;
 
-
 #[cfg(any(debug_assertions, feature = "debug-dumps"))]
 pub(crate) mod debug;
 

@@ -1,6 +1,6 @@
 //! quoteSummary v10 API path for profiles.
 
-use crate::{internal::net, YfClient, YfError};
+use crate::{YfClient, YfError, internal::net};
 use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};
@@ -32,13 +32,15 @@ pub(crate) async fn load_from_quote_summary_api(
             let _ = debug_dump_api(symbol, &text);
         }
 
-        let env: V10Envelope =
-            serde_json::from_str(&text).map_err(|e| YfError::Data(format!("quoteSummary json parse: {e}")))?;
+        let env: V10Envelope = serde_json::from_str(&text)
+            .map_err(|e| YfError::Data(format!("quoteSummary json parse: {e}")))?;
 
         if let Some(error) = env.quote_summary.as_ref().and_then(|qs| qs.error.as_ref()) {
             if error.description.contains("Invalid Crumb") && i == 0 {
                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                    eprintln!("YF_DEBUG: Invalid crumb detected. Refreshing credentials and retrying.");
+                    eprintln!(
+                        "YF_DEBUG: Invalid crumb detected. Refreshing credentials and retrying."
+                    );
                 }
                 client.clear_crumb();
                 client.ensure_credentials().await?;
