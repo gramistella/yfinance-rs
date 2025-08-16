@@ -2,7 +2,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use url::Url;
 
-use crate::{YfClient, YfError, internal::net};
+use crate::{YfClient, YfError, core::net};
 
 /* ---------------- Public API ---------------- */
 

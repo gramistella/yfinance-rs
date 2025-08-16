@@ -42,7 +42,7 @@ impl Profile {
 
         #[cfg(feature = "test-mode")]
         {
-            use crate::client::ApiPreference;
+            use crate::core::client::ApiPreference;
             match client.api_preference() {
                 ApiPreference::ApiThenScrape => {
                     client.ensure_credentials().await?;

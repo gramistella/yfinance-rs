@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
-use crate::{YfClient, YfError, internal::net};
+use crate::core::net;
+use crate::core::{YfClient, YfError};
 
 use super::{
     BalanceSheetRow, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps, EarningsYear,

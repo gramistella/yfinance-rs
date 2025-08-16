@@ -1,6 +1,6 @@
 //! quoteSummary v10 API path for profiles.
 
-use crate::{YfClient, YfError, internal::net};
+use crate::{YfClient, YfError, core::net};
 use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};

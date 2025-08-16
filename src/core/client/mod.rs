@@ -4,7 +4,7 @@
 mod auth;
 mod constants;
 
-use crate::error::YfError;
+use crate::core::YfError;
 use constants::{
     DEFAULT_BASE_CHART, DEFAULT_BASE_QUOTE, DEFAULT_BASE_QUOTE_API, DEFAULT_COOKIE_URL,
     DEFAULT_CRUMB_URL, USER_AGENT,

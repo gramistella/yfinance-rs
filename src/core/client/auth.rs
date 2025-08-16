@@ -1,6 +1,6 @@
 //! Cookie & crumb acquisition for Yahoo endpoints.
 
-use crate::error::YfError;
+use crate::core::error::YfError;
 use reqwest::header::SET_COOKIE;
 
 impl super::YfClient {

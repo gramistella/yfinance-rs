@@ -1,7 +1,8 @@
 use serde::Deserialize;
 
 use crate::analysis::model::PriceTarget;
-use crate::{YfClient, YfError, internal::net};
+use crate::core::net;
+use crate::core::{YfClient, YfError};
 
 #[cfg(any(debug_assertions, feature = "debug-dumps"))]
 use crate::profile::debug::debug_dump_api;

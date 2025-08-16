@@ -1,4 +1,4 @@
-use crate::{YfClient, YfError, history::HistoryBuilder, internal::net};
+use crate::{YfClient, YfError, core::net, history::HistoryBuilder};
 use serde::Deserialize;
 use url::Url;
 

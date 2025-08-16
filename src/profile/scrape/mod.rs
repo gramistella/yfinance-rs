@@ -27,8 +27,7 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
             url: url.to_string(),
         });
     }
-    let body =
-        crate::internal::net::get_text(quote_page_resp, "profile_html", symbol, "html").await?;
+    let body = crate::core::net::get_text(quote_page_resp, "profile_html", symbol, "html").await?;
 
     #[cfg(any(debug_assertions, feature = "debug-dumps"))]
     {

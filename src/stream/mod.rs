@@ -280,7 +280,7 @@ async fn parse_v7_multi(
     // IMPORTANT: the fixture key *must* map to your live recording.
     // For single-symbol streams this is exactly the same as Ticker::quote ("AAPL"),
     // so the stream happily reuses quote_v7/AAPL.json recorded during live runs.
-    let body = crate::internal::net::get_text(resp, "quote_v7", fixture_key, "json").await?;
+    let body = crate::core::net::get_text(resp, "quote_v7", fixture_key, "json").await?;
     let env: V7Envelope =
         serde_json::from_str(&body).map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
 
