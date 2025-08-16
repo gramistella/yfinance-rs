@@ -3,7 +3,7 @@ use serde::Deserialize;
 use url::Url;
 
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
-const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options";
+const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
 
 pub struct Ticker<'a> {
     client: &'a mut YfClient,
