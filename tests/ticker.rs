@@ -6,3 +6,6 @@ mod common;
 #[path = "ticker/options.rs"] mod options;
 #[path = "ticker/live.rs"] mod live;
 #[path = "ticker/offline.rs"] mod offline;
+#[path = "ticker/options_expiry_from_url_fallback.rs"] mod options_expiry_from_url_fallback;
+
+#[path = "ticker/fast_info.rs"] mod fast_info;

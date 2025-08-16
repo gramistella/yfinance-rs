@@ -73,6 +73,17 @@ pub fn mock_quote_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
     })
 }
 
+pub fn mock_quote_v7_multi<'a>(server: &'a MockServer, symbols_csv: &'a str) -> Mock<'a> {
+    server.mock(|when, then| {
+        when.method(GET)
+            .path("/v7/finance/quote")
+            .query_param("symbols", symbols_csv);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(fixture("quote_v7", "MULTI", "json"));
+    })
+}
+
 pub fn mock_options_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
     server.mock(|when, then| {
         when.method(GET)

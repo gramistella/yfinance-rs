@@ -6,9 +6,9 @@ const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance
 const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
 
 pub struct Ticker<'a> {
-    client: &'a mut YfClient,
-    symbol: String,
-    quote_base: Url,
+    pub(crate) client: &'a mut YfClient,
+    pub(crate) symbol: String,
+    pub(crate) quote_base: Url,
     options_base: Url,
 }
 

@@ -15,6 +15,7 @@ pub mod ticker;
 pub mod download;
 pub mod fundamentals;
 pub mod analysis;
+pub mod stream;
 
 pub use client::YfClient;
 pub use error::YfError;
@@ -27,6 +28,7 @@ pub use fundamentals::{
     EarningsQuarterEps, EarningsYear, IncomeStatementRow, Num,
 };
 pub use analysis::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
+pub use stream::{StreamBuilder, StreamConfig, StreamHandle, QuoteUpdate};
 
 
 #[cfg(feature = "test-mode")]
