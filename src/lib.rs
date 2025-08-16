@@ -16,6 +16,7 @@ pub mod download;
 pub mod fundamentals;
 pub mod analysis;
 pub mod stream;
+pub mod quote;
 
 pub use client::YfClient;
 pub use error::YfError;
@@ -29,7 +30,7 @@ pub use fundamentals::{
 };
 pub use analysis::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow, PriceTarget};
 pub use stream::{StreamBuilder, StreamConfig, StreamHandle, QuoteUpdate};
-
+pub use quote::{quotes, QuotesBuilder};
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;
