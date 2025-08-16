@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Ticker, YfClient, Range, Interval};
+use yfinance_rs::{YfClient, Range, Interval};
 
 fn minimal_ok_body() -> String {
     r#"{

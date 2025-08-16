@@ -88,7 +88,7 @@ async fn option_chain_for_specific_date() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path("/v7/finance/options/AAPL")
-            .query_param("date", &date.to_string());
+            .query_param("date", date.to_string());
         then.status(200)
             .header("content-type","application/json")
             .body(body);
@@ -136,7 +136,7 @@ async fn options_retry_with_crumb_on_403() {
     let first = server.mock(|when, then| {
         when.method(GET)
             .path("/v7/finance/options/MSFT")
-            .query_param("date", &date.to_string())
+            .query_param("date", date.to_string())
             .matches(|req| {
                 // httpmock 0.7 exposes `query_params` as a nested Vec.
                 // Reject the match if ANY "crumb" param is present.
@@ -185,7 +185,7 @@ async fn options_retry_with_crumb_on_403() {
     let second = server.mock(|when, then| {
         when.method(GET)
             .path("/v7/finance/options/MSFT")
-            .query_param("date", &date.to_string())
+            .query_param("date", date.to_string())
             .query_param("crumb", "crumb-value");
         then.status(200)
             .header("content-type","application/json")

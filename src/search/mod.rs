@@ -138,7 +138,7 @@ impl<'a> SearchBuilder<'a> {
             }
 
             // Other non-success
-            let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
+            // let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
             return Err(YfError::Status { status: code, url: url.to_string() })
         }
 

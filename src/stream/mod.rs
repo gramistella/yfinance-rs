@@ -315,7 +315,7 @@ struct V7QuoteNode {
 impl<'a> crate::ticker::Ticker<'a> {
     /// Build a `StreamBuilder` seeded with this ticker’s symbol and base quote URL.
     pub fn stream_builder(&self) -> Result<StreamBuilder, YfError> {
-        let mut b = StreamBuilder::new(&self.client)?;
+        let mut b = StreamBuilder::new(self.client)?;
         b = b.symbols([self.symbol.clone()]);
         b = b.quote_base(self.quote_base.clone());
         Ok(b)

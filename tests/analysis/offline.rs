@@ -65,7 +65,7 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
 
     mock.assert();
     assert!(
-        s.strong_buy + s.buy + s.hold + s.sell + s.strong_sell >= 0,
+        s.strong_buy + s.buy + s.hold + s.sell + s.strong_sell > 0,
         "record with YF_RECORD=1 first"
     );
 }
@@ -93,9 +93,8 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
         .unwrap();
 
     let mut t = Ticker::new(&mut client, sym).unwrap();
-    let rows = t.upgrades_downgrades().await.unwrap();
+    let _rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();
     // After recording, this should be non-empty for many large-caps — but allow empty in case the day is quiet.
-    assert!(rows.len() >= 0, "record with YF_RECORD=1 first");
 }

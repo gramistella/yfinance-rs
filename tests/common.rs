@@ -89,7 +89,7 @@ pub fn mock_options_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> 
         when.method(GET)
             .path(format!("/v7/finance/options/{}", symbol))
             .matches(|req| {
-                for group in &req.query_params {
+                if let Some(group) = &req.query_params {
                     for (k, _) in group {
                         if k == "date" {
                             return false;
@@ -109,7 +109,7 @@ pub fn mock_options_v7_for_date<'a>(server: &'a MockServer, symbol: &'a str, dat
     server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v7/finance/options/{}", symbol))
-            .query_param("date", &date.to_string());
+            .query_param("date", date.to_string());
         then.status(200)
             .header("content-type", "application/json")
             .body(fixture("options_v7", &format!("{}_{}", symbol, date), "json"));

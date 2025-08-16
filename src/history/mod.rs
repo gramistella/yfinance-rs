@@ -311,13 +311,13 @@ impl<'a> HistoryBuilder<'a> {
                     if v_adj.is_finite() { v_adj.round() as u64 } else { v }
                 });
 
-                if open.is_some() && high.is_some() && low.is_some() && close.is_some() {
+                if let (Some(open_v), Some(high_v), Some(low_v), Some(close_v)) = (open, high, low, close) {
                     out.push(Candle {
                         ts: t,
-                        open: open.unwrap(),
-                        high: high.unwrap(),
-                        low: low.unwrap(),
-                        close: close.unwrap(),
+                        open: open_v,
+                        high: high_v,
+                        low: low_v,
+                        close: close_v,
                         volume: volume_adj,
                     });
                     raw_close_vec.push(raw_close_val);
@@ -334,13 +334,13 @@ impl<'a> HistoryBuilder<'a> {
                 }
             } else {
                 // no adjustment at all
-                if open.is_some() && high.is_some() && low.is_some() && close.is_some() {
+                if let (Some(open_v), Some(high_v), Some(low_v), Some(close_v)) = (open, high, low, close) {
                     out.push(Candle {
                         ts: t,
-                        open: open.unwrap(),
-                        high: high.unwrap(),
-                        low:  low.unwrap(),
-                        close: close.unwrap(),
+                        open: open_v,
+                        high: high_v,
+                        low:  low_v,
+                        close: close_v,
                         volume: volume0,
                     });
                     raw_close_vec.push(raw_close_val);

@@ -51,8 +51,8 @@ async fn download_multi_symbols_happy_path() {
     m_aapl.assert();
     m_msft.assert();
 
-    assert!(res.series.get("AAPL").is_some());
-    assert!(res.series.get("MSFT").is_some());
+    assert!(res.series.contains_key("AAPL"));
+    assert!(res.series.contains_key("MSFT"));
     assert!(res.meta.contains_key("AAPL"));
     assert!(res.meta.contains_key("MSFT"));
     assert!(res.actions.contains_key("AAPL"));
@@ -70,8 +70,8 @@ async fn download_between_params_applied_to_all_symbols() {
     let q1 = server.mock(|when, then| {
         when.method(GET)
             .path("/v8/finance/chart/AAPL")
-            .query_param("period1", &start.timestamp().to_string())
-            .query_param("period2", &end.timestamp().to_string())
+            .query_param("period1", start.timestamp().to_string())
+            .query_param("period2", end.timestamp().to_string())
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
             .query_param("events", "div|split");
@@ -83,8 +83,8 @@ async fn download_between_params_applied_to_all_symbols() {
     let q2 = server.mock(|when, then| {
         when.method(GET)
             .path("/v8/finance/chart/MSFT")
-            .query_param("period1", &start.timestamp().to_string())
-            .query_param("period2", &end.timestamp().to_string())
+            .query_param("period1", start.timestamp().to_string())
+            .query_param("period2", end.timestamp().to_string())
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
             .query_param("events", "div|split");
@@ -309,7 +309,7 @@ async fn download_rounding_and_keepna_offline() {
         (x - cents / 100.0).abs() > 1e-12
     }
 
-    for (_sym, bars) in &res.series {
+    for bars in res.series.values() {
         for c in bars {
             assert!(!has_more_than_two_decimals(c.open));
             assert!(!has_more_than_two_decimals(c.high));

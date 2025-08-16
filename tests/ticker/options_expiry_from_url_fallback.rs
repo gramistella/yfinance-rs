@@ -30,7 +30,7 @@ async fn option_chain_expiration_falls_back_to_url_date() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path("/v7/finance/options/AAPL")
-            .query_param("date", &date.to_string());
+            .query_param("date", date.to_string());
         then.status(200)
             .header("content-type","application/json")
             .body(body);

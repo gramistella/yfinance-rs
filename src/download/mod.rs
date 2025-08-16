@@ -204,8 +204,8 @@ impl<'a> DownloadBuilder<'a> {
             let mut v = resp.candles;
 
             // back_adjust: override Close with raw (unadjusted) close values.
-            if self.back_adjust {
-                if let Some(raw) = resp.raw_close.take() {
+            if self.back_adjust
+                && let Some(raw) = resp.raw_close.take() {
                     for (i, c) in v.iter_mut().enumerate() {
                         if let Some(&rc) = raw.get(i) {
                             if rc.is_finite() {
@@ -217,7 +217,6 @@ impl<'a> DownloadBuilder<'a> {
                         }
                     }
                 }
-            }
 
             // repair: fix 100× outliers in place
             if self.repair {

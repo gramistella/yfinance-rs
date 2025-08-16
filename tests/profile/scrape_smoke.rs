@@ -1,4 +1,3 @@
-use crate::common;
 use crate::common::{mock_profile_scrape, setup_server};
 use url::Url;
 use yfinance_rs::{ApiPreference, Profile, YfClient};

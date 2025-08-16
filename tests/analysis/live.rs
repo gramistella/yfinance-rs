@@ -27,6 +27,7 @@ async fn live_analysis_smoke_and_or_record() {
     if !crate::common::is_recording() {
         let mut t = yfinance_rs::Ticker::new(&mut client, "AAPL").unwrap();
         let rows = t.recommendations().await.unwrap();
-        assert!(rows.len() >= 0);
+        // Smoke check: when hitting live, expect at least one row
+        assert!(!rows.is_empty());
     }
 }

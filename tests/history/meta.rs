@@ -39,7 +39,7 @@ async fn get_history_metadata_returns_timezone() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, "MSFT").unwrap();
+    let t = Ticker::new(&mut client, "MSFT").unwrap();
     let meta = t.get_history_metadata(Some(Range::D1)).await.unwrap();
 
     mock.assert();

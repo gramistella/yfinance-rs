@@ -1,6 +1,6 @@
 use httpmock::{Method::GET, MockServer};
 use url::Url;
-use yfinance_rs::{ApiPreference, Profile, YfClient};
+use yfinance_rs::{Profile, YfClient};
 
 fn svelte_html(payload: &str) -> String {
     format!(r#"<!doctype html>

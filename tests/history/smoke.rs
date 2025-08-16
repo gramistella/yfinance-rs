@@ -56,8 +56,8 @@ async fn history_absolute_range_happy() {
     let mock = server.mock(|when, then| {
         when.method(httpmock::Method::GET)
             .path("/v8/finance/chart/AAPL")
-            .query_param("period1", &start.timestamp().to_string())
-            .query_param("period2", &end.timestamp().to_string());
+            .query_param("period1", start.timestamp().to_string())
+            .query_param("period2", end.timestamp().to_string());
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
