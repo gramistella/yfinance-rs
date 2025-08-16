@@ -3,7 +3,7 @@ use serde::Deserialize;
 use url::Url;
 
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
-const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
+const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options";
 
 pub struct Ticker<'a> {
     client: &'a mut YfClient,
@@ -35,7 +35,6 @@ impl<'a> Ticker<'a> {
         })
     }
 
-    /// Set a custom base URL for the options endpoint (useful for tests/mocking).
     pub fn with_options_base(
         client: &'a mut YfClient,
         symbol: impl Into<String>,
@@ -49,7 +48,6 @@ impl<'a> Ticker<'a> {
         })
     }
 
-    /// Set custom bases for both quote and options endpoints.
     pub fn with_bases(
         client: &'a mut YfClient,
         symbol: impl Into<String>,
@@ -240,7 +238,6 @@ impl<'a> Ticker<'a> {
 
     /* ---------------- Options API ---------------- */
 
-    /// Return available option expiration timestamps (Unix seconds) for the ticker.
     pub async fn options(&mut self) -> Result<Vec<i64>, YfError> {
         let (body, _) = self.fetch_options_raw(None).await?;
         let env: OptEnvelope = serde_json::from_str(&body)
@@ -252,8 +249,6 @@ impl<'a> Ticker<'a> {
         Ok(first.expiration_dates.unwrap_or_default())
     }
 
-    /// Return the full option chain (calls & puts) for a specific expiration date.
-    /// If `date` is None, Yahoo returns the nearest expiry.
     pub async fn option_chain(&mut self, date: Option<i64>) -> Result<OptionChain, YfError> {
         let (body, used_url) = self.fetch_options_raw(date).await?;
         let env: OptEnvelope = serde_json::from_str(&body)
@@ -264,18 +259,14 @@ impl<'a> Ticker<'a> {
             .and_then(|mut v| v.pop())
             .ok_or_else(|| YfError::Data("empty options result".into()))?;
 
-        // Yahoo returns an array "options" where each entry corresponds to one expiration date.
         let od = match first.options.and_then(|mut v| v.pop()) {
             Some(x) => x,
             None => {
-                // No options data; return empty chain.
                 return Ok(OptionChain { calls: vec![], puts: vec![] });
             }
         };
 
         let expiration = od.expiration_date.unwrap_or_else(|| {
-            // Best-effort: try to infer from the URL query param if present.
-            // (Purely for completeness; tests will always provide explicit expiration in payload.)
             if let Some(q) = used_url.query() {
                 for kv in q.split('&') {
                     if let Some(v) = kv.strip_prefix("date=")
@@ -327,7 +318,6 @@ impl<'a> Ticker<'a> {
             .await?;
 
         if resp.status().is_success() {
-            // record with a stable, date-scoped filename if applicable
             let fixture_symbol = match date {
                 Some(d) => format!("{}_{}", self.symbol, d),
                 None => self.symbol.clone(),
@@ -380,6 +370,43 @@ impl<'a> Ticker<'a> {
         Ok((body, url2))
     }
 
+    /* ---------------- Fundamentals convenience (new) ---------------- */
+
+    pub async fn income_stmt(&mut self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
+        crate::fundamentals::income_statement(self.client, &self.symbol, false).await
+    }
+
+    pub async fn quarterly_income_stmt(
+        &mut self,
+    ) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
+        crate::fundamentals::income_statement(self.client, &self.symbol, true).await
+    }
+
+    pub async fn balance_sheet(&mut self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
+        crate::fundamentals::balance_sheet(self.client, &self.symbol, false).await
+    }
+
+    pub async fn quarterly_balance_sheet(
+        &mut self,
+    ) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
+        crate::fundamentals::balance_sheet(self.client, &self.symbol, true).await
+    }
+
+    pub async fn cashflow(&mut self) -> Result<Vec<crate::CashflowRow>, YfError> {
+        crate::fundamentals::cashflow(self.client, &self.symbol, false).await
+    }
+
+    pub async fn quarterly_cashflow(&mut self) -> Result<Vec<crate::CashflowRow>, YfError> {
+        crate::fundamentals::cashflow(self.client, &self.symbol, true).await
+    }
+
+    pub async fn earnings(&mut self) -> Result<crate::Earnings, YfError> {
+        crate::fundamentals::earnings(self.client, &self.symbol).await
+    }
+
+    pub async fn calendar(&mut self) -> Result<crate::FundCalendar, YfError> {
+        crate::fundamentals::calendar(self.client, &self.symbol).await
+    }
 }
 
 /* ---------------- Public models ---------------- */

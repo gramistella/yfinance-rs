@@ -13,6 +13,7 @@ pub(crate) mod internal {
 pub mod profile;
 pub mod ticker;
 pub mod download;
+pub mod fundamentals;
 
 pub use client::YfClient;
 pub use error::YfError;
@@ -20,6 +21,10 @@ pub use history::{Action, Candle, HistoryBuilder, HistoryMeta, HistoryResponse, 
 pub use profile::{Address, Company, Fund, Profile};
 pub use ticker::{Ticker, Quote, FastInfo, OptionChain, OptionContract};
 pub use download::{DownloadBuilder, DownloadResult};
+pub use fundamentals::{
+    BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
+    EarningsQuarterEps, EarningsYear, IncomeStatementRow, Num,
+};
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;
