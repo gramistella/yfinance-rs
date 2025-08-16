@@ -34,3 +34,11 @@ pub struct UpgradeDowngradeRow {
     pub to_grade: Option<String>,     // e.g. "Buy"
     pub action: Option<String>,       // e.g. "upgraded", "downgraded", "main", etc.
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct PriceTarget {
+    pub mean: Option<f64>,
+    pub high: Option<f64>,
+    pub low: Option<f64>,
+    pub number_of_analysts: Option<u32>,
+}

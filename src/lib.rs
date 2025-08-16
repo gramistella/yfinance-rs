@@ -27,7 +27,7 @@ pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
     EarningsQuarterEps, EarningsYear, IncomeStatementRow, Num,
 };
-pub use analysis::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
+pub use analysis::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow, PriceTarget};
 pub use stream::{StreamBuilder, StreamConfig, StreamHandle, QuoteUpdate};
 
 

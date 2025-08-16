@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 use crate::{internal::net, YfClient, YfError};
+use crate::analysis::model::PriceTarget;
 
 #[cfg(any(debug_assertions, feature = "debug-dumps"))]
 use crate::profile::debug::debug_dump_api;
@@ -37,7 +38,6 @@ pub async fn recommendation_summary(
     client: &mut YfClient,
     symbol: &str,
 ) -> Result<super::RecommendationSummary, YfError> {
-    // Pull both in one go (trend + mean)
     let env = call_quote_summary(client, symbol, "recommendationTrend,recommendationMean").await?;
     let root = get_first_result(env)?;
 
@@ -46,8 +46,6 @@ pub async fn recommendation_summary(
         .and_then(|x| x.trend)
         .unwrap_or_default();
 
-    // Choose the most recent period. Yahoo typically returns most-recent first;
-    // fall back gracefully if empty.
     let latest = trend.first();
 
     let (latest_period, sb, b, h, s, ss) = match latest {
@@ -97,12 +95,35 @@ pub async fn upgrades_downgrades(
             firm: h.firm,
             from_grade: h.from_grade,
             to_grade: h.to_grade,
-            action: h.action.or(h.grade_change), // Yahoo sometimes uses either
+            action: h.action.or(h.grade_change),
         })
         .collect();
 
     rows.sort_by_key(|r| r.ts);
     Ok(rows)
+}
+
+/* ---------- NEW: analyst price targets ---------- */
+
+pub async fn analyst_price_target(
+    client: &mut YfClient,
+    symbol: &str,
+) -> Result<PriceTarget, YfError> {
+    let env = call_quote_summary(client, symbol, "financialData").await?;
+    let root = get_first_result(env)?;
+    let fd = root
+        .financial_data
+        .ok_or_else(|| YfError::Data("financialData missing".into()))?;
+
+    let f = |x: Option<RawNum>| x.and_then(|n| n.raw);
+    let n = |x: Option<RawNum>| x.and_then(|n| n.raw).map(|v| v.round() as u32);
+
+    Ok(PriceTarget {
+        mean: f(fd.target_mean_price),
+        high: f(fd.target_high_price),
+        low: f(fd.target_low_price),
+        number_of_analysts: n(fd.number_of_analyst_opinions),
+    })
 }
 
 /* ---------- Shared call + helpers ---------- */
@@ -198,6 +219,9 @@ struct V10Result {
 
     #[serde(rename = "upgradeDowngradeHistory")]
     upgrade_downgrade_history: Option<UpgradeDowngradeHistoryNode>,
+
+    #[serde(rename = "financialData")]
+    financial_data: Option<FinancialDataNode>,
 }
 
 /* --- recommendation trend --- */
@@ -252,10 +276,23 @@ struct UpgradeNode {
     #[serde(rename = "fromGrade")]
     from_grade: Option<String>,
 
-    // Some payloads use action, others use gradeChange. Capture both.
     action: Option<String>,
     #[serde(rename = "gradeChange")]
     grade_change: Option<String>,
+}
+
+/* --- NEW: financial data (price targets) --- */
+
+#[derive(Deserialize)]
+struct FinancialDataNode {
+    #[serde(rename = "targetMeanPrice")]
+    target_mean_price: Option<RawNum>,
+    #[serde(rename = "targetHighPrice")]
+    target_high_price: Option<RawNum>,
+    #[serde(rename = "targetLowPrice")]
+    target_low_price: Option<RawNum>,
+    #[serde(rename = "numberOfAnalystOpinions")]
+    number_of_analyst_opinions: Option<RawNum>,
 }
 
 /* --- shared small wrappers --- */

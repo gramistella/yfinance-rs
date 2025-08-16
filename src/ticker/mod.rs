@@ -236,6 +236,7 @@ impl<'a> Ticker<'a> {
         Ok(resp.meta)
     }
 
+    
     /* ---------------- Options API ---------------- */
 
     pub async fn options(&mut self) -> Result<Vec<i64>, YfError> {
@@ -382,6 +383,10 @@ impl<'a> Ticker<'a> {
 
     pub async fn upgrades_downgrades(&mut self) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
         crate::analysis::upgrades_downgrades(self.client, &self.symbol).await
+    }
+
+    pub async fn analyst_price_target(&mut self) -> Result<crate::PriceTarget, YfError> {
+        crate::analysis::analyst_price_target(self.client, &self.symbol).await
     }
 
     /* ---------------- Fundamentals convenience (new) ---------------- */

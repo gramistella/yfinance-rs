@@ -1,7 +1,7 @@
 mod api;
 mod model;
 
-pub use model::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
+pub use model::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow, PriceTarget};
 
 use crate::{YfClient, YfError};
 
@@ -24,4 +24,11 @@ pub async fn upgrades_downgrades(
     symbol: &str,
 ) -> Result<Vec<UpgradeDowngradeRow>, YfError> {
     api::upgrades_downgrades(client, symbol).await
+}
+
+pub async fn analyst_price_target(
+    client: &mut YfClient,
+    symbol: &str,
+) -> Result<PriceTarget, YfError> {
+    api::analyst_price_target(client, symbol).await
 }
