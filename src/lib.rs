@@ -14,6 +14,7 @@ pub mod profile;
 pub mod ticker;
 pub mod download;
 pub mod fundamentals;
+pub mod analysis;
 
 pub use client::YfClient;
 pub use error::YfError;
@@ -25,6 +26,8 @@ pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
     EarningsQuarterEps, EarningsYear, IncomeStatementRow, Num,
 };
+pub use analysis::{RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
+
 
 #[cfg(feature = "test-mode")]
 pub use client::ApiPreference;

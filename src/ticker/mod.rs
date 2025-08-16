@@ -370,6 +370,20 @@ impl<'a> Ticker<'a> {
         Ok((body, url2))
     }
 
+    /* ---------------- Analysis convenience (new) ---------------- */
+
+    pub async fn recommendations(&mut self) -> Result<Vec<crate::RecommendationRow>, YfError> {
+        crate::analysis::recommendations(self.client, &self.symbol).await
+    }
+
+    pub async fn recommendations_summary(&mut self) -> Result<crate::RecommendationSummary, YfError> {
+        crate::analysis::recommendations_summary(self.client, &self.symbol).await
+    }
+
+    pub async fn upgrades_downgrades(&mut self) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
+        crate::analysis::upgrades_downgrades(self.client, &self.symbol).await
+    }
+
     /* ---------------- Fundamentals convenience (new) ---------------- */
 
     pub async fn income_stmt(&mut self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
