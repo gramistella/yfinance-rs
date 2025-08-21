@@ -1,3 +1,5 @@
+use std::env;
+
 /// Read the response body as text.
 /// In `test-mode`, if `YF_RECORD=1`, the body is saved as a fixture via `net_fixtures`.
 pub(crate) async fn get_text(

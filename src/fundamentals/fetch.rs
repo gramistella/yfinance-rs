@@ -37,6 +37,35 @@ async fn call_quote_summary(
             qp.append_pair("crumb", &crumb);
         }
 
+        // Cache check
+        if let Some(text) = client.cache_get(&url).await {
+            #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+            {
+                let _ = debug_dump_api(symbol, &text);
+            }
+
+            let env: V10Envelope = match serde_json::from_str(&text) {
+                Ok(v) => v,
+                Err(e) => return Err(YfError::Data(format!("quoteSummary json parse: {e}"))),
+            };
+
+            if let Some(error) = env.quote_summary.as_ref().and_then(|qs| qs.error.as_ref()) {
+                let desc = error.description.to_ascii_lowercase();
+                if desc.contains("invalid crumb") && attempt == 0 {
+                    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                        eprintln!(
+                            "YF_DEBUG: Invalid crumb in fundamentals; refreshing and retrying."
+                        );
+                    }
+                    client.clear_crumb();
+                    continue;
+                }
+                return Err(YfError::Data(format!("yahoo error: {}", error.description)));
+            }
+
+            return Ok(env);
+        }
+
         let resp = client.http().get(url.clone()).send().await?;
         let text = net::get_text(resp, "fundamentals_api", symbol, "json").await?;
 
@@ -61,6 +90,9 @@ async fn call_quote_summary(
             }
             return Err(YfError::Data(format!("yahoo error: {}", error.description)));
         }
+
+        // Cache success
+        client.cache_put(&url, &text, None).await;
 
         return Ok(env);
     }

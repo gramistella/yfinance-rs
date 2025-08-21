@@ -106,6 +106,11 @@ async fn fetch_options_raw(
         }
     }
 
+    // Cache check
+    if let Some(body) = client.cache_get(&url).await {
+        return Ok((body, url));
+    }
+
     let mut resp = http
         .get(url.clone())
         .header("accept", "application/json")
@@ -118,6 +123,8 @@ async fn fetch_options_raw(
             None => symbol.to_string(),
         };
         let body = net::get_text(resp, "options_v7", &fixture_key, "json").await?;
+        // Cache success
+        client.cache_put(&url, &body, None).await;
         return Ok((body, url));
     }
 
@@ -162,6 +169,8 @@ async fn fetch_options_raw(
         None => symbol.to_string(),
     };
     let body = net::get_text(resp, "options_v7", &fixture_key, "json").await?;
+    // Cache success
+    client.cache_put(&url2, &body, None).await;
     Ok((body, url2))
 }
 

@@ -51,7 +51,7 @@ pub struct HistoryResponse {
 }
 
 /* ----- HISTORY PARAMS (so download/ doesn’t import history/) ----- */
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Range {
     D1,
     D5,
@@ -85,7 +85,7 @@ impl Range {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Interval {
     I1m,
     I2m,

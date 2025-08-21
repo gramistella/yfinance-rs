@@ -5,6 +5,29 @@ use crate::{YfClient, YfError, core::net};
 
 use super::model::Quote;
 
+async fn parse_quote_from_body(body: &str, symbol: &str) -> Result<Quote, YfError> {
+    let env: V7Envelope =
+        serde_json::from_str(body).map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
+    let result = env
+        .quote_response
+        .and_then(|qr| qr.result)
+        .and_then(|mut v| v.pop())
+        .ok_or_else(|| YfError::Data("empty quote result".into()))?;
+
+    Ok(Quote {
+        symbol: result.symbol.unwrap_or_else(|| symbol.to_string()),
+        regular_market_price: result.regular_market_price,
+        regular_market_previous_close: result.regular_market_previous_close,
+        currency: result.currency,
+        exchange: result
+            .full_exchange_name
+            .or(result.exchange)
+            .or(result.market)
+            .or(result.market_cap_figure_exchange),
+        market_state: result.market_state,
+    })
+}
+
 /* ---------------- Public: fetch a single quote ---------------- */
 
 pub(crate) async fn fetch_quote(
@@ -14,11 +37,15 @@ pub(crate) async fn fetch_quote(
 ) -> Result<Quote, YfError> {
     let http = client.http().clone();
 
-    // Attempt without auth
     let mut url = base.clone();
     {
         let mut qp = url.query_pairs_mut();
         qp.append_pair("symbols", symbol);
+    }
+
+    // Cache check
+    if let Some(body) = client.cache_get(&url).await {
+        return parse_quote_from_body(&body, symbol).await;
     }
 
     let mut resp = http
@@ -28,7 +55,10 @@ pub(crate) async fn fetch_quote(
         .await?;
 
     if resp.status().is_success() {
-        return parse_quote_from_response(resp, symbol).await;
+        let body = net::get_text(resp, "quote_v7", symbol, "json").await?;
+        // Cache success
+        client.cache_put(&url, &body, None).await;
+        return parse_quote_from_body(&body, symbol).await;
     }
 
     let code = resp.status().as_u16();
@@ -39,7 +69,6 @@ pub(crate) async fn fetch_quote(
         });
     }
 
-    // Retry with crumb
     client.ensure_credentials().await?;
     let crumb = client
         .crumb()
@@ -69,37 +98,10 @@ pub(crate) async fn fetch_quote(
         });
     }
 
-    parse_quote_from_response(resp, symbol).await
-}
-
-/* ---------------- Internal helpers ---------------- */
-
-async fn parse_quote_from_response(
-    resp: reqwest::Response,
-    symbol: &str,
-) -> Result<Quote, YfError> {
     let body = net::get_text(resp, "quote_v7", symbol, "json").await?;
-    let env: V7Envelope =
-        serde_json::from_str(&body).map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
-
-    let result = env
-        .quote_response
-        .and_then(|qr| qr.result)
-        .and_then(|mut v| v.pop())
-        .ok_or_else(|| YfError::Data("empty quote result".into()))?;
-
-    Ok(Quote {
-        symbol: result.symbol.unwrap_or_else(|| symbol.to_string()),
-        regular_market_price: result.regular_market_price,
-        regular_market_previous_close: result.regular_market_previous_close,
-        currency: result.currency,
-        exchange: result
-            .full_exchange_name
-            .or(result.exchange)
-            .or(result.market)
-            .or(result.market_cap_figure_exchange),
-        market_state: result.market_state,
-    })
+    // Cache success
+    client.cache_put(&url2, &body, None).await;
+    parse_quote_from_body(&body, symbol).await
 }
 
 /* ---------------- Minimal serde mapping for v7 quote ---------------- */

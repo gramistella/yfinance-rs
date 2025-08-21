@@ -110,9 +110,11 @@ async fn fetch_v7_multi_raw(
         }
     }
 
-    // Fixture key policy:
-    //  - single symbol => use the symbol
-    //  - multi symbol => always "MULTI" so it lines up with tests/fixtures/quote_v7_MULTI.json
+    // Cache check
+    if let Some(body) = client.cache_get(&url).await {
+        return Ok((body, url, None));
+    }
+
     let fixture_key_owned = if symbols.len() == 1 {
         symbols[0].clone()
     } else {
@@ -133,6 +135,9 @@ async fn fetch_v7_multi_raw(
     }
 
     let body = net::get_text(resp, "quote_v7", fixture_key, "json").await?;
+    // Cache success
+    client.cache_put(&url, &body, None).await;
+
     Ok((body, url, None))
 }
 

@@ -18,7 +18,6 @@ pub(crate) async fn fetch_chart(
     include_actions: bool,
     include_prepost: bool,
 ) -> Result<Fetched, YfError> {
-    // Build URL
     let mut url = client.base_chart().join(symbol)?;
     {
         let mut qp = url.query_pairs_mut();
@@ -45,7 +44,52 @@ pub(crate) async fn fetch_chart(
         );
     }
 
-    // Request
+    // Cache check
+    if let Some(body) = client.cache_get(&url).await {
+        let parsed: ChartEnvelope = serde_json::from_str(&body)
+            .map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
+        let chart = parsed
+            .chart
+            .ok_or_else(|| YfError::Data("missing chart".into()))?;
+
+        if let Some(err) = chart.error {
+            return Err(YfError::Data(format!(
+                "yahoo error: {} - {}",
+                err.code, err.description
+            )));
+        }
+
+        let mut results = chart
+            .result
+            .ok_or_else(|| YfError::Data("missing result".into()))?;
+        let r0 = results
+            .pop()
+            .ok_or_else(|| YfError::Data("empty result".into()))?;
+
+        let ts = r0.timestamp.unwrap_or_default();
+
+        let quotes = r0.indicators.quote;
+        let quote = quotes
+            .into_iter()
+            .next()
+            .ok_or_else(|| YfError::Data("missing quote".into()))?;
+
+        let adjs = r0.indicators.adjclose;
+        let adjclose = adjs
+            .into_iter()
+            .next()
+            .map(|a| a.adjclose)
+            .unwrap_or_default();
+
+        return Ok(Fetched {
+            ts,
+            quote,
+            adjclose,
+            events: r0.events,
+            meta: r0.meta,
+        });
+    }
+
     let resp = client.http().get(url.clone()).send().await?;
     if !resp.status().is_success() {
         return Err(YfError::Status {
@@ -54,8 +98,10 @@ pub(crate) async fn fetch_chart(
         });
     }
 
-    // Parse
     let body = crate::core::net::get_text(resp, "history_chart", symbol, "json").await?;
+    // Cache success
+    client.cache_put(&url, &body, None).await;
+
     let parsed: ChartEnvelope =
         serde_json::from_str(&body).map_err(|e| YfError::Data(format!("json parse error: {e}")))?;
 
@@ -70,7 +116,6 @@ pub(crate) async fn fetch_chart(
         )));
     }
 
-    // Take ownership of the first result
     let mut results = chart
         .result
         .ok_or_else(|| YfError::Data("missing result".into()))?;
@@ -81,7 +126,6 @@ pub(crate) async fn fetch_chart(
 
     let ts = r0.timestamp.unwrap_or_default();
 
-    // Own the first quote block (and the first adjclose block, if any)
     let quotes = r0.indicators.quote;
     let quote = quotes
         .into_iter()

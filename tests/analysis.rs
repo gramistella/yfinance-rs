@@ -1,3 +1,4 @@
+// tests/analysis.rs
 mod common;
 
 #[path = "analysis/live.rs"]
@@ -12,3 +13,5 @@ mod price_target;
 mod price_target_live;
 #[path = "analysis/sorted_upgrades.rs"]
 mod sorted_upgrades;
+#[path = "analysis/yahoo_error_passthrough.rs"]
+mod yahoo_error_passthrough;

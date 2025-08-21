@@ -20,14 +20,24 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
         let mut qp = url.query_pairs_mut();
         qp.append_pair("p", symbol);
     }
-    let quote_page_resp = client.http().get(url.clone()).send().await?;
-    if !quote_page_resp.status().is_success() {
-        return Err(YfError::Status {
-            status: quote_page_resp.status().as_u16(),
-            url: url.to_string(),
-        });
-    }
-    let body = crate::core::net::get_text(quote_page_resp, "profile_html", symbol, "html").await?;
+
+    // Try cache
+    let body = if let Some(body) = client.cache_get(&url).await {
+        body
+    } else {
+        let quote_page_resp = client.http().get(url.clone()).send().await?;
+        if !quote_page_resp.status().is_success() {
+            return Err(YfError::Status {
+                status: quote_page_resp.status().as_u16(),
+                url: url.to_string(),
+            });
+        }
+        let body =
+            crate::core::net::get_text(quote_page_resp, "profile_html", symbol, "html").await?;
+        // Cache success
+        client.cache_put(&url, &body, None).await;
+        body
+    };
 
     #[cfg(any(debug_assertions, feature = "debug-dumps"))]
     {

@@ -4,6 +4,29 @@ use url::Url;
 
 use crate::{YfClient, YfError, core::net};
 
+async fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
+    let env: V1SearchEnvelope =
+        serde_json::from_str(body).map_err(|e| YfError::Data(format!("search json parse: {e}")))?;
+
+    let count = env.count.map(|c| c as u32);
+    let quotes = env.quotes.unwrap_or_default();
+
+    let out = quotes
+        .into_iter()
+        .map(|q| SearchQuote {
+            symbol: q.symbol.unwrap_or_default(),
+            shortname: q.shortname,
+            longname: q.longname,
+            quote_type: q.quote_type,
+            exchange: q.exchange,
+            exch_disp: q.exch_disp,
+            type_disp: q.type_disp,
+        })
+        .collect();
+
+    Ok(SearchResponse { count, quotes: out })
+}
+
 /* ---------------- Public API ---------------- */
 
 /// Convenience: perform a search with default settings (quotes only).
@@ -69,7 +92,6 @@ impl<'a> SearchBuilder<'a> {
     }
 
     pub async fn fetch(self) -> Result<SearchResponse, YfError> {
-        // Build URL with query params
         let mut url = self.base.clone();
         {
             let mut qp = url.query_pairs_mut();
@@ -91,6 +113,11 @@ impl<'a> SearchBuilder<'a> {
             }
         }
 
+        // Cache check
+        if let Some(body) = self.client.cache_get(&url).await {
+            return parse_search_body(&body).await;
+        }
+
         let http = self.client.http().clone();
         let mut resp = http
             .get(url.clone())
@@ -101,8 +128,6 @@ impl<'a> SearchBuilder<'a> {
         if !resp.status().is_success() {
             let code = resp.status().as_u16();
 
-            // As with other endpoints in this crate, attempt an authenticated retry
-            // only for 401/403 (some regions/dynamic policies can require it).
             if code == 401 || code == 403 {
                 self.client.ensure_credentials().await?;
                 let crumb = self
@@ -148,18 +173,22 @@ impl<'a> SearchBuilder<'a> {
                     });
                 }
 
-                return parse_search(resp, &self.query).await;
+                let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
+                // Cache success
+                self.client.cache_put(&url2, &body, None).await;
+                return parse_search_body(&body).await;
             }
 
-            // Other non-success
-            // let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
             return Err(YfError::Status {
                 status: code,
                 url: url.to_string(),
             });
         }
 
-        parse_search(resp, &self.query).await
+        let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
+        // Cache success
+        self.client.cache_put(&url, &body, None).await;
+        parse_search_body(&body).await
     }
 }
 
@@ -182,36 +211,7 @@ pub struct SearchQuote {
     pub type_disp: Option<String>,
 }
 
-/* ---------------- Internal helpers ---------------- */
-
 const DEFAULT_BASE_SEARCH_V1: &str = "https://query2.finance.yahoo.com/v1/finance/search";
-
-async fn parse_search(
-    resp: reqwest::Response,
-    fixture_key: &str,
-) -> Result<SearchResponse, YfError> {
-    let body = net::get_text(resp, "search_v1", fixture_key, "json").await?;
-    let env: V1SearchEnvelope = serde_json::from_str(&body)
-        .map_err(|e| YfError::Data(format!("search json parse: {e}")))?;
-
-    let count = env.count.map(|c| c as u32);
-    let quotes = env.quotes.unwrap_or_default();
-
-    let out = quotes
-        .into_iter()
-        .map(|q| SearchQuote {
-            symbol: q.symbol.unwrap_or_default(),
-            shortname: q.shortname,
-            longname: q.longname,
-            quote_type: q.quote_type,
-            exchange: q.exchange,
-            exch_disp: q.exch_disp,
-            type_disp: q.type_disp,
-        })
-        .collect();
-
-    Ok(SearchResponse { count, quotes: out })
-}
 
 /* ------------- Minimal serde mapping of /v1/finance/search ------------- */
 

@@ -1,0 +1,100 @@
+{
+  "name": "Public interface",
+  "settings": {
+    "version": 1,
+    "ext_filter": ".rs, .toml",
+    "exclude_dirs": ".git, node_modules, target, _target, .elan, .lake, .idea, .vscode, _app, .svelte-kit, .sqlx, venv, .venv, __pycache__, LICENSES, fixtures, tests",
+    "exclude_files": "LICENSE, Cargo.lock, package-lock.json, yarn.lock, .DS_Store, .dockerignore, .gitignore, .npmignore, .pre-commit-config.yaml, .prettierignore, .prettierrc, eslint.config.js, .env, Thumbs.db",
+    "remove_prefix": "//",
+    "remove_regex": "(?s)/\\*.*?\\*/ ",
+    "hierarchy_only": false,
+    "dirs_only": false,
+    "current_profile": "Public interface"
+  },
+  "explicit": [
+    {
+      "path": "src/profile/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/lib.rs",
+      "state": true
+    },
+    {
+      "path": "src/analysis/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/quote/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/ticker/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/history/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/download/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/search/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/client/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/fundamentals/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/history/builder.rs",
+      "state": true
+    },
+    {
+      "path": "Cargo.toml",
+      "state": true
+    },
+    {
+      "path": "src/analysis/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/profile/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/error.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/models.rs",
+      "state": true
+    },
+    {
+      "path": "src/stream/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/services.rs",
+      "state": true
+    },
+    {
+      "path": "src/ticker/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/fundamentals/mod.rs",
+      "state": true
+    }
+  ]
+}

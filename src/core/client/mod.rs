@@ -10,6 +10,10 @@ use constants::{
     DEFAULT_CRUMB_URL, USER_AGENT,
 };
 use reqwest::Client;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
 use url::Url;
 
 #[cfg(feature = "test-mode")]
@@ -21,6 +25,18 @@ pub enum ApiPreference {
     ApiOnly,
     /// Use only the scraping path.
     ScrapeOnly,
+}
+
+#[derive(Debug)]
+struct CacheEntry {
+    body: String,
+    expires_at: Instant,
+}
+
+#[derive(Debug)]
+struct CacheStore {
+    map: RwLock<HashMap<String, CacheEntry>>,
+    default_ttl: Duration,
 }
 
 #[derive(Debug, Clone)]
@@ -37,6 +53,8 @@ pub struct YfClient {
 
     #[cfg(feature = "test-mode")]
     api_preference: ApiPreference,
+
+    cache: Option<Arc<CacheStore>>,
 }
 
 impl Default for YfClient {
@@ -70,6 +88,38 @@ impl YfClient {
     pub(crate) fn api_preference(&self) -> ApiPreference {
         self.api_preference
     }
+
+    pub fn cache_enabled(&self) -> bool {
+        self.cache.is_some()
+    }
+
+    pub(crate) async fn cache_get(&self, url: &Url) -> Option<String> {
+        let store = self.cache.as_ref()?;
+        let key = url.as_str().to_string();
+        let guard = store.map.read().await;
+        if let Some(entry) = guard.get(&key)
+            && Instant::now() <= entry.expires_at
+        {
+            return Some(entry.body.clone());
+        }
+        None
+    }
+
+    pub(crate) async fn cache_put(&self, url: &Url, body: &str, ttl_override: Option<Duration>) {
+        let store = match &self.cache {
+            Some(s) => s.clone(),
+            None => return,
+        };
+        let key = url.as_str().to_string();
+        let ttl = ttl_override.unwrap_or(store.default_ttl);
+        let expires_at = Instant::now() + ttl;
+        let entry = CacheEntry {
+            body: body.to_string(),
+            expires_at,
+        };
+        let mut guard = store.map.write().await;
+        guard.insert(key, entry);
+    }
 }
 
 /* ----------------------- Builder ----------------------- */
@@ -89,6 +139,10 @@ pub struct YfClientBuilder {
     preauth_cookie: Option<String>,
     #[cfg(feature = "test-mode")]
     preauth_crumb: Option<String>,
+
+    timeout: Option<Duration>,
+    connect_timeout: Option<Duration>,
+    cache_ttl: Option<Duration>,
 }
 
 impl YfClientBuilder {
@@ -143,23 +197,46 @@ impl YfClientBuilder {
         self
     }
 
+    /// Set a global request timeout (overall). Default: none.
+    pub fn timeout(mut self, dur: Duration) -> Self {
+        self.timeout = Some(dur);
+        self
+    }
+
+    /// Set a connect timeout. Default: none.
+    pub fn connect_timeout(mut self, dur: Duration) -> Self {
+        self.connect_timeout = Some(dur);
+        self
+    }
+
+    /// Enable in-memory caching with a default TTL.
+    /// If not set, caching is disabled.
+    pub fn cache_ttl(mut self, dur: Duration) -> Self {
+        self.cache_ttl = Some(dur);
+        self
+    }
+
     pub fn build(self) -> Result<YfClient, YfError> {
         let base_chart = self.base_chart.unwrap_or(Url::parse(DEFAULT_BASE_CHART)?);
-
         let base_quote = self.base_quote.unwrap_or(Url::parse(DEFAULT_BASE_QUOTE)?);
-
         let base_quote_api = self
             .base_quote_api
             .unwrap_or(Url::parse(DEFAULT_BASE_QUOTE_API)?);
-
         let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
-
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
-        let http = reqwest::Client::builder()
+        let mut httpb = reqwest::Client::builder()
             .user_agent(self.user_agent.as_deref().unwrap_or(USER_AGENT))
-            .cookie_store(true)
-            .build()?;
+            .cookie_store(true);
+
+        if let Some(t) = self.timeout {
+            httpb = httpb.timeout(t);
+        }
+        if let Some(ct) = self.connect_timeout {
+            httpb = httpb.connect_timeout(ct);
+        }
+
+        let http = httpb.build()?;
 
         Ok(YfClient {
             http,
@@ -190,6 +267,14 @@ impl YfClientBuilder {
             },
             #[cfg(feature = "test-mode")]
             api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
+
+            // NEW: enable cache only if TTL provided
+            cache: self.cache_ttl.map(|ttl| {
+                Arc::new(CacheStore {
+                    map: RwLock::new(HashMap::new()),
+                    default_ttl: ttl,
+                })
+            }),
         })
     }
 }

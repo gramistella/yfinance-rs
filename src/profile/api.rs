@@ -24,6 +24,80 @@ pub(crate) async fn load_from_quote_summary_api(
             qp.append_pair("crumb", crumb);
         }
 
+        // Cache path
+        if let Some(text) = client.cache_get(&url).await {
+            #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+            {
+                let _ = debug_dump_api(symbol, &text);
+            }
+
+            let env: V10Envelope = serde_json::from_str(&text)
+                .map_err(|e| YfError::Data(format!("quoteSummary json parse: {e}")))?;
+
+            if let Some(error) = env.quote_summary.as_ref().and_then(|qs| qs.error.as_ref()) {
+                if error.description.contains("Invalid Crumb") && i == 0 {
+                    client.clear_crumb();
+                    client.ensure_credentials().await?;
+                    continue;
+                }
+                return Err(YfError::Data(format!("yahoo error: {}", error.description)));
+            }
+
+            let first = env
+                .quote_summary
+                .and_then(|qs| qs.result)
+                .and_then(|mut v| v.pop())
+                .ok_or_else(|| YfError::Data("empty quoteSummary result".into()))?;
+
+            let kind = first
+                .quote_type
+                .as_ref()
+                .and_then(|q| q.quote_type.as_deref())
+                .unwrap_or("");
+
+            let name = first
+                .quote_type
+                .as_ref()
+                .and_then(|q| q.long_name.clone().or(q.short_name.clone()))
+                .unwrap_or_else(|| symbol.to_string());
+
+            return match kind {
+                "EQUITY" => {
+                    let sp = first
+                        .asset_profile
+                        .ok_or_else(|| YfError::Data("assetProfile missing".into()))?;
+                    let address = Address {
+                        street1: sp.address1,
+                        street2: sp.address2,
+                        city: sp.city,
+                        state: sp.state,
+                        country: sp.country,
+                        zip: sp.zip,
+                    };
+                    Ok(Profile::Company(Company {
+                        name,
+                        sector: sp.sector,
+                        industry: sp.industry,
+                        website: sp.website,
+                        summary: sp.long_business_summary,
+                        address: Some(address),
+                    }))
+                }
+                "ETF" => {
+                    let fp = first
+                        .fund_profile
+                        .ok_or_else(|| YfError::Data("fundProfile missing".into()))?;
+                    Ok(Profile::Fund(Fund {
+                        name,
+                        family: fp.family,
+                        kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
+                    }))
+                }
+                other => Err(YfError::Data(format!("unsupported quoteType: {other}"))),
+            };
+        }
+
+        // Network path
         let resp = client.http().get(url.clone()).send().await?;
         let text = net::get_text(resp, "profile_api", symbol, "json").await?;
 
@@ -48,6 +122,9 @@ pub(crate) async fn load_from_quote_summary_api(
             }
             return Err(YfError::Data(format!("yahoo error: {}", error.description)));
         }
+
+        // Cache successful body
+        client.cache_put(&url, &text, None).await;
 
         let first = env
             .quote_summary
