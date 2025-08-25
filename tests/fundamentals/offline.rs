@@ -25,7 +25,7 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
             .body(fixture("fundamentals_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -34,7 +34,7 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let rows = t.quarterly_income_stmt().await.unwrap();
 
     mock.assert();
@@ -59,7 +59,7 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
             .body(fixture("fundamentals_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -68,7 +68,7 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let rows = t.balance_sheet().await.unwrap();
 
     mock.assert();
@@ -93,7 +93,7 @@ async fn offline_cashflow_annual_uses_recorded_fixture() {
             .body(fixture("fundamentals_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -102,7 +102,7 @@ async fn offline_cashflow_annual_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let rows = t.cashflow().await.unwrap();
 
     mock.assert();
@@ -127,7 +127,7 @@ async fn offline_earnings_uses_recorded_fixture() {
             .body(fixture("fundamentals_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -136,7 +136,7 @@ async fn offline_earnings_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let e = t.earnings().await.unwrap();
 
     mock.assert();
@@ -164,7 +164,7 @@ async fn offline_calendar_uses_recorded_fixture() {
             .body(fixture("fundamentals_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -173,7 +173,7 @@ async fn offline_calendar_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let cal = t.calendar().await.unwrap();
 
     mock.assert();

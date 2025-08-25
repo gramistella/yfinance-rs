@@ -5,10 +5,10 @@ async fn live_ticker_quote_for_record() {
         return;
     }
 
-    let mut client = yfinance_rs::YfClient::builder().build().unwrap();
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
 
     for sym in ["AAPL", "MSFT"] {
-        let mut t = yfinance_rs::Ticker::new(&mut client, sym).unwrap();
+        let mut t = yfinance_rs::Ticker::new(client.clone(), sym).unwrap();
         let q = t.quote().await.unwrap();
 
         if !crate::common::is_recording() {
@@ -25,8 +25,8 @@ async fn live_ticker_options_for_record() {
         return;
     }
 
-    let mut client = yfinance_rs::YfClient::builder().build().unwrap();
-    let mut t = yfinance_rs::Ticker::new(&mut client, "AAPL").unwrap();
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let t = yfinance_rs::Ticker::new(client, "AAPL").unwrap();
 
     let expiries = t.options().await.unwrap();
 

@@ -37,12 +37,12 @@ async fn get_history_metadata_returns_timezone() {
             .body(meta_body());
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
         .build()
         .unwrap();
 
-    let t = Ticker::new(&mut client, "MSFT").unwrap();
+    let t = Ticker::new(client, "MSFT").unwrap();
     let meta = t.get_history_metadata(Some(Range::D1)).await.unwrap();
 
     mock.assert();

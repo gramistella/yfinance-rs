@@ -1,4 +1,7 @@
-use crate::core::{YfClient, YfError};
+use crate::core::{
+    YfClient, YfError,
+    client::{CacheMode, RetryConfig},
+};
 
 use super::fetch::fetch_modules;
 use super::wire::raw_num;
@@ -7,12 +10,12 @@ use super::{
     IncomeStatementRow,
 };
 
-/* ---------- Public entry points (mapping wire → public models) ---------- */
-
-pub async fn income_statement(
-    client: &mut YfClient,
+pub(super) async fn income_statement(
+    client: &YfClient,
     symbol: &str,
     quarterly: bool,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<IncomeStatementRow>, YfError> {
     let modules = if quarterly {
         "incomeStatementHistoryQuarterly"
@@ -20,7 +23,7 @@ pub async fn income_statement(
         "incomeStatementHistory"
     };
 
-    let root = fetch_modules(client, symbol, modules).await?;
+    let root = fetch_modules(client, symbol, modules, cache_mode, retry_override).await?;
     let arr = if quarterly {
         root.income_statement_history_quarterly
             .and_then(|x| x.income_statement_history)
@@ -42,10 +45,12 @@ pub async fn income_statement(
         .collect())
 }
 
-pub async fn balance_sheet(
-    client: &mut YfClient,
+pub(super) async fn balance_sheet(
+    client: &YfClient,
     symbol: &str,
     quarterly: bool,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<BalanceSheetRow>, YfError> {
     let modules = if quarterly {
         "balanceSheetHistoryQuarterly"
@@ -53,7 +58,7 @@ pub async fn balance_sheet(
         "balanceSheetHistory"
     };
 
-    let root = fetch_modules(client, symbol, modules).await?;
+    let root = fetch_modules(client, symbol, modules, cache_mode, retry_override).await?;
     let arr = if quarterly {
         root.balance_sheet_history_quarterly
             .and_then(|x| x.balance_sheet_statements)
@@ -76,10 +81,12 @@ pub async fn balance_sheet(
         .collect())
 }
 
-pub async fn cashflow(
-    client: &mut YfClient,
+pub(super) async fn cashflow(
+    client: &YfClient,
     symbol: &str,
     quarterly: bool,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<CashflowRow>, YfError> {
     let modules = if quarterly {
         "cashflowStatementHistoryQuarterly"
@@ -87,7 +94,7 @@ pub async fn cashflow(
         "cashflowStatementHistory"
     };
 
-    let root = fetch_modules(client, symbol, modules).await?;
+    let root = fetch_modules(client, symbol, modules, cache_mode, retry_override).await?;
     let arr = if quarterly {
         root.cashflow_statement_history_quarterly
             .and_then(|x| x.cashflow_statements)
@@ -118,8 +125,13 @@ pub async fn cashflow(
         .collect())
 }
 
-pub async fn earnings(client: &mut YfClient, symbol: &str) -> Result<Earnings, YfError> {
-    let root = fetch_modules(client, symbol, "earnings").await?;
+pub(super) async fn earnings(
+    client: &YfClient,
+    symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+) -> Result<Earnings, YfError> {
+    let root = fetch_modules(client, symbol, "earnings", cache_mode, retry_override).await?;
     let e = root
         .earnings
         .ok_or_else(|| YfError::Data("earnings missing".into()))?;
@@ -176,8 +188,13 @@ pub async fn earnings(client: &mut YfClient, symbol: &str) -> Result<Earnings, Y
     })
 }
 
-pub async fn calendar(client: &mut YfClient, symbol: &str) -> Result<super::Calendar, YfError> {
-    let root = fetch_modules(client, symbol, "calendarEvents").await?;
+pub(super) async fn calendar(
+    client: &YfClient,
+    symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+) -> Result<super::Calendar, YfError> {
+    let root = fetch_modules(client, symbol, "calendarEvents", cache_mode, retry_override).await?;
     let c = root
         .calendar_events
         .and_then(|ce| ce.earnings)

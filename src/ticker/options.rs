@@ -14,7 +14,7 @@ use super::model::{OptionChain, OptionContract};
 /* ---------------- Public: expirations + chain ---------------- */
 
 pub(crate) async fn expiration_dates(
-    client: &mut YfClient,
+    client: &YfClient,
     base: &Url,
     symbol: &str,
     cache_mode: CacheMode,
@@ -35,7 +35,7 @@ pub(crate) async fn expiration_dates(
 }
 
 pub(crate) async fn option_chain(
-    client: &mut YfClient,
+    client: &YfClient,
     base: &Url,
     symbol: &str,
     date: Option<i64>,
@@ -103,7 +103,7 @@ pub(crate) async fn option_chain(
 /* ---------------- Internal: raw fetch with auth fallback ---------------- */
 
 async fn fetch_options_raw(
-    client: &mut YfClient,
+    client: &YfClient,
     base: &Url,
     symbol: &str,
     date: Option<i64>,
@@ -150,7 +150,7 @@ async fn fetch_options_raw(
     }
 
     client.ensure_credentials().await?;
-    let crumb = client.crumb().ok_or_else(|| YfError::Status {
+    let crumb = client.crumb().await.ok_or_else(|| YfError::Status {
         status: code,
         url: url.to_string(),
     })?;
@@ -161,7 +161,7 @@ async fn fetch_options_raw(
         if let Some(d) = date {
             qp.append_pair("date", &d.to_string());
         }
-        qp.append_pair("crumb", crumb);
+        qp.append_pair("crumb", &crumb);
     }
 
     let req2 = http.get(url2.clone()).header("accept", "application/json");

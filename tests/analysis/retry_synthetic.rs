@@ -51,7 +51,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
             }"#);
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -62,7 +62,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let t = Ticker::new(client, sym).unwrap();
     let s = t.recommendations_summary().await.unwrap();
 
     first.assert();

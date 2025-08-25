@@ -11,7 +11,7 @@ use crate::{
 
 use super::model::Quote;
 
-async fn parse_quote_from_body(body: &str, symbol: &str) -> Result<Quote, YfError> {
+fn parse_quote_from_body(body: &str, symbol: &str) -> Result<Quote, YfError> {
     let env: V7Envelope =
         serde_json::from_str(body).map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
     let result = env
@@ -37,7 +37,7 @@ async fn parse_quote_from_body(body: &str, symbol: &str) -> Result<Quote, YfErro
 /* ---------------- Public: fetch a single quote ---------------- */
 
 pub(crate) async fn fetch_quote(
-    client: &mut YfClient,
+    client: &YfClient,
     base: &Url,
     symbol: &str,
     cache_mode: CacheMode,
@@ -54,7 +54,7 @@ pub(crate) async fn fetch_quote(
     if cache_mode == CacheMode::Use
         && let Some(body) = client.cache_get(&url).await
     {
-        return parse_quote_from_body(&body, symbol).await;
+        return parse_quote_from_body(&body, symbol);
     }
 
     let req = http.get(url.clone()).header("accept", "application/json");
@@ -65,7 +65,7 @@ pub(crate) async fn fetch_quote(
         if cache_mode != CacheMode::Bypass {
             client.cache_put(&url, &body, None).await;
         }
-        return parse_quote_from_body(&body, symbol).await;
+        return parse_quote_from_body(&body, symbol);
     }
 
     let code = resp.status().as_u16();
@@ -77,13 +77,10 @@ pub(crate) async fn fetch_quote(
     }
 
     client.ensure_credentials().await?;
-    let crumb = client
-        .crumb()
-        .ok_or_else(|| YfError::Status {
-            status: code,
-            url: url.to_string(),
-        })?
-        .to_string();
+    let crumb = client.crumb().await.ok_or_else(|| YfError::Status {
+        status: code,
+        url: url.to_string(),
+    })?;
 
     let mut url2 = base.clone();
     {
@@ -106,7 +103,7 @@ pub(crate) async fn fetch_quote(
     if cache_mode != CacheMode::Bypass {
         client.cache_put(&url2, &body, None).await;
     }
-    parse_quote_from_body(&body, symbol).await
+    parse_quote_from_body(&body, symbol)
 }
 
 /* ---------------- Minimal serde mapping for v7 quote ---------------- */

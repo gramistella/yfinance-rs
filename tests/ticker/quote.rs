@@ -32,9 +32,9 @@ async fn quote_v7_happy_path() {
             .body(body);
     });
 
-    let mut client = YfClient::builder().build().unwrap();
+    let client = YfClient::builder().build().unwrap();
     let mut ticker = Ticker::with_quote_base(
-        &mut client,
+        client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
     )
@@ -80,9 +80,9 @@ async fn fast_info_derives_last_price() {
             .body(body);
     });
 
-    let mut client = YfClient::builder().build().unwrap();
+    let client = YfClient::builder().build().unwrap();
     let mut ticker = Ticker::with_quote_base(
-        &mut client,
+        client,
         "MSFT",
         Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
     )
@@ -110,8 +110,8 @@ async fn live_quote_smoke() {
         return;
     }
 
-    let mut client = YfClient::builder().build().unwrap();
-    let mut ticker = Ticker::new(&mut client, "AAPL").unwrap();
+    let client = YfClient::builder().build().unwrap();
+    let mut ticker = Ticker::new(client, "AAPL").unwrap();
     let fi = ticker.fast_info().await.unwrap();
 
     if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {

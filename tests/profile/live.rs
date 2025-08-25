@@ -5,10 +5,8 @@ async fn live_profile_company() {
         return;
     }
 
-    let mut client = yfinance_rs::YfClient::builder().build().unwrap();
-    let prof = yfinance_rs::Profile::load(&mut client, "AAPL")
-        .await
-        .unwrap();
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let prof = yfinance_rs::Profile::load(&client, "AAPL").await.unwrap();
 
     if !crate::common::is_recording() {
         match prof {
@@ -24,8 +22,8 @@ async fn live_profile_fund_for_record() {
     if !crate::common::is_recording() {
         return;
     }
-    let mut client = yfinance_rs::YfClient::builder().build().unwrap();
-    let _ = yfinance_rs::Profile::load(&mut client, "QQQ").await;
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let _ = yfinance_rs::Profile::load(&client, "QQQ").await;
 }
 
 #[tokio::test]
@@ -34,11 +32,11 @@ async fn live_profile_company_scrape_for_record() {
     if !crate::common::is_recording() {
         return;
     }
-    let mut client = yfinance_rs::YfClient::builder()
+    let client = yfinance_rs::YfClient::builder()
         .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
-    let _ = yfinance_rs::Profile::load(&mut client, "AAPL").await;
+    let _ = yfinance_rs::Profile::load(&client, "AAPL").await;
 }
 
 #[tokio::test]
@@ -47,9 +45,9 @@ async fn live_profile_fund_scrape_for_record() {
     if !crate::common::is_recording() {
         return;
     }
-    let mut client = yfinance_rs::YfClient::builder()
+    let client = yfinance_rs::YfClient::builder()
         .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
-    let _ = yfinance_rs::Profile::load(&mut client, "QQQ").await;
+    let _ = yfinance_rs::Profile::load(&client, "QQQ").await;
 }

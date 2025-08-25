@@ -21,7 +21,7 @@ async fn api_fetches_cookie_and_crumb_first() {
             .body(common::fixture("profile_api", sym, "json"));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -31,7 +31,7 @@ async fn api_fetches_cookie_and_crumb_first() {
         .build()
         .unwrap();
 
-    let p = Profile::load(&mut client, sym).await.unwrap();
+    let p = Profile::load(&client, sym).await.unwrap();
     api.assert();
     cookie_mock.assert();
     crumb_mock.assert();
@@ -47,7 +47,7 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
     let server = common::setup_server();
 
     // start with a stale crumb so first call fails
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -84,7 +84,7 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
             .body(common::fixture("profile_api", sym, "json"));
     });
 
-    let p = Profile::load(&mut client, sym).await.unwrap();
+    let p = Profile::load(&client, sym).await.unwrap();
     invalid.assert();
     cookie_mock.assert();
     crumb_mock.assert();

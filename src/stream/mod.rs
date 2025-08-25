@@ -525,11 +525,8 @@ async fn fetch_quotes_multi(
     client.ensure_credentials().await?;
     let crumb = client
         .crumb()
-        .ok_or_else(|| crate::core::YfError::Status {
-            status: code,
-            url: url.to_string(),
-        })?
-        .to_string();
+        .await
+        .ok_or_else(|| crate::core::YfError::Data("Crumb is not set".into()))?;
 
     let mut url2 = base.clone();
     {

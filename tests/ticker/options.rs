@@ -27,9 +27,9 @@ async fn options_expirations_happy() {
             .body(body);
     });
 
-    let mut client = YfClient::builder().build().unwrap();
-    let mut t = Ticker::with_options_base(
-        &mut client,
+    let client = YfClient::builder().build().unwrap();
+    let t = Ticker::with_options_base(
+        client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
     )
@@ -94,9 +94,9 @@ async fn option_chain_for_specific_date() {
             .body(body);
     });
 
-    let mut client = YfClient::builder().build().unwrap();
-    let mut t = Ticker::with_options_base(
-        &mut client,
+    let client = YfClient::builder().build().unwrap();
+    let t = Ticker::with_options_base(
+        client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
     )
@@ -193,14 +193,14 @@ async fn options_retry_with_crumb_on_403() {
             .body(ok_body);
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
         .build()
         .unwrap();
 
-    let mut t = Ticker::with_options_base(
-        &mut client,
+    let t = Ticker::with_options_base(
+        client,
         "MSFT",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
     )

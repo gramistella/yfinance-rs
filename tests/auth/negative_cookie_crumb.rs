@@ -28,7 +28,7 @@ async fn missing_set_cookie_header_is_an_error() {
             .body(r#"{"quoteSummary":{"result":[],"error":null}}"#);
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -38,7 +38,7 @@ async fn missing_set_cookie_header_is_an_error() {
         .build()
         .unwrap();
 
-    let err = Profile::load(&mut client, sym).await.unwrap_err();
+    let err = Profile::load(&client, sym).await.unwrap_err();
     cookie.assert();
 
     match err {
@@ -73,7 +73,7 @@ async fn invalid_crumb_body_is_an_error() {
         then.status(200).body("{}");
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -83,7 +83,7 @@ async fn invalid_crumb_body_is_an_error() {
         .build()
         .unwrap();
 
-    let err = Profile::load(&mut client, sym).await.unwrap_err();
+    let err = Profile::load(&client, sym).await.unwrap_err();
 
     match err {
         YfError::Data(s) => assert!(s.contains("Received invalid crumb"), "unexpected: {s}"),

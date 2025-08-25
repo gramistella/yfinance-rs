@@ -23,7 +23,7 @@ impl Profile {
     /// 2) Try API; if it errors, fall back to scraping the HTML page.
     ///
     /// In `test-mode`, the behavior follows `ApiPreference`.
-    pub async fn load(client: &mut YfClient, symbol: &str) -> Result<Profile, YfError> {
+    pub async fn load(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
         #[cfg(not(feature = "test-mode"))]
         {
             client.ensure_credentials().await?;

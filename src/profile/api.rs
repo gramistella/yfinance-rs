@@ -9,7 +9,7 @@ use serde::Deserialize;
 use super::{Address, Company, Fund, Profile};
 
 pub(crate) async fn load_from_quote_summary_api(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
 ) -> Result<Profile, YfError> {
     let first: V10Result = quotesummary::fetch_module_result(

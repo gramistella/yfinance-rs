@@ -6,7 +6,7 @@ use crate::core::client::CacheMode;
 use crate::core::client::RetryConfig;
 use crate::{YfClient, YfError};
 
-async fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
+fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
     let env: V1SearchEnvelope =
         serde_json::from_str(body).map_err(|e| YfError::Data(format!("search json parse: {e}")))?;
 
@@ -32,13 +32,13 @@ async fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
 /* ---------------- Public API ---------------- */
 
 /// Convenience: perform a search with default settings (quotes only).
-pub async fn search(client: &mut YfClient, query: &str) -> Result<SearchResponse, YfError> {
+pub async fn search(client: YfClient, query: &str) -> Result<SearchResponse, YfError> {
     SearchBuilder::new(client, query)?.fetch().await
 }
 
 #[derive(Debug)]
-pub struct SearchBuilder<'a> {
-    client: &'a mut YfClient,
+pub struct SearchBuilder {
+    client: YfClient,
     base: Url,
     query: String,
     quotes_count: Option<u32>,
@@ -50,8 +50,8 @@ pub struct SearchBuilder<'a> {
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> SearchBuilder<'a> {
-    pub fn new(client: &'a mut YfClient, query: impl Into<String>) -> Result<Self, YfError> {
+impl SearchBuilder {
+    pub fn new(client: YfClient, query: impl Into<String>) -> Result<Self, YfError> {
         Ok(Self {
             client,
             base: Url::parse(DEFAULT_BASE_SEARCH_V1)?,
@@ -132,7 +132,7 @@ impl<'a> SearchBuilder<'a> {
         if self.cache_mode == CacheMode::Use
             && let Some(body) = self.client.cache_get(&url).await
         {
-            return parse_search_body(&body).await;
+            return parse_search_body(&body);
         }
 
         let http = self.client.http().clone();
@@ -152,11 +152,8 @@ impl<'a> SearchBuilder<'a> {
                 let crumb = self
                     .client
                     .crumb()
-                    .ok_or_else(|| crate::core::YfError::Status {
-                        status: code,
-                        url: url.to_string(),
-                    })?
-                    .to_string();
+                    .await
+                    .ok_or_else(|| crate::core::YfError::Data("Crumb is not set".into()))?;
 
                 let mut url2 = self.base.clone();
                 {
@@ -200,7 +197,7 @@ impl<'a> SearchBuilder<'a> {
                 if self.cache_mode != CacheMode::Bypass {
                     self.client.cache_put(&url2, &body, None).await;
                 }
-                return parse_search_body(&body).await;
+                return parse_search_body(&body);
             }
 
             return Err(crate::core::YfError::Status {
@@ -213,7 +210,7 @@ impl<'a> SearchBuilder<'a> {
         if self.cache_mode != CacheMode::Bypass {
             self.client.cache_put(&url, &body, None).await;
         }
-        parse_search_body(&body).await
+        parse_search_body(&body)
     }
 }
 

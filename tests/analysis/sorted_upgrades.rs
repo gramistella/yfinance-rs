@@ -32,7 +32,7 @@ async fn upgrades_downgrades_are_sorted_by_ts() {
             .body(body);
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -41,7 +41,7 @@ async fn upgrades_downgrades_are_sorted_by_ts() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();

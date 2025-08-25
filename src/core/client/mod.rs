@@ -42,6 +42,12 @@ struct CacheStore {
     default_ttl: Duration,
 }
 
+#[derive(Debug, Default)]
+struct ClientState {
+    cookie: Option<String>,
+    crumb: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct YfClient {
     http: Client,
@@ -52,8 +58,7 @@ pub struct YfClient {
     crumb_url: Url,
     user_agent: String,
 
-    cookie: Option<String>,
-    crumb: Option<String>,
+    state: Arc<RwLock<ClientState>>,
 
     #[cfg(feature = "test-mode")]
     api_preference: ApiPreference,
@@ -331,14 +336,7 @@ impl YfClientBuilder {
 
         let http = httpb.build()?;
 
-        Ok(YfClient {
-            http,
-            base_chart,
-            base_quote,
-            base_quote_api,
-            cookie_url,
-            crumb_url,
-            user_agent,
+        let initial_state = ClientState {
             cookie: {
                 #[cfg(feature = "test-mode")]
                 {
@@ -359,6 +357,17 @@ impl YfClientBuilder {
                     None
                 }
             },
+        };
+
+        Ok(YfClient {
+            http,
+            base_chart,
+            base_quote,
+            base_quote_api,
+            cookie_url,
+            crumb_url,
+            user_agent,
+            state: Arc::new(RwLock::new(initial_state)),
             #[cfg(feature = "test-mode")]
             api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
             retry: self.retry.unwrap_or_default(),

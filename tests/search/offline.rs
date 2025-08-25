@@ -26,9 +26,9 @@ async fn offline_search_uses_recorded_fixture() {
             .body(fixture("search_v1", query));
     });
 
-    let mut client = YfClient::builder().build().unwrap();
+    let client = YfClient::builder().build().unwrap();
 
-    let resp = SearchBuilder::new(&mut client, query)
+    let resp = SearchBuilder::new(client, query)
         .unwrap()
         .search_base(Url::parse(&format!("{}/v1/finance/search", server.base_url())).unwrap())
         .fetch()

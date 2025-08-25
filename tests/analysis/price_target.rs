@@ -32,7 +32,7 @@ async fn offline_price_target_happy() {
             .body(body);
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -41,7 +41,7 @@ async fn offline_price_target_happy() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let pt = t.analyst_price_target().await.unwrap();
 
     mock.assert();
@@ -104,7 +104,7 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
             );
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -115,7 +115,7 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let pt = t.analyst_price_target().await.unwrap();
 
     first.assert();

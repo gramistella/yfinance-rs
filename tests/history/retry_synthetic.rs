@@ -25,8 +25,8 @@ async fn history_retries_on_persistent_5xx() {
 
     let max_retries = 3;
     let client_retry_config = RetryConfig {
-        backoff: Backoff::Fixed(Duration::from_millis(1)), // minimal delay for fast tests
-        max_retries,                                       // keep whatever you had in scope
+        backoff: Backoff::Fixed(Duration::from_millis(1)),
+        max_retries,
         ..RetryConfig::default()
     };
 

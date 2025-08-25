@@ -36,9 +36,9 @@ async fn option_chain_expiration_falls_back_to_url_date() {
             .body(body);
     });
 
-    let mut client = YfClient::builder().build().unwrap();
-    let mut t = Ticker::with_options_base(
-        &mut client,
+    let client = YfClient::builder().build().unwrap();
+    let t = Ticker::with_options_base(
+        client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
     )

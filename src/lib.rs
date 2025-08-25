@@ -23,7 +23,7 @@ pub use core::{
 pub use download::{DownloadBuilder, DownloadResult};
 pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
-    EarningsQuarterEps, EarningsYear, IncomeStatementRow, Num,
+    EarningsQuarterEps, EarningsYear, FundamentalsBuilder, IncomeStatementRow, Num,
 };
 pub use history::HistoryBuilder;
 pub use profile::{Address, Company, Fund, Profile};

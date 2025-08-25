@@ -23,7 +23,7 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
             .body(fixture("analysis_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -32,7 +32,7 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let t = Ticker::new(client, sym).unwrap();
     let rows = t.recommendations().await.unwrap();
 
     mock.assert();
@@ -55,7 +55,7 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
             .body(fixture("analysis_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -64,7 +64,7 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let t = Ticker::new(client, sym).unwrap();
     let s = t.recommendations_summary().await.unwrap();
 
     mock.assert();
@@ -89,7 +89,7 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
             .body(fixture("analysis_api", sym));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -98,7 +98,7 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let _rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();

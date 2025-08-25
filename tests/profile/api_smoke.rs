@@ -9,7 +9,7 @@ async fn profile_api_company_happy() {
     let crumb = "test-crumb";
     let mock = mock_profile_api(&server, sym, crumb);
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -18,7 +18,7 @@ async fn profile_api_company_happy() {
         .build()
         .unwrap();
 
-    let prof = Profile::load(&mut client, sym).await.unwrap();
+    let prof = Profile::load(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {
@@ -39,7 +39,7 @@ async fn profile_api_fund_happy() {
     let crumb = "test-crumb";
     let mock = mock_profile_api(&server, sym, crumb);
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -48,7 +48,7 @@ async fn profile_api_fund_happy() {
         .build()
         .unwrap();
 
-    let prof = Profile::load(&mut client, sym).await.unwrap();
+    let prof = Profile::load(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {

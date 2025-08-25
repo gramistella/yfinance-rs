@@ -7,12 +7,12 @@ async fn live_search_smoke_and_or_record() {
         return;
     }
 
-    let mut client = YfClient::builder().build().unwrap();
+    let client = YfClient::builder().build().unwrap();
 
     // Keep the query simple/stable so the recorded fixture is reusable.
     let query = "apple";
 
-    let resp = SearchBuilder::new(&mut client, query)
+    let resp = SearchBuilder::new(client, query)
         .unwrap()
         .fetch()
         .await

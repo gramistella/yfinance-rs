@@ -50,12 +50,12 @@ async fn ticker_actions_dividends_splits() {
             .body(body_with_actions());
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
         .build()
         .unwrap();
 
-    let t = Ticker::new(&mut client, "TEST").unwrap();
+    let t = Ticker::new(client, "TEST").unwrap();
 
     let acts = t.actions(None).await.unwrap();
     mock.assert();

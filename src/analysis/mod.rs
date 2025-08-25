@@ -14,16 +14,16 @@ use crate::{
 };
 
 /// Builder for analysis module API calls.
-pub struct AnalysisBuilder<'a> {
-    client: &'a mut YfClient,
+pub struct AnalysisBuilder {
+    client: YfClient,
     symbol: String,
     cache_mode: CacheMode,
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> AnalysisBuilder<'a> {
+impl AnalysisBuilder {
     /// Creates a new builder for a given symbol.
-    pub fn new(client: &'a mut YfClient, symbol: impl Into<String>) -> Self {
+    pub fn new(client: YfClient, symbol: impl Into<String>) -> Self {
         Self {
             client,
             symbol: symbol.into(),
@@ -47,7 +47,7 @@ impl<'a> AnalysisBuilder<'a> {
     /// Fetches the analyst recommendation trend.
     pub async fn recommendations(self) -> Result<Vec<RecommendationRow>, YfError> {
         api::recommendation_trend(
-            self.client,
+            &self.client,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),
@@ -58,7 +58,7 @@ impl<'a> AnalysisBuilder<'a> {
     /// Fetches a summary of the latest analyst recommendations.
     pub async fn recommendations_summary(self) -> Result<RecommendationSummary, YfError> {
         api::recommendation_summary(
-            self.client,
+            &self.client,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),
@@ -69,7 +69,7 @@ impl<'a> AnalysisBuilder<'a> {
     /// Fetches the history of analyst upgrades and downgrades.
     pub async fn upgrades_downgrades(self) -> Result<Vec<UpgradeDowngradeRow>, YfError> {
         api::upgrades_downgrades(
-            self.client,
+            &self.client,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),
@@ -80,7 +80,7 @@ impl<'a> AnalysisBuilder<'a> {
     /// Fetches the analyst price target.
     pub async fn analyst_price_target(self) -> Result<PriceTarget, YfError> {
         api::analyst_price_target(
-            self.client,
+            &self.client,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),

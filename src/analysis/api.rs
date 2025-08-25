@@ -10,7 +10,7 @@ use super::wire::RawNum;
 /* ---------- Public entry points (mapping wire → public models) ---------- */
 
 pub(super) async fn recommendation_trend(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
@@ -45,7 +45,7 @@ pub(super) async fn recommendation_trend(
 }
 
 pub(super) async fn recommendation_summary(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
@@ -101,7 +101,7 @@ pub(super) async fn recommendation_summary(
 }
 
 pub(super) async fn upgrades_downgrades(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
@@ -136,7 +136,7 @@ pub(super) async fn upgrades_downgrades(
 }
 
 pub(super) async fn analyst_price_target(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,

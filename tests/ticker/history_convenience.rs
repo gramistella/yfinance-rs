@@ -35,12 +35,12 @@ async fn ticker_history_convenience_builds_expected_query() {
             .body(minimal_ok_body());
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
         .build()
         .unwrap();
 
-    let ticker = yfinance_rs::Ticker::new(&mut client, "AAPL").unwrap();
+    let ticker = yfinance_rs::Ticker::new(client, "AAPL").unwrap();
     let bars = ticker
         .history(Some(Range::Ytd), Some(Interval::D1), false)
         .await

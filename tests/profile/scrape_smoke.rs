@@ -8,13 +8,13 @@ async fn profile_scrape_company_happy() {
     let sym = "AAPL";
     let mock = mock_profile_scrape(&server, sym);
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = Profile::load(&mut client, sym).await.unwrap();
+    let prof = Profile::load(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {
@@ -35,13 +35,13 @@ async fn profile_scrape_fund_happy() {
     let sym = "QQQ";
     let mock = mock_profile_scrape(&server, sym);
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = Profile::load(&mut client, sym).await.unwrap();
+    let prof = Profile::load(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {

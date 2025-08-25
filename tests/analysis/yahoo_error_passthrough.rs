@@ -20,7 +20,7 @@ async fn analysis_other_yahoo_errors_are_surfaced_without_retry() {
     });
 
     // Build a client that already has credentials so the call proceeds immediately.
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -29,7 +29,7 @@ async fn analysis_other_yahoo_errors_are_surfaced_without_retry() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let t = Ticker::new(client, sym).unwrap();
     let err = t.recommendations().await.unwrap_err();
 
     api_err.assert();

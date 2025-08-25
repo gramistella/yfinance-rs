@@ -10,14 +10,15 @@ use crate::{
     YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
+    fundamentals::FundamentalsBuilder,
     history::HistoryBuilder,
 };
 
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
 
-pub struct Ticker<'a> {
-    pub(crate) client: &'a mut YfClient,
+pub struct Ticker {
+    pub(crate) client: YfClient,
     pub(crate) symbol: String,
     pub(crate) quote_base: Url,
     options_base: Url,
@@ -25,11 +26,8 @@ pub struct Ticker<'a> {
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> Ticker<'a> {
-    pub fn new(
-        client: &'a mut crate::core::YfClient,
-        symbol: impl Into<String>,
-    ) -> Result<Self, crate::core::YfError> {
+impl Ticker {
+    pub fn new(client: YfClient, symbol: impl Into<String>) -> Result<Self, crate::core::YfError> {
         Ok(Self {
             client,
             symbol: symbol.into(),
@@ -51,7 +49,7 @@ impl<'a> Ticker<'a> {
     }
 
     pub fn with_quote_base(
-        client: &'a mut YfClient,
+        client: YfClient,
         symbol: impl Into<String>,
         base: Url,
     ) -> Result<Self, YfError> {
@@ -66,7 +64,7 @@ impl<'a> Ticker<'a> {
     }
 
     pub fn with_options_base(
-        client: &'a mut YfClient,
+        client: YfClient,
         symbol: impl Into<String>,
         base: Url,
     ) -> Result<Self, YfError> {
@@ -81,7 +79,7 @@ impl<'a> Ticker<'a> {
     }
 
     pub fn with_bases(
-        client: &'a mut YfClient,
+        client: YfClient,
         symbol: impl Into<String>,
         quote_base: Url,
         options_base: Url,
@@ -97,14 +95,14 @@ impl<'a> Ticker<'a> {
     }
 
     pub fn history_builder(&self) -> HistoryBuilder<'_> {
-        HistoryBuilder::new(&*self.client, &self.symbol)
+        HistoryBuilder::new(&self.client, &self.symbol)
     }
 
     /* ---------------- Quotes ---------------- */
 
     pub async fn quote(&mut self) -> Result<Quote, YfError> {
         quote::fetch_quote(
-            self.client,
+            &self.client,
             &self.quote_base,
             &self.symbol,
             self.cache_mode,
@@ -210,9 +208,9 @@ impl<'a> Ticker<'a> {
 
     /* ---------------- Options ---------------- */
 
-    pub async fn options(&mut self) -> Result<Vec<i64>, YfError> {
+    pub async fn options(&self) -> Result<Vec<i64>, YfError> {
         options::expiration_dates(
-            self.client,
+            &self.client,
             &self.options_base,
             &self.symbol,
             self.cache_mode,
@@ -221,9 +219,9 @@ impl<'a> Ticker<'a> {
         .await
     }
 
-    pub async fn option_chain(&mut self, date: Option<i64>) -> Result<OptionChain, YfError> {
+    pub async fn option_chain(&self, date: Option<i64>) -> Result<OptionChain, YfError> {
         options::option_chain(
-            self.client,
+            &self.client,
             &self.options_base,
             &self.symbol,
             date,
@@ -235,18 +233,16 @@ impl<'a> Ticker<'a> {
 
     /* ---------------- Analysis convenience ---------------- */
 
-    pub async fn recommendations(&mut self) -> Result<Vec<crate::RecommendationRow>, YfError> {
-        AnalysisBuilder::new(self.client, &self.symbol)
+    pub async fn recommendations(&self) -> Result<Vec<crate::RecommendationRow>, YfError> {
+        AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
             .recommendations()
             .await
     }
 
-    pub async fn recommendations_summary(
-        &mut self,
-    ) -> Result<crate::RecommendationSummary, YfError> {
-        AnalysisBuilder::new(self.client, &self.symbol)
+    pub async fn recommendations_summary(&self) -> Result<crate::RecommendationSummary, YfError> {
+        AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
             .recommendations_summary()
@@ -256,7 +252,7 @@ impl<'a> Ticker<'a> {
     pub async fn upgrades_downgrades(
         &mut self,
     ) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
-        AnalysisBuilder::new(self.client, &self.symbol)
+        AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
             .upgrades_downgrades()
@@ -264,7 +260,7 @@ impl<'a> Ticker<'a> {
     }
 
     pub async fn analyst_price_target(&mut self) -> Result<crate::PriceTarget, YfError> {
-        AnalysisBuilder::new(self.client, &self.symbol)
+        AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
             .analyst_price_target()
@@ -273,39 +269,45 @@ impl<'a> Ticker<'a> {
 
     /* ---------------- Fundamentals convenience ---------------- */
 
+    fn fundamentals_builder(&self) -> FundamentalsBuilder {
+        FundamentalsBuilder::new(self.client.clone(), &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+    }
+
     pub async fn income_stmt(&mut self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
-        crate::fundamentals::income_statement(self.client, &self.symbol, false).await
+        self.fundamentals_builder().income_statement(false).await
     }
 
     pub async fn quarterly_income_stmt(
         &mut self,
     ) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
-        crate::fundamentals::income_statement(self.client, &self.symbol, true).await
+        self.fundamentals_builder().income_statement(true).await
     }
 
     pub async fn balance_sheet(&mut self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
-        crate::fundamentals::balance_sheet(self.client, &self.symbol, false).await
+        self.fundamentals_builder().balance_sheet(false).await
     }
 
     pub async fn quarterly_balance_sheet(
         &mut self,
     ) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
-        crate::fundamentals::balance_sheet(self.client, &self.symbol, true).await
+        self.fundamentals_builder().balance_sheet(true).await
     }
 
     pub async fn cashflow(&mut self) -> Result<Vec<crate::CashflowRow>, YfError> {
-        crate::fundamentals::cashflow(self.client, &self.symbol, false).await
+        self.fundamentals_builder().cashflow(false).await
     }
 
     pub async fn quarterly_cashflow(&mut self) -> Result<Vec<crate::CashflowRow>, YfError> {
-        crate::fundamentals::cashflow(self.client, &self.symbol, true).await
+        self.fundamentals_builder().cashflow(true).await
     }
 
     pub async fn earnings(&mut self) -> Result<crate::Earnings, YfError> {
-        crate::fundamentals::earnings(self.client, &self.symbol).await
+        self.fundamentals_builder().earnings().await
     }
 
     pub async fn calendar(&mut self) -> Result<crate::FundCalendar, YfError> {
-        crate::fundamentals::calendar(self.client, &self.symbol).await
+        self.fundamentals_builder().calendar().await
     }
 }

@@ -32,13 +32,13 @@ async fn scrape_sveltekit_equity() {
             .body(svelte_html(payload));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::Profile::load(&mut client, sym).await.unwrap();
+    let prof = yfinance_rs::Profile::load(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {
@@ -69,13 +69,13 @@ async fn scrape_infers_equity_when_quote_type_missing() {
             .body(svelte_html(payload));
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
         .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::Profile::load(&mut client, sym).await.unwrap();
+    let prof = yfinance_rs::Profile::load(&client, sym).await.unwrap();
     mock.assert();
     assert!(matches!(prof, Profile::Company(_)));
 }

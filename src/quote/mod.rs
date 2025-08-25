@@ -10,25 +10,28 @@ use crate::core::{YfClient, YfError};
 
 /// Fetch a batch of quotes for multiple symbols using Yahoo's v7 endpoint.
 /// Falls back to cookie+crumb auth automatically if the first call returns 401/403.
-pub async fn quotes<I, S>(client: &mut YfClient, symbols: I) -> Result<Vec<Quote>, YfError>
+pub async fn quotes<I, S>(client: &YfClient, symbols: I) -> Result<Vec<Quote>, YfError>
 where
     I: IntoIterator<Item = S>,
     S: Into<String>,
 {
-    QuotesBuilder::new(client)?.symbols(symbols).fetch().await
+    QuotesBuilder::new(client.clone())?
+        .symbols(symbols)
+        .fetch()
+        .await
 }
 
 /// Builder for batch quote snapshots.
-pub struct QuotesBuilder<'a> {
-    client: &'a mut YfClient,
+pub struct QuotesBuilder {
+    client: YfClient,
     quote_base: Url,
     symbols: Vec<String>,
     cache_mode: CacheMode,
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> QuotesBuilder<'a> {
-    pub fn new(client: &'a mut YfClient) -> Result<Self, YfError> {
+impl QuotesBuilder {
+    pub fn new(client: YfClient) -> Result<Self, YfError> {
         Ok(Self {
             client,
             quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
@@ -79,7 +82,7 @@ impl<'a> QuotesBuilder<'a> {
         }
 
         let (body, url, maybe_status) = fetch_v7_multi_raw(
-            self.client,
+            &self.client,
             &self.quote_base,
             &self.symbols,
             None,
@@ -108,11 +111,11 @@ impl<'a> QuotesBuilder<'a> {
         let crumb = self
             .client
             .crumb()
-            .ok_or_else(|| crate::core::YfError::Data("Crumb is not set".into()))?
-            .to_string();
+            .await
+            .ok_or_else(|| crate::core::YfError::Data("Crumb is not set".into()))?;
 
         let (body, url, status) = fetch_v7_multi_raw(
-            self.client,
+            &self.client,
             &self.quote_base,
             &self.symbols,
             Some(&crumb),
@@ -137,13 +140,13 @@ impl<'a> QuotesBuilder<'a> {
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 
 async fn fetch_v7_multi_raw(
-    client: &mut crate::core::YfClient,
+    client: &YfClient,
     base: &url::Url,
     symbols: &[String],
     crumb: Option<&str>,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
-) -> Result<(String, url::Url, Option<u16>), crate::core::YfError> {
+) -> Result<(String, url::Url, Option<u16>), YfError> {
     let http = client.http().clone();
 
     let mut url = base.clone();

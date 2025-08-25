@@ -6,7 +6,7 @@ use crate::core::{
 };
 
 pub(super) async fn fetch_modules(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     modules: &str,
     cache_mode: CacheMode,

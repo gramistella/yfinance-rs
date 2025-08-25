@@ -35,7 +35,7 @@ async fn cashflow_computes_fcf_when_missing() {
             .body(body);
     });
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -44,7 +44,7 @@ async fn cashflow_computes_fcf_when_missing() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(&mut client, sym).unwrap();
+    let mut t = Ticker::new(client, sym).unwrap();
     let rows = t.cashflow().await.unwrap();
 
     mock.assert();

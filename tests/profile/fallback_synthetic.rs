@@ -20,7 +20,7 @@ async fn api_then_scrape_fallback_on_other_error() {
     // Scrape path gets used instead
     let scrape = common::mock_profile_scrape(&server, sym);
 
-    let mut client = YfClient::builder()
+    let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
@@ -30,7 +30,7 @@ async fn api_then_scrape_fallback_on_other_error() {
         .build()
         .unwrap();
 
-    let p = Profile::load(&mut client, sym).await.unwrap();
+    let p = Profile::load(&client, sym).await.unwrap();
     api_err.assert();
     scrape.assert();
 

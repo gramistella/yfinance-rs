@@ -26,17 +26,15 @@ pub(crate) struct V10Error {
 }
 
 pub(crate) async fn fetch(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     modules: &str,
     caller: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<V10Envelope, YfError> {
-    // This inner async block allows us to retry the whole credential + fetch flow
-    // on an invalid crumb error, while using the standard retry logic for the HTTP request itself.
     async fn attempt_fetch(
-        client: &mut YfClient,
+        client: &YfClient,
         symbol: &str,
         modules: &str,
         caller: &str,
@@ -47,8 +45,8 @@ pub(crate) async fn fetch(
 
         let crumb = client
             .crumb()
-            .ok_or_else(|| YfError::Data("Crumb is not set".into()))?
-            .to_string();
+            .await
+            .ok_or_else(|| YfError::Data("Crumb is not set".into()))?;
 
         let mut url = client.base_quote_api().join(symbol)?;
         {
@@ -94,8 +92,8 @@ pub(crate) async fn fetch(
                         caller
                     );
                 }
-                client.clear_crumb();
-                continue; // Retry the whole function
+                client.clear_crumb().await;
+                continue;
             }
             return Err(YfError::Data(format!("yahoo error: {}", error.description)));
         }
@@ -109,7 +107,7 @@ pub(crate) async fn fetch(
 }
 
 pub(crate) async fn fetch_module_result<T>(
-    client: &mut YfClient,
+    client: &YfClient,
     symbol: &str,
     modules: &str,
     caller: &str,
