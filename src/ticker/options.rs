@@ -1,7 +1,13 @@
 use serde::Deserialize;
 use url::Url;
 
-use crate::{YfClient, YfError, core::net};
+use crate::{
+    YfClient, YfError,
+    core::{
+        client::{CacheMode, RetryConfig},
+        net,
+    },
+};
 
 use super::model::{OptionChain, OptionContract};
 
@@ -11,8 +17,11 @@ pub(crate) async fn expiration_dates(
     client: &mut YfClient,
     base: &Url,
     symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<i64>, YfError> {
-    let (body, _used_url) = fetch_options_raw(client, base, symbol, None).await?;
+    let (body, _used_url) =
+        fetch_options_raw(client, base, symbol, None, cache_mode, retry_override).await?;
     let env: OptEnvelope = serde_json::from_str(&body)
         .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
 
@@ -30,8 +39,11 @@ pub(crate) async fn option_chain(
     base: &Url,
     symbol: &str,
     date: Option<i64>,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<OptionChain, YfError> {
-    let (body, used_url) = fetch_options_raw(client, base, symbol, date).await?;
+    let (body, used_url) =
+        fetch_options_raw(client, base, symbol, date, cache_mode, retry_override).await?;
     let env: OptEnvelope = serde_json::from_str(&body)
         .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
 
@@ -95,6 +107,8 @@ async fn fetch_options_raw(
     base: &Url,
     symbol: &str,
     date: Option<i64>,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<(String, Url), YfError> {
     let http = client.http().clone();
 
@@ -106,16 +120,14 @@ async fn fetch_options_raw(
         }
     }
 
-    // Cache check
-    if let Some(body) = client.cache_get(&url).await {
-        return Ok((body, url));
+    if cache_mode == CacheMode::Use {
+        if let Some(body) = client.cache_get(&url).await {
+            return Ok((body, url));
+        }
     }
 
-    let mut resp = http
-        .get(url.clone())
-        .header("accept", "application/json")
-        .send()
-        .await?;
+    let req = http.get(url.clone()).header("accept", "application/json");
+    let mut resp = client.send_with_retry(req, retry_override).await?;
 
     if resp.status().is_success() {
         let fixture_key = match date {
@@ -123,8 +135,9 @@ async fn fetch_options_raw(
             None => symbol.to_string(),
         };
         let body = net::get_text(resp, "options_v7", &fixture_key, "json").await?;
-        // Cache success
-        client.cache_put(&url, &body, None).await;
+        if cache_mode != CacheMode::Bypass {
+            client.cache_put(&url, &body, None).await;
+        }
         return Ok((body, url));
     }
 
@@ -151,11 +164,8 @@ async fn fetch_options_raw(
         qp.append_pair("crumb", crumb);
     }
 
-    resp = http
-        .get(url2.clone())
-        .header("accept", "application/json")
-        .send()
-        .await?;
+    let req2 = http.get(url2.clone()).header("accept", "application/json");
+    resp = client.send_with_retry(req2, retry_override).await?;
 
     if !resp.status().is_success() {
         return Err(YfError::Status {
@@ -169,8 +179,9 @@ async fn fetch_options_raw(
         None => symbol.to_string(),
     };
     let body = net::get_text(resp, "options_v7", &fixture_key, "json").await?;
-    // Cache success
-    client.cache_put(&url2, &body, None).await;
+    if cache_mode != CacheMode::Bypass {
+        client.cache_put(&url2, &body, None).await;
+    }
     Ok((body, url2))
 }
 

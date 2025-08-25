@@ -3,6 +3,7 @@ mod adjust;
 mod assemble;
 mod fetch;
 
+use crate::core::client::{CacheMode, RetryConfig};
 use crate::core::models::{Action, Candle, HistoryMeta, HistoryResponse};
 use crate::core::{Interval, Range, YfClient, YfError};
 use crate::history::wire::MetaNode;
@@ -12,6 +13,7 @@ use adjust::cumulative_split_after;
 use assemble::assemble_candles;
 use fetch::fetch_chart;
 
+#[derive(Clone)]
 pub struct HistoryBuilder<'a> {
     pub(crate) client: &'a YfClient,
     pub(crate) symbol: String,
@@ -22,6 +24,8 @@ pub struct HistoryBuilder<'a> {
     pub(crate) include_prepost: bool,
     pub(crate) include_actions: bool,
     pub(crate) keepna: bool,
+    pub(crate) cache_mode: CacheMode,
+    pub(crate) retry_override: Option<RetryConfig>,
 }
 
 impl<'a> HistoryBuilder<'a> {
@@ -36,7 +40,19 @@ impl<'a> HistoryBuilder<'a> {
             include_prepost: false,
             include_actions: true,
             keepna: false,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         }
+    }
+
+    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
+        self.retry_override = cfg;
+        self
     }
 
     pub fn range(mut self, range: Range) -> Self {
@@ -95,6 +111,8 @@ impl<'a> HistoryBuilder<'a> {
             self.interval,
             self.include_actions,
             self.include_prepost,
+            self.cache_mode,
+            self.retry_override.as_ref(),
         )
         .await?;
 

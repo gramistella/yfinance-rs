@@ -12,6 +12,8 @@ pub(crate) mod extract;
 pub(crate) mod utils;
 use extract::extract_bootstrap_json;
 
+// src/profile/scrape/mod.rs
+
 pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
 
@@ -21,11 +23,11 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
         qp.append_pair("p", symbol);
     }
 
-    // Try cache
     let body = if let Some(body) = client.cache_get(&url).await {
         body
     } else {
-        let quote_page_resp = client.http().get(url.clone()).send().await?;
+        let req = client.http().get(url.clone());
+        let quote_page_resp = client.send_with_retry(req, None).await?;
         if !quote_page_resp.status().is_success() {
             return Err(YfError::Status {
                 status: quote_page_resp.status().as_u16(),
@@ -34,7 +36,6 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
         }
         let body =
             crate::core::net::get_text(quote_page_resp, "profile_html", symbol, "html").await?;
-        // Cache success
         client.cache_put(&url, &body, None).await;
         body
     };

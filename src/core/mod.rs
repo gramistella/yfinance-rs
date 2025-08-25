@@ -2,6 +2,7 @@
 pub mod client;
 pub mod error;
 pub mod models;
+pub(crate) mod quotesummary;
 pub mod services;
 
 #[cfg(feature = "test-mode")]

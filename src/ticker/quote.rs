@@ -1,7 +1,13 @@
 use serde::Deserialize;
 use url::Url;
 
-use crate::{YfClient, YfError, core::net};
+use crate::{
+    YfClient, YfError,
+    core::{
+        client::{CacheMode, RetryConfig},
+        net,
+    },
+};
 
 use super::model::Quote;
 
@@ -34,6 +40,8 @@ pub(crate) async fn fetch_quote(
     client: &mut YfClient,
     base: &Url,
     symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Quote, YfError> {
     let http = client.http().clone();
 
@@ -43,21 +51,20 @@ pub(crate) async fn fetch_quote(
         qp.append_pair("symbols", symbol);
     }
 
-    // Cache check
-    if let Some(body) = client.cache_get(&url).await {
-        return parse_quote_from_body(&body, symbol).await;
+    if cache_mode == CacheMode::Use {
+        if let Some(body) = client.cache_get(&url).await {
+            return parse_quote_from_body(&body, symbol).await;
+        }
     }
 
-    let mut resp = http
-        .get(url.clone())
-        .header("accept", "application/json")
-        .send()
-        .await?;
+    let req = http.get(url.clone()).header("accept", "application/json");
+    let mut resp = client.send_with_retry(req, retry_override).await?;
 
     if resp.status().is_success() {
         let body = net::get_text(resp, "quote_v7", symbol, "json").await?;
-        // Cache success
-        client.cache_put(&url, &body, None).await;
+        if cache_mode != CacheMode::Bypass {
+            client.cache_put(&url, &body, None).await;
+        }
         return parse_quote_from_body(&body, symbol).await;
     }
 
@@ -85,11 +92,8 @@ pub(crate) async fn fetch_quote(
         qp.append_pair("crumb", &crumb);
     }
 
-    resp = http
-        .get(url2.clone())
-        .header("accept", "application/json")
-        .send()
-        .await?;
+    let req2 = http.get(url2.clone()).header("accept", "application/json");
+    resp = client.send_with_retry(req2, retry_override).await?;
 
     if !resp.status().is_success() {
         return Err(YfError::Status {
@@ -99,8 +103,9 @@ pub(crate) async fn fetch_quote(
     }
 
     let body = net::get_text(resp, "quote_v7", symbol, "json").await?;
-    // Cache success
-    client.cache_put(&url2, &body, None).await;
+    if cache_mode != CacheMode::Bypass {
+        client.cache_put(&url2, &body, None).await;
+    }
     parse_quote_from_body(&body, symbol).await
 }
 

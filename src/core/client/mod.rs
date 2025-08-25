@@ -3,8 +3,11 @@
 
 mod auth;
 mod constants;
+mod retry;
 
 use crate::core::YfError;
+pub use retry::{Backoff, CacheMode, RetryConfig};
+
 use constants::{
     DEFAULT_BASE_CHART, DEFAULT_BASE_QUOTE, DEFAULT_BASE_QUOTE_API, DEFAULT_COOKIE_URL,
     DEFAULT_CRUMB_URL, USER_AGENT,
@@ -55,6 +58,7 @@ pub struct YfClient {
     #[cfg(feature = "test-mode")]
     api_preference: ApiPreference,
 
+    retry: RetryConfig,
     cache: Option<Arc<CacheStore>>,
 }
 
@@ -80,9 +84,16 @@ impl YfClient {
         &self.user_agent
     }
 
+    #[cfg(feature = "test-mode")]
+    pub fn base_chart(&self) -> &Url {
+        &self.base_chart
+    }
+
+    #[cfg(not(feature = "test-mode"))]
     pub(crate) fn base_chart(&self) -> &Url {
         &self.base_chart
     }
+
     pub(crate) fn base_quote(&self) -> &Url {
         &self.base_quote
     }
@@ -130,6 +141,72 @@ impl YfClient {
         let mut guard = store.map.write().await;
         guard.insert(key, entry);
     }
+
+    /// Clears the entire in-memory cache.
+    ///
+    /// This is an asynchronous operation that will acquire a write lock on the cache.
+    /// It does nothing if caching is disabled for the client.
+    pub async fn clear_cache(&self) {
+        if let Some(store) = &self.cache {
+            let mut guard = store.map.write().await;
+            guard.clear();
+        }
+    }
+
+    /// Removes a specific URL-based entry from the in-memory cache.
+    ///
+    /// This is useful if you know that the data for a specific request has become stale.
+    /// It does nothing if caching is disabled for the client.
+    pub async fn invalidate_cache_entry(&self, url: &Url) {
+        if let Some(store) = &self.cache {
+            let key = url.as_str().to_string();
+            let mut guard = store.map.write().await;
+            guard.remove(&key);
+        }
+    }
+
+    pub async fn send_with_retry(
+        &self,
+        mut req: reqwest::RequestBuilder,
+        override_retry: Option<&RetryConfig>,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let cfg = override_retry.unwrap_or(&self.retry);
+        if !cfg.enabled {
+            return req.send().await;
+        }
+
+        let mut attempt = 0u32;
+        loop {
+            let res = req.try_clone().expect("cloneable request").send().await;
+
+            match res {
+                Ok(resp) => {
+                    let code = resp.status().as_u16();
+                    if cfg.retry_on_status.iter().any(|&s| s == code) && attempt < cfg.max_retries {
+                        sleep_backoff(&cfg.backoff, attempt).await;
+                        attempt += 1;
+                        continue;
+                    }
+                    return Ok(resp);
+                }
+                Err(e) => {
+                    let should_retry = (cfg.retry_on_timeout && e.is_timeout())
+                        || (cfg.retry_on_connect && e.is_connect());
+
+                    if should_retry && attempt < cfg.max_retries {
+                        sleep_backoff(&cfg.backoff, attempt).await;
+                        attempt += 1;
+                        continue;
+                    }
+                    return Err(e);
+                }
+            }
+        }
+    }
+
+    pub fn retry_config(&self) -> &RetryConfig {
+        &self.retry
+    }
 }
 
 /* ----------------------- Builder ----------------------- */
@@ -152,6 +229,7 @@ pub struct YfClientBuilder {
 
     timeout: Option<Duration>,
     connect_timeout: Option<Duration>,
+    retry: Option<RetryConfig>,
     cache_ttl: Option<Duration>,
 }
 
@@ -189,6 +267,21 @@ impl YfClientBuilder {
     /// Override the crumb URL.
     pub fn crumb_url(mut self, url: Url) -> Self {
         self.crumb_url = Some(url);
+        self
+    }
+
+    pub fn retry_config(mut self, cfg: RetryConfig) -> Self {
+        self.retry = Some(cfg);
+        self
+    }
+    pub fn retry_enabled(mut self, yes: bool) -> Self {
+        let mut cfg = self.retry.unwrap_or_default();
+        cfg.enabled = yes;
+        self.retry = Some(cfg);
+        self
+    }
+    pub fn no_cache(mut self) -> Self {
+        self.cache_ttl = None;
         self
     }
 
@@ -279,8 +372,7 @@ impl YfClientBuilder {
             },
             #[cfg(feature = "test-mode")]
             api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
-
-            // NEW: enable cache only if TTL provided
+            retry: self.retry.unwrap_or_default(),
             cache: self.cache_ttl.map(|ttl| {
                 Arc::new(CacheStore {
                     map: RwLock::new(HashMap::new()),
@@ -289,4 +381,36 @@ impl YfClientBuilder {
             }),
         })
     }
+}
+
+async fn sleep_backoff(b: &Backoff, attempt: u32) {
+    use std::time::Duration;
+    let dur = match *b {
+        Backoff::Fixed(d) => d,
+        Backoff::Exponential {
+            base,
+            factor,
+            max,
+            jitter,
+        } => {
+            let pow = factor.powi(attempt as i32);
+            let mut d = Duration::from_secs_f64(base.as_secs_f64() * pow as f64);
+            if d > max {
+                d = max;
+            }
+            if jitter {
+                // simple +/- 50% jitter without extra deps
+                let nanos = d.as_nanos();
+                let j = ((nanos / 2) as u64) * ((attempt as u64 % 5 + 1) * 13 % 100) / 100;
+                let sign = attempt % 2 == 0;
+                d = if sign {
+                    d.saturating_add(Duration::from_nanos(j))
+                } else {
+                    d.saturating_sub(Duration::from_nanos(j))
+                };
+            }
+            d
+        }
+    };
+    tokio::time::sleep(dur).await;
 }

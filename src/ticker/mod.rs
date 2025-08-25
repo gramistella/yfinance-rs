@@ -6,7 +6,9 @@ pub use model::{FastInfo, OptionChain, OptionContract, Quote};
 
 use url::Url;
 
-use crate::{YfClient, YfError, history::HistoryBuilder};
+use crate::{
+    analysis::AnalysisBuilder, core::client::{CacheMode, RetryConfig}, history::HistoryBuilder, YfClient, YfError
+};
 
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
@@ -16,16 +18,33 @@ pub struct Ticker<'a> {
     pub(crate) symbol: String,
     pub(crate) quote_base: Url,
     options_base: Url,
+    cache_mode: CacheMode,
+    retry_override: Option<RetryConfig>,
 }
 
 impl<'a> Ticker<'a> {
-    pub fn new(client: &'a mut YfClient, symbol: impl Into<String>) -> Result<Self, YfError> {
+    pub fn new(
+        client: &'a mut crate::core::YfClient,
+        symbol: impl Into<String>,
+    ) -> Result<Self, crate::core::YfError> {
         Ok(Self {
             client,
             symbol: symbol.into(),
-            quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
-            options_base: Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
+            quote_base: url::Url::parse(DEFAULT_BASE_QUOTE_V7)?,
+            options_base: url::Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
+    }
+
+    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
+        self.retry_override = cfg;
+        self
     }
 
     pub fn with_quote_base(
@@ -38,6 +57,8 @@ impl<'a> Ticker<'a> {
             symbol: symbol.into(),
             quote_base: base,
             options_base: Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
     }
 
@@ -51,6 +72,8 @@ impl<'a> Ticker<'a> {
             symbol: symbol.into(),
             quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
             options_base: base,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
     }
 
@@ -65,6 +88,8 @@ impl<'a> Ticker<'a> {
             symbol: symbol.into(),
             quote_base,
             options_base,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
     }
 
@@ -75,7 +100,14 @@ impl<'a> Ticker<'a> {
     /* ---------------- Quotes ---------------- */
 
     pub async fn quote(&mut self) -> Result<Quote, YfError> {
-        quote::fetch_quote(self.client, &self.quote_base, &self.symbol).await
+        quote::fetch_quote(
+            self.client,
+            &self.quote_base,
+            &self.symbol,
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await
     }
 
     pub async fn fast_info(&mut self) -> Result<FastInfo, YfError> {
@@ -102,7 +134,7 @@ impl<'a> Ticker<'a> {
         range: Option<crate::Range>,
         interval: Option<crate::Interval>,
         prepost: bool,
-    ) -> Result<Vec<crate::Candle>, YfError> {
+    ) -> Result<Vec<crate::Candle>, crate::core::YfError> {
         let mut hb = self.history_builder();
         if let Some(r) = range {
             hb = hb.range(r);
@@ -110,7 +142,12 @@ impl<'a> Ticker<'a> {
         if let Some(i) = interval {
             hb = hb.interval(i);
         }
-        hb = hb.auto_adjust(true).prepost(prepost).actions(true);
+        hb = hb
+            .auto_adjust(true)
+            .prepost(prepost)
+            .actions(true)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone());
         hb.fetch().await
     }
 
@@ -156,8 +193,11 @@ impl<'a> Ticker<'a> {
     pub async fn get_history_metadata(
         &self,
         range: Option<crate::Range>,
-    ) -> Result<Option<crate::HistoryMeta>, YfError> {
-        let mut hb = self.history_builder();
+    ) -> Result<Option<crate::HistoryMeta>, crate::core::YfError> {
+        let mut hb = self
+            .history_builder()
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone());
         if let Some(r) = range {
             hb = hb.range(r);
         }
@@ -168,33 +208,64 @@ impl<'a> Ticker<'a> {
     /* ---------------- Options ---------------- */
 
     pub async fn options(&mut self) -> Result<Vec<i64>, YfError> {
-        options::expiration_dates(self.client, &self.options_base, &self.symbol).await
+        options::expiration_dates(
+            self.client,
+            &self.options_base,
+            &self.symbol,
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await
     }
 
     pub async fn option_chain(&mut self, date: Option<i64>) -> Result<OptionChain, YfError> {
-        options::option_chain(self.client, &self.options_base, &self.symbol, date).await
+        options::option_chain(
+            self.client,
+            &self.options_base,
+            &self.symbol,
+            date,
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await
     }
 
     /* ---------------- Analysis convenience ---------------- */
 
     pub async fn recommendations(&mut self) -> Result<Vec<crate::RecommendationRow>, YfError> {
-        crate::analysis::recommendations(self.client, &self.symbol).await
+        AnalysisBuilder::new(self.client, &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+            .recommendations()
+            .await
     }
 
     pub async fn recommendations_summary(
         &mut self,
     ) -> Result<crate::RecommendationSummary, YfError> {
-        crate::analysis::recommendations_summary(self.client, &self.symbol).await
+        AnalysisBuilder::new(self.client, &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+            .recommendations_summary()
+            .await
     }
 
     pub async fn upgrades_downgrades(
         &mut self,
     ) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
-        crate::analysis::upgrades_downgrades(self.client, &self.symbol).await
+        AnalysisBuilder::new(self.client, &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+            .upgrades_downgrades()
+            .await
     }
 
     pub async fn analyst_price_target(&mut self) -> Result<crate::PriceTarget, YfError> {
-        crate::analysis::analyst_price_target(self.client, &self.symbol).await
+        AnalysisBuilder::new(self.client, &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+            .analyst_price_target()
+            .await
     }
 
     /* ---------------- Fundamentals convenience ---------------- */

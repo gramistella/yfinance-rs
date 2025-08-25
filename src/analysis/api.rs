@@ -1,16 +1,22 @@
-use crate::core::{YfClient, YfError};
+use crate::core::{
+    client::{CacheMode, RetryConfig},
+    YfClient, YfError,
+};
 
 use super::fetch::fetch_modules;
 use super::model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 use super::wire::RawNum;
 
+
 /* ---------- Public entry points (mapping wire → public models) ---------- */
 
-pub async fn recommendation_trend(
+pub(super) async fn recommendation_trend(
     client: &mut YfClient,
     symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<RecommendationRow>, YfError> {
-    let root = fetch_modules(client, symbol, "recommendationTrend").await?;
+    let root = fetch_modules(client, symbol, "recommendationTrend", cache_mode, retry_override).await?;
 
     let trend = root
         .recommendation_trend
@@ -32,11 +38,20 @@ pub async fn recommendation_trend(
     Ok(rows)
 }
 
-pub async fn recommendation_summary(
+pub(super) async fn recommendation_summary(
     client: &mut YfClient,
     symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<RecommendationSummary, YfError> {
-    let root = fetch_modules(client, symbol, "recommendationTrend,recommendationMean").await?;
+    let root = fetch_modules(
+        client,
+        symbol,
+        "recommendationTrend,recommendationMean",
+        cache_mode,
+        retry_override,
+    )
+    .await?;
 
     let trend = root
         .recommendation_trend
@@ -79,11 +94,20 @@ pub async fn recommendation_summary(
     })
 }
 
-pub async fn upgrades_downgrades(
+pub(super) async fn upgrades_downgrades(
     client: &mut YfClient,
     symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<UpgradeDowngradeRow>, YfError> {
-    let root = fetch_modules(client, symbol, "upgradeDowngradeHistory").await?;
+    let root = fetch_modules(
+        client,
+        symbol,
+        "upgradeDowngradeHistory",
+        cache_mode,
+        retry_override,
+    )
+    .await?;
 
     let hist = root
         .upgrade_downgrade_history
@@ -105,13 +129,13 @@ pub async fn upgrades_downgrades(
     Ok(rows)
 }
 
-/* ---------- Analyst price targets ---------- */
-
-pub async fn analyst_price_target(
+pub(super) async fn analyst_price_target(
     client: &mut YfClient,
     symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) -> Result<PriceTarget, YfError> {
-    let root = fetch_modules(client, symbol, "financialData").await?;
+    let root = fetch_modules(client, symbol, "financialData", cache_mode, retry_override).await?;
     let fd = root
         .financial_data
         .ok_or_else(|| YfError::Data("financialData missing".into()))?;

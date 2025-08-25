@@ -3,23 +3,6 @@ use serde::Deserialize;
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
 #[derive(Deserialize)]
-pub(crate) struct V10Envelope {
-    #[serde(rename = "quoteSummary")]
-    pub(crate) quote_summary: Option<V10QuoteSummary>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct V10QuoteSummary {
-    pub(crate) result: Option<Vec<V10Result>>,
-    pub(crate) error: Option<V10Error>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct V10Error {
-    pub(crate) description: String,
-}
-
-#[derive(Deserialize)]
 pub(crate) struct V10Result {
     /* income */
     #[serde(rename = "incomeStatementHistory")]

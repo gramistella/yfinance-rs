@@ -1,6 +1,9 @@
+// tests/history/http_status_error.rs
+
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
+use yfinance_rs::YfClient;
 
 #[tokio::test]
 async fn history_returns_status_error_on_non_2xx() {
@@ -11,8 +14,9 @@ async fn history_returns_status_error_on_non_2xx() {
         then.status(500).body("oops");
     });
 
-    let client = yfinance_rs::YfClient::builder()
+    let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
+        .retry_enabled(false) // Disable retries for this test
         .build()
         .unwrap();
 
@@ -20,6 +24,8 @@ async fn history_returns_status_error_on_non_2xx() {
         .fetch()
         .await
         .unwrap_err();
+
+    // The mock server now correctly expects only one call
     mock.assert();
 
     match err {

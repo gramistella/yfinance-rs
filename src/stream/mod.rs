@@ -20,7 +20,10 @@ use tokio_tungstenite::{
 };
 use url::Url;
 
-use crate::{YfClient, YfError};
+use crate::{
+    YfClient, YfError,
+    core::client::{CacheMode, RetryConfig},
+};
 
 mod wire_ws {
     include!(concat!(env!("OUT_DIR"), "/yaticker.rs"));
@@ -102,6 +105,8 @@ pub struct StreamBuilder {
     stream_url: Url,
     cfg: StreamConfig,
     method: StreamMethod,
+    cache_mode: CacheMode,
+    retry_override: Option<RetryConfig>,
 }
 
 impl StreamBuilder {
@@ -114,7 +119,19 @@ impl StreamBuilder {
             stream_url: Url::parse(DEFAULT_STREAM_URL)?,
             cfg: StreamConfig::default(),
             method: StreamMethod::default(),
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
+    }
+
+    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
+        self.retry_override = cfg;
+        self
     }
 
     /// Sets the base URL for polling quote requests. (For testing purposes).
@@ -164,54 +181,84 @@ impl StreamBuilder {
     }
 
     /// Starts the stream, returning a handle to control it and a receiver for quote updates.
-    pub fn start(self) -> Result<(StreamHandle, mpsc::Receiver<QuoteUpdate>), YfError> {
+    pub fn start(
+        self,
+    ) -> Result<(StreamHandle, tokio::sync::mpsc::Receiver<QuoteUpdate>), crate::core::YfError>
+    {
         if self.symbols.is_empty() {
-            return Err(YfError::Data("stream: at least one symbol required".into()));
+            return Err(crate::core::YfError::Data(
+                "stream: at least one symbol required".into(),
+            ));
         }
 
-        let (tx, rx) = mpsc::channel::<QuoteUpdate>(1024);
-        let (stop_tx, stop_rx) = oneshot::channel::<()>();
+        let (tx, rx) = tokio::sync::mpsc::channel::<QuoteUpdate>(1024);
+        let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
 
-        let join = tokio::spawn(async move {
-            let mut client = self.client;
-            let symbols = self.symbols;
-            let cfg = self.cfg;
-            let quote_base = self.quote_base;
-            let stream_url = self.stream_url;
+        let join = tokio::spawn({
+            let mut client = self.client.clone();
+            let symbols = self.symbols.clone();
+            let cfg = self.cfg.clone();
+            let quote_base = self.quote_base.clone();
+            let stream_url = self.stream_url.clone();
             let mut stop_rx = stop_rx;
 
-            match self.method {
-                StreamMethod::Websocket => {
-                    if let Err(e) =
-                        run_websocket_stream(&mut client, symbols, stream_url, tx, &mut stop_rx)
-                            .await
-                    {
-                        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                            eprintln!("YF_DEBUG(stream): websocket stream failed: {e}");
+            // NEW:
+            let cache_mode = self.cache_mode;
+            let retry_override = self.retry_override.clone();
+
+            async move {
+                match self.method {
+                    StreamMethod::Websocket => {
+                        if let Err(e) =
+                            run_websocket_stream(&mut client, symbols, stream_url, tx, &mut stop_rx)
+                                .await
+                        {
+                            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                                eprintln!("YF_DEBUG(stream): websocket stream failed: {e}");
+                            }
                         }
                     }
-                }
-                StreamMethod::WebsocketWithFallback => {
-                    if let Err(e) = run_websocket_stream(
-                        &mut client,
-                        symbols.clone(),
-                        stream_url,
-                        tx.clone(),
-                        &mut stop_rx,
-                    )
-                    .await
-                    {
-                        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                            eprintln!(
-                                "YF_DEBUG(stream): websocket failed ({e}), falling back to polling."
-                            );
-                        }
-                        run_polling_stream(client, symbols, quote_base, cfg, tx, &mut stop_rx)
+                    StreamMethod::WebsocketWithFallback => {
+                        if let Err(e) = run_websocket_stream(
+                            &mut client,
+                            symbols.clone(),
+                            stream_url,
+                            tx.clone(),
+                            &mut stop_rx,
+                        )
+                        .await
+                        {
+                            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                                eprintln!(
+                                    "YF_DEBUG(stream): websocket failed ({e}), falling back to polling."
+                                );
+                            }
+                            run_polling_stream(
+                                client,
+                                symbols,
+                                quote_base,
+                                cfg,
+                                tx,
+                                &mut stop_rx,
+                                cache_mode,
+                                retry_override.as_ref(),
+                            )
                             .await;
+                        }
                     }
-                }
-                StreamMethod::Polling => {
-                    run_polling_stream(client, symbols, quote_base, cfg, tx, &mut stop_rx).await;
+                    StreamMethod::Polling => {
+                        run_polling_stream(
+                            client,
+                            symbols,
+                            quote_base,
+                            cfg,
+                            tx,
+                            &mut stop_rx,
+                            cache_mode,
+                            retry_override.as_ref(),
+                        )
+                        .await;
+                    }
                 }
             }
         });
@@ -380,22 +427,25 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
 }
 
 async fn run_polling_stream(
-    mut client: YfClient,
+    mut client: crate::core::YfClient,
     symbols: Vec<String>,
-    base: Url,
+    base: url::Url,
     cfg: StreamConfig,
-    tx: mpsc::Sender<QuoteUpdate>,
-    stop_rx: &mut oneshot::Receiver<()>,
+    tx: tokio::sync::mpsc::Sender<QuoteUpdate>,
+    stop_rx: &mut tokio::sync::oneshot::Receiver<()>,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
 ) {
-    let mut ticker = interval(cfg.interval);
-    let mut last_price: HashMap<String, Option<f64>> = HashMap::new();
+    let mut ticker = tokio::time::interval(cfg.interval);
+    let mut last_price: std::collections::HashMap<String, Option<f64>> =
+        std::collections::HashMap::new();
     let fixture_key = symbols.join(",");
 
     loop {
-        select! {
+        tokio::select! {
             _ = ticker.tick() => {
-                let ts = Utc::now().timestamp();
-                match fetch_quotes_multi(&mut client, &base, &symbols, &fixture_key).await {
+                let ts = chrono::Utc::now().timestamp();
+                match fetch_quotes_multi(&mut client, &base, &symbols, &fixture_key, cache_mode, retry_override).await {
                     Ok(quotes) => {
                         for q in quotes {
                             let lp = q.regular_market_price.or(q.regular_market_previous_close);
@@ -422,46 +472,55 @@ async fn run_polling_stream(
                         }
                     }
                 }
-
-                if tx.is_closed() {
-                    break;
-                }
+                if tx.is_closed() { break; }
             }
-            _ = &mut *stop_rx => {
-                break;
-            }
+            _ = &mut *stop_rx => { break; }
         }
     }
 }
 
 async fn fetch_quotes_multi(
-    client: &mut YfClient,
-    base: &Url,
+    client: &mut crate::core::YfClient,
+    base: &url::Url,
     symbols: &[String],
     fixture_key: &str,
-) -> Result<Vec<V7QuoteNode>, YfError> {
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+) -> Result<Vec<V7QuoteNode>, crate::core::YfError> {
     let http = client.http().clone();
 
     let mut url = base.clone();
     {
         let mut qp = url.query_pairs_mut();
-        let joined = symbols.join(",");
-        qp.append_pair("symbols", &joined);
+        qp.append_pair("symbols", &symbols.join(","));
     }
 
-    let mut resp = http
-        .get(url.clone())
-        .header("accept", "application/json")
-        .send()
+    if cache_mode == CacheMode::Use {
+        if let Some(body) = client.cache_get(&url).await {
+            let env: V7Envelope = serde_json::from_str(&body)
+                .map_err(|e| crate::core::YfError::Data(format!("quote json parse: {e}")))?;
+            let result = env
+                .quote_response
+                .and_then(|qr| qr.result)
+                .unwrap_or_default();
+            return Ok(result);
+        }
+    }
+
+    let mut resp = client
+        .send_with_retry(
+            http.get(url.clone()).header("accept", "application/json"),
+            retry_override,
+        )
         .await?;
 
     if resp.status().is_success() {
-        return parse_v7_multi(resp, fixture_key).await;
+        return parse_v7_multi(resp, fixture_key, client, &url, cache_mode).await;
     }
 
     let code = resp.status().as_u16();
     if code != 401 && code != 403 {
-        return Err(crate::YfError::Status {
+        return Err(crate::core::YfError::Status {
             status: code,
             url: url.to_string(),
         });
@@ -470,7 +529,7 @@ async fn fetch_quotes_multi(
     client.ensure_credentials().await?;
     let crumb = client
         .crumb()
-        .ok_or_else(|| crate::YfError::Status {
+        .ok_or_else(|| crate::core::YfError::Status {
             status: code,
             url: url.to_string(),
         })?
@@ -479,40 +538,45 @@ async fn fetch_quotes_multi(
     let mut url2 = base.clone();
     {
         let mut qp = url2.query_pairs_mut();
-        let joined = symbols.join(",");
-        qp.append_pair("symbols", &joined);
+        qp.append_pair("symbols", &symbols.join(","));
         qp.append_pair("crumb", &crumb);
     }
 
-    resp = http
-        .get(url2.clone())
-        .header("accept", "application/json")
-        .send()
+    resp = client
+        .send_with_retry(
+            http.get(url2.clone()).header("accept", "application/json"),
+            retry_override,
+        )
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::YfError::Status {
+        return Err(crate::core::YfError::Status {
             status: resp.status().as_u16(),
             url: url2.to_string(),
         });
     }
 
-    parse_v7_multi(resp, fixture_key).await
+    parse_v7_multi(resp, fixture_key, client, &url2, cache_mode).await
 }
 
+// helper used above
 async fn parse_v7_multi(
     resp: reqwest::Response,
     fixture_key: &str,
-) -> Result<Vec<V7QuoteNode>, YfError> {
+    client: &crate::core::YfClient,
+    url: &url::Url,
+    cache_mode: CacheMode,
+) -> Result<Vec<V7QuoteNode>, crate::core::YfError> {
     let body = crate::core::net::get_text(resp, "quote_v7", fixture_key, "json").await?;
-    let env: V7Envelope =
-        serde_json::from_str(&body).map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
-
+    if cache_mode != CacheMode::Bypass {
+        client.cache_put(url, &body, None).await;
+    }
+    let env: V7Envelope = serde_json::from_str(&body)
+        .map_err(|e| crate::core::YfError::Data(format!("quote json parse: {e}")))?;
     let result = env
         .quote_response
         .and_then(|qr| qr.result)
         .unwrap_or_default();
-
     Ok(result)
 }
 

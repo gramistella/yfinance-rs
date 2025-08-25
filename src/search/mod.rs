@@ -2,6 +2,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use url::Url;
 
+use crate::core::client::CacheMode;
+use crate::core::client::RetryConfig;
 use crate::{YfClient, YfError, core::net};
 
 async fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
@@ -44,6 +46,8 @@ pub struct SearchBuilder<'a> {
     lists_count: Option<u32>,
     lang: Option<String>,
     region: Option<String>,
+    cache_mode: CacheMode,
+    retry_override: Option<RetryConfig>,
 }
 
 impl<'a> SearchBuilder<'a> {
@@ -57,7 +61,19 @@ impl<'a> SearchBuilder<'a> {
             lists_count: Some(0),
             lang: None,
             region: None,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
+    }
+
+    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
+        self.retry_override = cfg;
+        self
     }
 
     /// Override the base URL (useful for tests/mocking).
@@ -91,7 +107,7 @@ impl<'a> SearchBuilder<'a> {
         self
     }
 
-    pub async fn fetch(self) -> Result<SearchResponse, YfError> {
+    pub async fn fetch(self) -> Result<SearchResponse, crate::core::YfError> {
         let mut url = self.base.clone();
         {
             let mut qp = url.query_pairs_mut();
@@ -113,16 +129,19 @@ impl<'a> SearchBuilder<'a> {
             }
         }
 
-        // Cache check
-        if let Some(body) = self.client.cache_get(&url).await {
-            return parse_search_body(&body).await;
+        if self.cache_mode == CacheMode::Use {
+            if let Some(body) = self.client.cache_get(&url).await {
+                return parse_search_body(&body).await;
+            }
         }
 
         let http = self.client.http().clone();
-        let mut resp = http
-            .get(url.clone())
-            .header("accept", "application/json")
-            .send()
+        let mut resp = self
+            .client
+            .send_with_retry(
+                http.get(url.clone()).header("accept", "application/json"),
+                self.retry_override.as_ref(),
+            )
             .await?;
 
         if !resp.status().is_success() {
@@ -133,7 +152,7 @@ impl<'a> SearchBuilder<'a> {
                 let crumb = self
                     .client
                     .crumb()
-                    .ok_or_else(|| YfError::Status {
+                    .ok_or_else(|| crate::core::YfError::Status {
                         status: code,
                         url: url.to_string(),
                     })?
@@ -161,33 +180,39 @@ impl<'a> SearchBuilder<'a> {
                     qp.append_pair("crumb", &crumb);
                 }
 
-                resp = http
-                    .get(url2.clone())
-                    .header("accept", "application/json")
-                    .send()
+                resp = self
+                    .client
+                    .send_with_retry(
+                        http.get(url2.clone()).header("accept", "application/json"),
+                        self.retry_override.as_ref(),
+                    )
                     .await?;
+
                 if !resp.status().is_success() {
-                    return Err(YfError::Status {
+                    return Err(crate::core::YfError::Status {
                         status: resp.status().as_u16(),
                         url: url2.to_string(),
                     });
                 }
 
-                let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
-                // Cache success
-                self.client.cache_put(&url2, &body, None).await;
+                let body =
+                    crate::core::net::get_text(resp, "search_v1", &self.query, "json").await?;
+                if self.cache_mode != CacheMode::Bypass {
+                    self.client.cache_put(&url2, &body, None).await;
+                }
                 return parse_search_body(&body).await;
             }
 
-            return Err(YfError::Status {
+            return Err(crate::core::YfError::Status {
                 status: code,
                 url: url.to_string(),
             });
         }
 
-        let body = net::get_text(resp, "search_v1", &self.query, "json").await?;
-        // Cache success
-        self.client.cache_put(&url, &body, None).await;
+        let body = crate::core::net::get_text(resp, "search_v1", &self.query, "json").await?;
+        if self.cache_mode != CacheMode::Bypass {
+            self.client.cache_put(&url, &body, None).await;
+        }
         parse_search_body(&body).await
     }
 }

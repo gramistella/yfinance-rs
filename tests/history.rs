@@ -26,3 +26,9 @@ mod keepna_true;
 
 #[path = "history/http_status_error.rs"]
 mod http_status_error;
+
+#[path = "history/retry_synthetic.rs"]
+mod retry_synthetic;
+
+#[path = "history/caching_synthetic.rs"]
+mod caching_synthetic;

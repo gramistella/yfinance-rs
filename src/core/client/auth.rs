@@ -25,7 +25,8 @@ impl super::YfClient {
     }
 
     async fn get_cookie(&mut self) -> Result<(), YfError> {
-        let resp = self.http.get(self.cookie_url.clone()).send().await?;
+        let req = self.http.get(self.cookie_url.clone());
+        let resp = self.send_with_retry(req, None).await?;
 
         let cookie = resp
             .headers()
@@ -40,14 +41,12 @@ impl super::YfClient {
     }
 
     async fn get_crumb_internal(&mut self) -> Result<(), YfError> {
-        // We rely on the fact that `get_cookie()` already hit the cookie URL
-        // with `self.http` (cookie_store=true), so the jar contains the cookie.
         if self.cookie.is_none() {
-            // Not strictly required for correctness, but keeps the flow explicit:
             return Err(YfError::Data("Cookie is missing, cannot get crumb".into()));
         }
         let url = self.crumb_url.clone();
-        let resp = self.http.get(url).send().await?;
+        let req = self.http.get(url);
+        let resp = self.send_with_retry(req, None).await?;
         let crumb = resp.text().await?;
 
         if crumb.is_empty() || crumb.contains('{') || crumb.contains('<') {

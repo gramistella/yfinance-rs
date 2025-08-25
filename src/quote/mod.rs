@@ -2,6 +2,8 @@ use serde::Deserialize;
 use url::Url;
 
 use crate::core::Quote;
+use crate::core::client::CacheMode;
+use crate::core::client::RetryConfig;
 use crate::core::net;
 use crate::core::{YfClient, YfError};
 
@@ -22,6 +24,8 @@ pub struct QuotesBuilder<'a> {
     client: &'a mut YfClient,
     quote_base: Url,
     symbols: Vec<String>,
+    cache_mode: CacheMode,
+    retry_override: Option<RetryConfig>,
 }
 
 impl<'a> QuotesBuilder<'a> {
@@ -30,7 +34,19 @@ impl<'a> QuotesBuilder<'a> {
             client,
             quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
             symbols: Vec::new(),
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         })
+    }
+
+    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
+        self.retry_override = cfg;
+        self
     }
 
     /// Override the v7 quote base URL (useful for tests).
@@ -56,19 +72,29 @@ impl<'a> QuotesBuilder<'a> {
     }
 
     /// Execute the request and return a vector of `Quote` (one per symbol found).
-    pub async fn fetch(self) -> Result<Vec<Quote>, YfError> {
+    pub async fn fetch(self) -> Result<Vec<crate::core::Quote>, crate::core::YfError> {
         if self.symbols.is_empty() {
-            return Err(YfError::Data("quotes: at least one symbol required".into()));
+            return Err(crate::core::YfError::Data(
+                "quotes: at least one symbol required".into(),
+            ));
         }
 
-        let (body, url, maybe_status) =
-            fetch_v7_multi_raw(self.client, &self.quote_base, &self.symbols, None).await?;
+        let (body, url, maybe_status) = fetch_v7_multi_raw(
+            self.client,
+            &self.quote_base,
+            &self.symbols,
+            None,
+            // NEW:
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await?;
 
         if let Some(code) = maybe_status {
             if code == 401 || code == 403 {
                 return self.fetch_with_auth().await;
             } else {
-                return Err(YfError::Status {
+                return Err(crate::core::YfError::Status {
                     status: code,
                     url: url.to_string(),
                 });
@@ -78,19 +104,26 @@ impl<'a> QuotesBuilder<'a> {
         parse_v7_quotes(&body).map(|nodes| nodes.into_iter().map(map_v7_to_public).collect())
     }
 
-    async fn fetch_with_auth(self) -> Result<Vec<Quote>, YfError> {
+    async fn fetch_with_auth(self) -> Result<Vec<crate::core::Quote>, crate::core::YfError> {
         self.client.ensure_credentials().await?;
         let crumb = self
             .client
             .crumb()
-            .ok_or_else(|| YfError::Data("Crumb is not set".into()))?
+            .ok_or_else(|| crate::core::YfError::Data("Crumb is not set".into()))?
             .to_string();
 
-        let (body, url, status) =
-            fetch_v7_multi_raw(self.client, &self.quote_base, &self.symbols, Some(&crumb)).await?;
+        let (body, url, status) = fetch_v7_multi_raw(
+            self.client,
+            &self.quote_base,
+            &self.symbols,
+            Some(&crumb),
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await?;
 
         if let Some(code) = status {
-            return Err(YfError::Status {
+            return Err(crate::core::YfError::Status {
                 status: code,
                 url: url.to_string(),
             });
@@ -105,11 +138,13 @@ impl<'a> QuotesBuilder<'a> {
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 
 async fn fetch_v7_multi_raw(
-    client: &mut YfClient,
-    base: &Url,
+    client: &mut crate::core::YfClient,
+    base: &url::Url,
     symbols: &[String],
     crumb: Option<&str>,
-) -> Result<(String, Url, Option<u16>), YfError> {
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+) -> Result<(String, url::Url, Option<u16>), crate::core::YfError> {
     let http = client.http().clone();
 
     let mut url = base.clone();
@@ -121,9 +156,10 @@ async fn fetch_v7_multi_raw(
         }
     }
 
-    // Cache check
-    if let Some(body) = client.cache_get(&url).await {
-        return Ok((body, url, None));
+    if cache_mode == CacheMode::Use {
+        if let Some(body) = client.cache_get(&url).await {
+            return Ok((body, url, None));
+        }
     }
 
     let fixture_key_owned = if symbols.len() == 1 {
@@ -133,21 +169,25 @@ async fn fetch_v7_multi_raw(
     };
     let fixture_key = fixture_key_owned.as_str();
 
-    let resp = http
-        .get(url.clone())
-        .header("accept", "application/json")
-        .send()
+    let resp = client
+        .send_with_retry(
+            http.get(url.clone()).header("accept", "application/json"),
+            retry_override,
+        )
         .await?;
 
     let code = resp.status().as_u16();
-    if !resp.status().is_success() {
-        let body = net::get_text(resp, "quote_v7", fixture_key, "json").await?;
-        return Ok((body, url, Some(code)));
+    let body = crate::core::net::get_text(resp, "quote_v7", fixture_key, "json").await?;
+
+    if !matches!(cache_mode, CacheMode::Bypass) {
+        if (code as u16) < 400 {
+            client.cache_put(&url, &body, None).await;
+        }
     }
 
-    let body = net::get_text(resp, "quote_v7", fixture_key, "json").await?;
-    // Cache success
-    client.cache_put(&url, &body, None).await;
+    if (code as u16) >= 400 {
+        return Ok((body, url, Some(code)));
+    }
 
     Ok((body, url, None))
 }

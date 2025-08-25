@@ -4,6 +4,7 @@ use futures::future::try_join_all;
 
 use crate::{
     Action, Candle, HistoryMeta, HistoryResponse, Interval, Range, YfClient, YfError,
+    core::client::{CacheMode, RetryConfig},
     history::HistoryBuilder,
 };
 
@@ -49,6 +50,9 @@ pub struct DownloadBuilder<'a> {
     keepna: bool,
     rounding: bool,
     repair: bool,
+
+    cache_mode: CacheMode,
+    retry_override: Option<RetryConfig>,
 }
 
 impl<'a> DownloadBuilder<'a> {
@@ -67,7 +71,19 @@ impl<'a> DownloadBuilder<'a> {
             keepna: false,
             rounding: false,
             repair: false,
+            cache_mode: CacheMode::Use,
+            retry_override: None,
         }
+    }
+
+    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
+        self.retry_override = cfg;
+        self
     }
 
     /// Replace the full symbol list.
@@ -171,7 +187,9 @@ impl<'a> DownloadBuilder<'a> {
                 .auto_adjust(need_adjust_in_fetch)
                 .prepost(self.include_prepost)
                 .actions(self.include_actions)
-                .keepna(self.keepna);
+                .keepna(self.keepna)
+                .cache_mode(self.cache_mode)
+                .retry_policy(self.retry_override.clone());
 
             if let Some((p1, p2)) = self.period {
                 use chrono::{TimeZone, Utc};
