@@ -1,4 +1,4 @@
-use tokio::time::{timeout, Duration};
+use tokio::time::{Duration, timeout};
 use url::Url;
 use yfinance_rs::StreamMethod;
 

@@ -92,9 +92,7 @@ async fn call_quote_summary(
         return Ok(env);
     }
 
-    Err(YfError::Data(
-        "analysis API call failed after retry".into(),
-    ))
+    Err(YfError::Data("analysis API call failed after retry".into()))
 }
 
 fn get_first_result(env: V10Envelope) -> Result<V10Result, YfError> {

@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use chrono::Utc;
 use futures_util::{SinkExt, StreamExt};
 use prost::Message;
@@ -11,7 +11,13 @@ use tokio::{
     task::JoinHandle,
     time::interval,
 };
-use tokio_tungstenite::{connect_async, connect_async_with_config, tungstenite::{handshake::client::{generate_key, Request}, protocol::{Message as WsMessage, WebSocketConfig}}};
+use tokio_tungstenite::{
+    connect_async, connect_async_with_config,
+    tungstenite::{
+        handshake::client::{Request, generate_key},
+        protocol::{Message as WsMessage, WebSocketConfig},
+    },
+};
 use url::Url;
 
 use crate::{YfClient, YfError};
@@ -110,13 +116,13 @@ impl StreamBuilder {
             method: StreamMethod::default(),
         })
     }
-    
+
     /// Sets the base URL for polling quote requests. (For testing purposes).
     pub fn quote_base(mut self, base: Url) -> Self {
         self.quote_base = base;
         self
     }
-    
+
     /// Sets the URL for the WebSocket stream. (For testing purposes).
     pub fn stream_url(mut self, url: Url) -> Self {
         self.stream_url = url;
@@ -138,7 +144,7 @@ impl StreamBuilder {
         self.symbols.push(sym.into());
         self
     }
-    
+
     /// Sets the streaming transport method.
     pub fn method(mut self, method: StreamMethod) -> Self {
         self.method = method;
@@ -186,15 +192,14 @@ impl StreamBuilder {
                     }
                 }
                 StreamMethod::WebsocketWithFallback => {
-                    if let Err(e) =
-                        run_websocket_stream(
-                            &mut client,
-                            symbols.clone(),
-                            stream_url,
-                            tx.clone(),
-                            &mut stop_rx,
-                        )
-                        .await
+                    if let Err(e) = run_websocket_stream(
+                        &mut client,
+                        symbols.clone(),
+                        stream_url,
+                        tx.clone(),
+                        &mut stop_rx,
+                    )
+                    .await
                     {
                         if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
                             eprintln!(
@@ -255,8 +260,10 @@ async fn run_websocket_stream(
     let (ws_stream, _) = connect_async(request).await?;
     let (mut write, mut read) = ws_stream.split();
 
-    let sub_msg = serde_json::to_string(&WsSubscribe { subscribe: &symbols })
-        .map_err(|e| YfError::Data(format!("ws subscribe serialize: {e}")))?;
+    let sub_msg = serde_json::to_string(&WsSubscribe {
+        subscribe: &symbols,
+    })
+    .map_err(|e| YfError::Data(format!("ws subscribe serialize: {e}")))?;
     write.send(WsMessage::Text(sub_msg)).await?;
 
     #[cfg(feature = "test-mode")]
@@ -347,10 +354,9 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
     let b64_cow: std::borrow::Cow<str> = if s.starts_with('{') {
         match serde_json::from_str::<serde_json::Value>(s) {
             Ok(v) => {
-                let msg = v
-                    .get("message")
-                    .and_then(|m| m.as_str())
-                    .ok_or_else(|| YfError::Data("ws json message missing 'message' field".into()))?;
+                let msg = v.get("message").and_then(|m| m.as_str()).ok_or_else(|| {
+                    YfError::Data("ws json message missing 'message' field".into())
+                })?;
                 std::borrow::Cow::Owned(msg.to_string())
             }
             // If it's not valid JSON, treat the whole thing as raw base64

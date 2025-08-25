@@ -79,7 +79,7 @@ impl YfClient {
     pub(crate) fn user_agent(&self) -> &str {
         &self.user_agent
     }
-    
+
     pub(crate) fn base_chart(&self) -> &Url {
         &self.base_chart
     }

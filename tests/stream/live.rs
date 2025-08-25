@@ -16,7 +16,7 @@ async fn live_stream_smoke() {
 
     let (handle, mut rx) = builder.start().unwrap();
 
-    use tokio::time::{timeout, Duration};
+    use tokio::time::{Duration, timeout};
     let got = timeout(Duration::from_secs(30), rx.recv()).await;
 
     handle.abort();
