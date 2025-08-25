@@ -1,5 +1,5 @@
-/// Live smoke test (ignored by default). Run in record mode to capture fixtures:
-///   YF_RECORD=1 cargo test --features test-mode -- --include-ignored --test-threads=1
+use yfinance_rs::StreamMethod;
+
 #[tokio::test]
 #[ignore]
 async fn live_stream_smoke() {
@@ -11,20 +11,21 @@ async fn live_stream_smoke() {
 
     let builder = yfinance_rs::StreamBuilder::new(&client)
         .unwrap()
-        .symbols(["AAPL"])
-        .interval(std::time::Duration::from_millis(400))
-        .diff_only(false);
+        .symbols(["BTC-USD"]) // Switched to a 24/7 symbol
+        .method(StreamMethod::Websocket);
 
     let (handle, mut rx) = builder.start().unwrap();
 
-    use tokio::time::{Duration, timeout};
-    let got = timeout(Duration::from_secs(8), rx.recv()).await;
+    use tokio::time::{timeout, Duration};
+    let got = timeout(Duration::from_secs(30), rx.recv()).await;
 
     handle.abort();
 
     let update = got
         .expect("no live update within timeout")
         .expect("stream closed without emitting");
-    assert_eq!(update.symbol, "AAPL");
+
+    // Updated assertion for the new symbol
+    assert_eq!(update.symbol, "BTC-USD");
     assert!(update.last_price.unwrap_or(0.0) > 0.0);
 }

@@ -61,14 +61,18 @@ impl<'a> QuotesBuilder<'a> {
             return Err(YfError::Data("quotes: at least one symbol required".into()));
         }
 
-        // First try without crumb.
-        let (body, _url, maybe_status) =
+        let (body, url, maybe_status) =
             fetch_v7_multi_raw(self.client, &self.quote_base, &self.symbols, None).await?;
 
-        if let Some(code) = maybe_status
-            && (code == 401 || code == 403)
-        {
-            return self.fetch_with_auth().await;
+        if let Some(code) = maybe_status {
+            if code == 401 || code == 403 {
+                return self.fetch_with_auth().await;
+            } else {
+                return Err(YfError::Status {
+                    status: code,
+                    url: url.to_string(),
+                });
+            }
         }
 
         parse_v7_quotes(&body).map(|nodes| nodes.into_iter().map(map_v7_to_public).collect())
@@ -82,8 +86,15 @@ impl<'a> QuotesBuilder<'a> {
             .ok_or_else(|| YfError::Data("Crumb is not set".into()))?
             .to_string();
 
-        let (body, _url, _status) =
+        let (body, url, status) =
             fetch_v7_multi_raw(self.client, &self.quote_base, &self.symbols, Some(&crumb)).await?;
+
+        if let Some(code) = status {
+            return Err(YfError::Status {
+                status: code,
+                url: url.to_string(),
+            });
+        }
 
         parse_v7_quotes(&body).map(|nodes| nodes.into_iter().map(map_v7_to_public).collect())
     }

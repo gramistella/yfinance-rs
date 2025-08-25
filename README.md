@@ -27,3 +27,6 @@ export YF_FIXDIR=/tmp/yf-fixtures
 YF_RECORD=1 cargo test --features test-mode -- --ignored --test-threads=1
 cargo test --features test-mode
 ```
+
+**Full test**
+YF_RECORD=1 cargo test --features test-mode -- --ignored --test-threads=1 && cargo test --features test-mode

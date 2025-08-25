@@ -47,6 +47,7 @@ pub struct YfClient {
     base_quote_api: Url,
     cookie_url: Url,
     crumb_url: Url,
+    user_agent: String,
 
     cookie: Option<String>,
     crumb: Option<String>,
@@ -74,6 +75,11 @@ impl YfClient {
     pub(crate) fn http(&self) -> &Client {
         &self.http
     }
+
+    pub(crate) fn user_agent(&self) -> &str {
+        &self.user_agent
+    }
+    
     pub(crate) fn base_chart(&self) -> &Url {
         &self.base_chart
     }
@@ -82,6 +88,10 @@ impl YfClient {
     }
     pub(crate) fn base_quote_api(&self) -> &Url {
         &self.base_quote_api
+    }
+
+    pub(crate) fn cookie(&self) -> Option<&str> {
+        self.cookie.as_deref()
     }
 
     #[cfg(feature = "test-mode")]
@@ -225,8 +235,9 @@ impl YfClientBuilder {
         let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
+        let user_agent = self.user_agent.as_deref().unwrap_or(USER_AGENT).to_string();
         let mut httpb = reqwest::Client::builder()
-            .user_agent(self.user_agent.as_deref().unwrap_or(USER_AGENT))
+            .user_agent(user_agent.clone())
             .cookie_store(true);
 
         if let Some(t) = self.timeout {
@@ -245,6 +256,7 @@ impl YfClientBuilder {
             base_quote_api,
             cookie_url,
             crumb_url,
+            user_agent,
             cookie: {
                 #[cfg(feature = "test-mode")]
                 {
