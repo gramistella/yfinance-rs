@@ -1,12 +1,11 @@
 use crate::core::{
-    client::{CacheMode, RetryConfig},
     YfClient, YfError,
+    client::{CacheMode, RetryConfig},
 };
 
 use super::fetch::fetch_modules;
 use super::model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 use super::wire::RawNum;
-
 
 /* ---------- Public entry points (mapping wire → public models) ---------- */
 
@@ -16,7 +15,14 @@ pub(super) async fn recommendation_trend(
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<RecommendationRow>, YfError> {
-    let root = fetch_modules(client, symbol, "recommendationTrend", cache_mode, retry_override).await?;
+    let root = fetch_modules(
+        client,
+        symbol,
+        "recommendationTrend",
+        cache_mode,
+        retry_override,
+    )
+    .await?;
 
     let trend = root
         .recommendation_trend

@@ -1,10 +1,12 @@
 //! quoteSummary v10 API path for profiles.
 
-use crate::{core::{client::CacheMode, net, quotesummary}, YfClient, YfError};
+use crate::{
+    YfClient, YfError,
+    core::{client::CacheMode, net, quotesummary},
+};
 use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};
-
 
 pub(crate) async fn load_from_quote_summary_api(
     client: &mut YfClient,

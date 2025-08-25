@@ -37,7 +37,7 @@ help:
 # - Everything else goes AFTER `--` to the harness.
 
 # Offline (replay cached fixtures)
-offline +args='':
+test-offline +args='':
 	@just banner "Offline tests (cached fixtures)"
 	@set -euo pipefail; \
 	TARGET_OPT=(); TEST_ARGS=(); \
@@ -54,7 +54,7 @@ offline +args='':
 	cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"
 
 # Full live sweep (no writes; runs all tests including ignored)
-live +args='':
+test-live +args='':
 	@just banner "Live sweep (no writes, includes ignored)"
 	@set -euo pipefail; \
 	TARGET_OPT=(); TEST_ARGS=(); \
@@ -71,7 +71,7 @@ live +args='':
 	YF_LIVE=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --include-ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"
 
 # Record fixtures (live → cache)
-record +args='':
+test-record +args='':
 	@just banner "Recording fixtures (runs ignored tests)"
 	@set -euo pipefail; \
 	TARGET_OPT=(); TEST_ARGS=(); \
@@ -88,7 +88,7 @@ record +args='':
 	YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"
 
 # Use a different fixture directory, then replay
-with-fixdir dir='/tmp/yf-fixtures' +args='':
+test-with-fixdir dir='/tmp/yf-fixtures' +args='':
 	@just banner "Recording to {{dir}} then replaying offline"
 	@set -euo pipefail; \
 	TARGET_OPT=(); TEST_ARGS=(); \
@@ -107,7 +107,7 @@ with-fixdir dir='/tmp/yf-fixtures' +args='':
 	cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"
 
 # Full test: clear phase markers; only run offline if live/record passes
-full +args='':
+test-full +args='':
 	@just banner "Full test (Phase 1: live/record → Phase 2: offline)"
 	@set -euo pipefail; \
 	ts() { date '+%Y-%m-%d %H:%M:%S'; }; \

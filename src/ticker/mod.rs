@@ -7,7 +7,10 @@ pub use model::{FastInfo, OptionChain, OptionContract, Quote};
 use url::Url;
 
 use crate::{
-    analysis::AnalysisBuilder, core::client::{CacheMode, RetryConfig}, history::HistoryBuilder, YfClient, YfError
+    YfClient, YfError,
+    analysis::AnalysisBuilder,
+    core::client::{CacheMode, RetryConfig},
+    history::HistoryBuilder,
 };
 
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";

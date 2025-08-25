@@ -1,7 +1,7 @@
 use httpmock::{Method::GET, MockServer};
 use std::time::Duration;
 use url::Url;
-use yfinance_rs::{core::client::CacheMode, HistoryBuilder, YfClient};
+use yfinance_rs::{HistoryBuilder, YfClient, core::client::CacheMode};
 
 #[tokio::test]
 async fn history_serves_from_cache_on_second_call() {

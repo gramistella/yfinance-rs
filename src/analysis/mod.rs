@@ -9,8 +9,8 @@ mod wire;
 pub use model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 
 use crate::{
-    core::client::{CacheMode, RetryConfig},
     YfClient, YfError,
+    core::client::{CacheMode, RetryConfig},
 };
 
 /// Builder for analysis module API calls.

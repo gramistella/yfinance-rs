@@ -1,5 +1,9 @@
 use super::wire::V10Result;
-use crate::core::{client::{CacheMode, RetryConfig}, quotesummary, YfClient, YfError};
+use crate::core::{
+    YfClient, YfError,
+    client::{CacheMode, RetryConfig},
+    quotesummary,
+};
 
 pub(super) async fn fetch_modules(
     client: &mut YfClient,
@@ -8,6 +12,13 @@ pub(super) async fn fetch_modules(
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<V10Result, YfError> {
-    quotesummary::fetch_module_result(client, symbol, modules, "analysis", cache_mode, retry_override)
-        .await
+    quotesummary::fetch_module_result(
+        client,
+        symbol,
+        modules,
+        "analysis",
+        cache_mode,
+        retry_override,
+    )
+    .await
 }

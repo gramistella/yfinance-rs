@@ -2,7 +2,10 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use std::time::Duration;
 use url::Url;
-use yfinance_rs::{core::client::{Backoff, RetryConfig}, HistoryBuilder, YfClient, YfError};
+use yfinance_rs::{
+    HistoryBuilder, YfClient, YfError,
+    core::client::{Backoff, RetryConfig},
+};
 
 #[tokio::test]
 async fn history_retries_on_persistent_5xx() {
