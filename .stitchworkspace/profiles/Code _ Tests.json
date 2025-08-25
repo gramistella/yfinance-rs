@@ -2,7 +2,7 @@
   "name": "Code + Tests",
   "settings": {
     "version": 1,
-    "ext_filter": ".rs, .toml",
+    "ext_filter": ".rs, .toml, .proto",
     "exclude_dirs": ".git, node_modules, target, _target, .elan, .lake, .idea, .vscode, _app, .svelte-kit, .sqlx, venv, .venv, __pycache__, LICENSES, fixtures",
     "exclude_files": "LICENSE, Cargo.lock, package-lock.json, yarn.lock, .DS_Store, .dockerignore, .gitignore, .npmignore, .pre-commit-config.yaml, .prettierignore, .prettierrc, eslint.config.js, .env, Thumbs.db",
     "remove_prefix": "//",
