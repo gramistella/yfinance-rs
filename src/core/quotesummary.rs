@@ -57,13 +57,13 @@ pub(crate) async fn fetch(
             qp.append_pair("crumb", &crumb);
         }
 
-        if cache_mode == CacheMode::Use {
-            if let Some(text) = client.cache_get(&url).await {
-                #[cfg(any(debug_assertions, feature = "debug-dumps"))]
-                let _ = debug_dump_api(symbol, &text);
-                return serde_json::from_str(&text)
-                    .map_err(|e| YfError::Data(format!("quoteSummary json parse (cache): {e}")));
-            }
+        if cache_mode == CacheMode::Use
+            && let Some(text) = client.cache_get(&url).await
+        {
+            #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+            let _ = debug_dump_api(symbol, &text);
+            return serde_json::from_str(&text)
+                .map_err(|e| YfError::Data(format!("quoteSummary json parse (cache): {e}")));
         }
 
         let req = client.http().get(url.clone());

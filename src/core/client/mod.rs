@@ -84,12 +84,6 @@ impl YfClient {
         &self.user_agent
     }
 
-    #[cfg(feature = "test-mode")]
-    pub fn base_chart(&self) -> &Url {
-        &self.base_chart
-    }
-
-    #[cfg(not(feature = "test-mode"))]
     pub(crate) fn base_chart(&self) -> &Url {
         &self.base_chart
     }
@@ -100,11 +94,6 @@ impl YfClient {
     pub(crate) fn base_quote_api(&self) -> &Url {
         &self.base_quote_api
     }
-
-    pub(crate) fn cookie(&self) -> Option<&str> {
-        self.cookie.as_deref()
-    }
-
     #[cfg(feature = "test-mode")]
     pub(crate) fn api_preference(&self) -> ApiPreference {
         self.api_preference
@@ -167,7 +156,7 @@ impl YfClient {
 
     pub async fn send_with_retry(
         &self,
-        mut req: reqwest::RequestBuilder,
+        req: reqwest::RequestBuilder,
         override_retry: Option<&RetryConfig>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let cfg = override_retry.unwrap_or(&self.retry);
@@ -182,7 +171,7 @@ impl YfClient {
             match res {
                 Ok(resp) => {
                     let code = resp.status().as_u16();
-                    if cfg.retry_on_status.iter().any(|&s| s == code) && attempt < cfg.max_retries {
+                    if cfg.retry_on_status.contains(&code) && attempt < cfg.max_retries {
                         sleep_backoff(&cfg.backoff, attempt).await;
                         attempt += 1;
                         continue;
@@ -394,7 +383,7 @@ async fn sleep_backoff(b: &Backoff, attempt: u32) {
             jitter,
         } => {
             let pow = factor.powi(attempt as i32);
-            let mut d = Duration::from_secs_f64(base.as_secs_f64() * pow as f64);
+            let mut d = Duration::from_secs_f64(base.as_secs_f64() * pow);
             if d > max {
                 d = max;
             }

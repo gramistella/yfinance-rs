@@ -1,21 +1,18 @@
 use base64::{Engine as _, engine::general_purpose};
-use chrono::Utc;
 use futures_util::{SinkExt, StreamExt};
 use prost::Message;
-use reqwest::header::HeaderValue;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 use tokio::{
     select,
     sync::{mpsc, oneshot},
     task::JoinHandle,
-    time::interval,
 };
 use tokio_tungstenite::{
-    connect_async, connect_async_with_config,
+    connect_async,
     tungstenite::{
         handshake::client::{Request, generate_key},
-        protocol::{Message as WsMessage, WebSocketConfig},
+        protocol::Message as WsMessage,
     },
 };
 use url::Url;
@@ -212,10 +209,9 @@ impl StreamBuilder {
                         if let Err(e) =
                             run_websocket_stream(&mut client, symbols, stream_url, tx, &mut stop_rx)
                                 .await
+                            && std::env::var("YF_DEBUG").ok().as_deref() == Some("1")
                         {
-                            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                                eprintln!("YF_DEBUG(stream): websocket stream failed: {e}");
-                            }
+                            eprintln!("YF_DEBUG(stream): websocket stream failed: {e}");
                         }
                     }
                     StreamMethod::WebsocketWithFallback => {
@@ -346,12 +342,11 @@ async fn run_websocket_stream(
                     Some(Ok(WsMessage::Binary(bin))) => {
                         // Try to interpret as UTF-8 JSON-wrapped base64 first
                         let mut handled = false;
-                        if let Ok(as_text) = std::str::from_utf8(&bin) {
-                            if let Ok(update) = decode_and_map_message(as_text) {
+                        if let Ok(as_text) = std::str::from_utf8(&bin)
+                            && let Ok(update) = decode_and_map_message(as_text) {
                                 let _ = tx.send(update).await;
                                 handled = true;
                             }
-                        }
                         // If not handled, treat as raw protobuf bytes
                         if !handled {
                             match wire_ws::PricingData::decode(&*bin) {
@@ -426,6 +421,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_polling_stream(
     mut client: crate::core::YfClient,
     symbols: Vec<String>,
@@ -495,16 +491,16 @@ async fn fetch_quotes_multi(
         qp.append_pair("symbols", &symbols.join(","));
     }
 
-    if cache_mode == CacheMode::Use {
-        if let Some(body) = client.cache_get(&url).await {
-            let env: V7Envelope = serde_json::from_str(&body)
-                .map_err(|e| crate::core::YfError::Data(format!("quote json parse: {e}")))?;
-            let result = env
-                .quote_response
-                .and_then(|qr| qr.result)
-                .unwrap_or_default();
-            return Ok(result);
-        }
+    if cache_mode == CacheMode::Use
+        && let Some(body) = client.cache_get(&url).await
+    {
+        let env: V7Envelope = serde_json::from_str(&body)
+            .map_err(|e| crate::core::YfError::Data(format!("quote json parse: {e}")))?;
+        let result = env
+            .quote_response
+            .and_then(|qr| qr.result)
+            .unwrap_or_default();
+        return Ok(result);
     }
 
     let mut resp = client

@@ -1,6 +1,5 @@
 use crate::core::client::{CacheMode, RetryConfig};
-use crate::core::{Interval, Range, YfClient, YfError};
-use crate::history::wire::{ChartEnvelope, Events, MetaNode, QuoteBlock};
+use crate::history::wire::{Events, MetaNode, QuoteBlock};
 
 pub(crate) struct Fetched {
     pub ts: Vec<i64>,
@@ -10,6 +9,7 @@ pub(crate) struct Fetched {
     pub meta: Option<MetaNode>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) async fn fetch_chart(
     client: &crate::core::YfClient,
     symbol: &str,
@@ -47,10 +47,10 @@ pub(crate) async fn fetch_chart(
         );
     }
 
-    if cache_mode == CacheMode::Use {
-        if let Some(body) = client.cache_get(&url).await {
-            return decode_chart(&body);
-        }
+    if cache_mode == CacheMode::Use
+        && let Some(body) = client.cache_get(&url).await
+    {
+        return decode_chart(&body);
     }
 
     let resp = client

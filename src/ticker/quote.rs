@@ -51,10 +51,10 @@ pub(crate) async fn fetch_quote(
         qp.append_pair("symbols", symbol);
     }
 
-    if cache_mode == CacheMode::Use {
-        if let Some(body) = client.cache_get(&url).await {
-            return parse_quote_from_body(&body, symbol).await;
-        }
+    if cache_mode == CacheMode::Use
+        && let Some(body) = client.cache_get(&url).await
+    {
+        return parse_quote_from_body(&body, symbol).await;
     }
 
     let req = http.get(url.clone()).header("accept", "application/json");

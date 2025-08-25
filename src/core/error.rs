@@ -6,7 +6,7 @@ pub enum YfError {
     Http(#[from] reqwest::Error),
 
     #[error("WebSocket error: {0}")]
-    Websocket(#[from] tokio_tungstenite::tungstenite::Error),
+    Websocket(Box<tokio_tungstenite::tungstenite::Error>),
 
     #[error("Protobuf decoding error: {0}")]
     Protobuf(#[from] prost::DecodeError),
@@ -22,4 +22,10 @@ pub enum YfError {
 
     #[error("invalid date range: start must be before end")]
     InvalidDates,
+}
+
+impl From<tokio_tungstenite::tungstenite::Error> for YfError {
+    fn from(e: tokio_tungstenite::tungstenite::Error) -> Self {
+        YfError::Websocket(Box::new(e))
+    }
 }

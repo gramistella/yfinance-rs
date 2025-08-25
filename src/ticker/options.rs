@@ -120,10 +120,10 @@ async fn fetch_options_raw(
         }
     }
 
-    if cache_mode == CacheMode::Use {
-        if let Some(body) = client.cache_get(&url).await {
-            return Ok((body, url));
-        }
+    if cache_mode == CacheMode::Use
+        && let Some(body) = client.cache_get(&url).await
+    {
+        return Ok((body, url));
     }
 
     let req = http.get(url.clone()).header("accept", "application/json");

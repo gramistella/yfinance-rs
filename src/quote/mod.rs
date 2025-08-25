@@ -4,7 +4,6 @@ use url::Url;
 use crate::core::Quote;
 use crate::core::client::CacheMode;
 use crate::core::client::RetryConfig;
-use crate::core::net;
 use crate::core::{YfClient, YfError};
 
 /* ---------------- Public API ---------------- */
@@ -156,10 +155,10 @@ async fn fetch_v7_multi_raw(
         }
     }
 
-    if cache_mode == CacheMode::Use {
-        if let Some(body) = client.cache_get(&url).await {
-            return Ok((body, url, None));
-        }
+    if cache_mode == CacheMode::Use
+        && let Some(body) = client.cache_get(&url).await
+    {
+        return Ok((body, url, None));
     }
 
     let fixture_key_owned = if symbols.len() == 1 {
@@ -179,10 +178,8 @@ async fn fetch_v7_multi_raw(
     let code = resp.status().as_u16();
     let body = crate::core::net::get_text(resp, "quote_v7", fixture_key, "json").await?;
 
-    if !matches!(cache_mode, CacheMode::Bypass) {
-        if (code as u16) < 400 {
-            client.cache_put(&url, &body, None).await;
-        }
+    if !matches!(cache_mode, CacheMode::Bypass) && (code as u16) < 400 {
+        client.cache_put(&url, &body, None).await;
     }
 
     if (code as u16) >= 400 {

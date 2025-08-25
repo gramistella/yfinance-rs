@@ -1,5 +1,5 @@
 use super::wire::V10Result;
-use crate::core::{YfClient, YfError, client::CacheMode, net, quotesummary};
+use crate::core::{YfClient, YfError, client::CacheMode, quotesummary};
 
 /* ---------- Single focused fetch with crumb + retry ---------- */
 

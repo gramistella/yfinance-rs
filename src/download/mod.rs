@@ -170,8 +170,6 @@ impl<'a> DownloadBuilder<'a> {
     }
 
     /// Execute the download concurrently and collect results.
-    ///
-    /// Fails fast if any symbol fetch fails.
     pub async fn run(self) -> Result<DownloadResult, YfError> {
         if self.symbols.is_empty() {
             return Err(YfError::Data("no symbols specified".into()));
@@ -179,10 +177,25 @@ impl<'a> DownloadBuilder<'a> {
 
         let need_adjust_in_fetch = self.auto_adjust || self.back_adjust;
 
-        // Build a future per symbol (polled concurrently).
+        // Precompute period timestamps here so we can use `?` safely
+        let period_dt = if let Some((p1, p2)) = self.period {
+            use chrono::{TimeZone, Utc};
+            let start = Utc
+                .timestamp_opt(p1, 0)
+                .single()
+                .ok_or_else(|| YfError::Data("invalid period1".into()))?;
+            let end = Utc
+                .timestamp_opt(p2, 0)
+                .single()
+                .ok_or_else(|| YfError::Data("invalid period2".into()))?;
+            Some((start, end))
+        } else {
+            None
+        };
+
         let futures = self.symbols.iter().map(|sym| {
             let sym = sym.clone();
-            let mut hb = HistoryBuilder::new(self.client, sym.clone())
+            let mut hb: HistoryBuilder<'_> = HistoryBuilder::new(self.client, sym.clone())
                 .interval(self.interval)
                 .auto_adjust(need_adjust_in_fetch)
                 .prepost(self.include_prepost)
@@ -191,18 +204,7 @@ impl<'a> DownloadBuilder<'a> {
                 .cache_mode(self.cache_mode)
                 .retry_policy(self.retry_override.clone());
 
-            if let Some((p1, p2)) = self.period {
-                use chrono::{TimeZone, Utc};
-                let start = Utc
-                    .timestamp_opt(p1, 0)
-                    .single()
-                    .ok_or(YfError::Data("invalid period1".into()))
-                    .unwrap();
-                let end = Utc
-                    .timestamp_opt(p2, 0)
-                    .single()
-                    .ok_or(YfError::Data("invalid period2".into()))
-                    .unwrap();
+            if let Some((start, end)) = period_dt {
                 hb = hb.between(start, end);
             } else if let Some(r) = self.range {
                 hb = hb.range(r);
@@ -218,35 +220,33 @@ impl<'a> DownloadBuilder<'a> {
 
         let joined: Vec<(String, HistoryResponse)> = try_join_all(futures).await?;
 
-        let mut series: HashMap<String, Vec<Candle>> = HashMap::new();
-        let mut meta: HashMap<String, Option<HistoryMeta>> = HashMap::new();
-        let mut actions: HashMap<String, Vec<Action>> = HashMap::new();
+        let mut series: std::collections::HashMap<String, Vec<Candle>> =
+            std::collections::HashMap::new();
+        let mut meta: std::collections::HashMap<String, Option<HistoryMeta>> =
+            std::collections::HashMap::new();
+        let mut actions: std::collections::HashMap<String, Vec<Action>> =
+            std::collections::HashMap::new();
 
         for (sym, mut resp) in joined {
             let mut v = resp.candles;
 
-            // back_adjust: override Close with raw (unadjusted) close values.
+            // Keep your current "back_adjust" semantics but avoid non-finite writes
             if self.back_adjust
                 && let Some(raw) = resp.raw_close.take()
             {
                 for (i, c) in v.iter_mut().enumerate() {
-                    if let Some(&rc) = raw.get(i) {
-                        if rc.is_finite() {
-                            c.close = rc;
-                        } else {
-                            // keep as-is (NaN stays if keepna)
-                            c.close = rc;
-                        }
+                    if let Some(&rc) = raw.get(i)
+                        && rc.is_finite()
+                    {
+                        c.close = rc;
                     }
                 }
             }
 
-            // repair: fix 100× outliers in place
             if self.repair {
                 repair_scale_outliers(&mut v);
             }
 
-            // rounding: round prices to 2 dp
             if self.rounding {
                 for c in &mut v {
                     if c.open.is_finite() {

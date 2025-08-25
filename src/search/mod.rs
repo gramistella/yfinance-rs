@@ -4,7 +4,7 @@ use url::Url;
 
 use crate::core::client::CacheMode;
 use crate::core::client::RetryConfig;
-use crate::{YfClient, YfError, core::net};
+use crate::{YfClient, YfError};
 
 async fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
     let env: V1SearchEnvelope =
@@ -129,10 +129,10 @@ impl<'a> SearchBuilder<'a> {
             }
         }
 
-        if self.cache_mode == CacheMode::Use {
-            if let Some(body) = self.client.cache_get(&url).await {
-                return parse_search_body(&body).await;
-            }
+        if self.cache_mode == CacheMode::Use
+            && let Some(body) = self.client.cache_get(&url).await
+        {
+            return parse_search_body(&body).await;
         }
 
         let http = self.client.http().clone();

@@ -24,9 +24,11 @@ async fn history_retries_on_persistent_5xx() {
     });
 
     let max_retries = 3;
-    let mut client_retry_config = RetryConfig::default();
-    client_retry_config.backoff = Backoff::Fixed(Duration::from_millis(1)); // Minimal delay for fast tests
-    client_retry_config.max_retries = max_retries;
+    let client_retry_config = RetryConfig {
+        backoff: Backoff::Fixed(Duration::from_millis(1)), // minimal delay for fast tests
+        max_retries,                                       // keep whatever you had in scope
+        ..RetryConfig::default()
+    };
 
     let client = YfClient::builder()
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
