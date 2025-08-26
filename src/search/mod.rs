@@ -31,11 +31,12 @@ fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
 
 /* ---------------- Public API ---------------- */
 
-/// Convenience: perform a search with default settings (quotes only).
+/// A convenience function to search for tickers with default settings (quotes only).
 pub async fn search(client: YfClient, query: &str) -> Result<SearchResponse, YfError> {
     SearchBuilder::new(client, query)?.fetch().await
 }
 
+/// A builder for searching for tickers and other assets on Yahoo Finance.
 #[derive(Debug)]
 pub struct SearchBuilder {
     client: YfClient,
@@ -51,6 +52,7 @@ pub struct SearchBuilder {
 }
 
 impl SearchBuilder {
+    /// Creates a new `SearchBuilder` for a given search query.
     pub fn new(client: YfClient, query: impl Into<String>) -> Result<Self, YfError> {
         Ok(Self {
             client,
@@ -66,47 +68,55 @@ impl SearchBuilder {
         })
     }
 
+    /// Sets the cache mode for this specific API call.
     pub fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
+    /// Overrides the default retry policy for this specific API call.
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
-    /// Override the base URL (useful for tests/mocking).
+    /// (For testing) Overrides the base URL for the search API.
     pub fn search_base(mut self, base: Url) -> Self {
         self.base = base;
         self
     }
 
+    /// Sets the maximum number of quote results to return.
     pub fn quotes_count(mut self, n: u32) -> Self {
         self.quotes_count = Some(n);
         self
     }
 
+    /// Sets the maximum number of news results to return.
     pub fn news_count(mut self, n: u32) -> Self {
         self.news_count = Some(n);
         self
     }
 
+    /// Sets the maximum number of screener list results to return.
     pub fn lists_count(mut self, n: u32) -> Self {
         self.lists_count = Some(n);
         self
     }
 
+    /// Sets the language for the search results.
     pub fn lang(mut self, s: impl Into<String>) -> Self {
         self.lang = Some(s.into());
         self
     }
 
+    /// Sets the region for the search results.
     pub fn region(mut self, s: impl Into<String>) -> Self {
         self.region = Some(s.into());
         self
     }
 
+    /// Executes the search request.
     pub async fn fetch(self) -> Result<SearchResponse, crate::core::YfError> {
         let mut url = self.base.clone();
         {
@@ -216,20 +226,31 @@ impl SearchBuilder {
 
 /* ---------------- Types returned by this module ---------------- */
 
+/// The response from a search query.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SearchResponse {
+    /// The total number of quote results found.
     pub count: Option<u32>,
+    /// A list of quote results matching the query.
     pub quotes: Vec<SearchQuote>,
 }
 
+/// A quote result from a search query.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SearchQuote {
+    /// The ticker symbol.
     pub symbol: String,
+    /// The short name of the company or asset.
     pub shortname: Option<String>,
+    /// The long name of the company or asset.
     pub longname: Option<String>,
+    /// The type of the quote (e.g., "EQUITY", "ETF").
     pub quote_type: Option<String>,
+    /// The exchange the asset is traded on.
     pub exchange: Option<String>,
+    /// The display name of the exchange.
     pub exch_disp: Option<String>,
+    /// The display name of the asset type.
     pub type_disp: Option<String>,
 }
 

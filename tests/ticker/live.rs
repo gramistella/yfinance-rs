@@ -8,7 +8,7 @@ async fn live_ticker_quote_for_record() {
     let client = yfinance_rs::YfClient::builder().build().unwrap();
 
     for sym in ["AAPL", "MSFT"] {
-        let mut t = yfinance_rs::Ticker::new(client.clone(), sym).unwrap();
+        let t = yfinance_rs::Ticker::new(client.clone(), sym).unwrap();
         let q = t.quote().await.unwrap();
 
         if !crate::common::is_recording() {

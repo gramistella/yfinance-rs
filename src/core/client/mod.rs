@@ -20,13 +20,14 @@ use tokio::sync::RwLock;
 use url::Url;
 
 #[cfg(feature = "test-mode")]
+/// Defines the preferred data source for profile lookups when testing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ApiPreference {
-    /// Try API first, then fall back to scraping if API fails.
+    /// Try the API first, then fall back to scraping if the API fails. (Default)
     ApiThenScrape,
-    /// Use only the API path.
+    /// Use only the `quoteSummary` API.
     ApiOnly,
-    /// Use only the scraping path.
+    /// Use only the HTML scraping method.
     ScrapeOnly,
 }
 
@@ -48,6 +49,13 @@ struct ClientState {
     crumb: Option<String>,
 }
 
+/// The main asynchronous client for interacting with the Yahoo Finance API.
+///
+/// The client manages an HTTP client, authentication (cookies and crumbs),
+/// caching, and retry logic. It is cloneable and designed to be shared
+/// across multiple tasks.
+///
+/// Create a client using [`YfClient::builder()`] or [`YfClient::default()`].
 #[derive(Debug, Clone)]
 pub struct YfClient {
     http: Client,
@@ -74,7 +82,7 @@ impl Default for YfClient {
 }
 
 impl YfClient {
-    /// Create a new builder.
+    /// Creates a new builder for a `YfClient`.
     pub fn builder() -> YfClientBuilder {
         YfClientBuilder::default()
     }
@@ -104,6 +112,7 @@ impl YfClient {
         self.api_preference
     }
 
+    /// Returns `true` if in-memory caching is enabled for this client.
     pub fn cache_enabled(&self) -> bool {
         self.cache.is_some()
     }
@@ -159,7 +168,7 @@ impl YfClient {
         }
     }
 
-    pub async fn send_with_retry(
+    pub(crate) async fn send_with_retry(
         &self,
         req: reqwest::RequestBuilder,
         override_retry: Option<&RetryConfig>,
@@ -198,6 +207,9 @@ impl YfClient {
         }
     }
 
+    /// Returns a reference to the default `RetryConfig` for this client.
+    ///
+    /// This config is used for all requests unless overridden on a per-call basis.
     pub fn retry_config(&self) -> &RetryConfig {
         &self.retry
     }
@@ -205,6 +217,7 @@ impl YfClient {
 
 /* ----------------------- Builder ----------------------- */
 
+/// A builder for creating and configuring a [`YfClient`].
 #[derive(Default)]
 pub struct YfClientBuilder {
     user_agent: Option<String>,
@@ -228,91 +241,108 @@ pub struct YfClientBuilder {
 }
 
 impl YfClientBuilder {
-    /// Override the User-Agent.
+    /// Overrides the `User-Agent` header for all HTTP requests.
+    ///
+    /// Defaults to a common desktop browser User-Agent to avoid being blocked
     pub fn user_agent(mut self, ua: impl Into<String>) -> Self {
         self.user_agent = Some(ua.into());
         self
     }
 
-    /// Override the quotes HTML base (e.g., `https://finance.yahoo.com/quote/`).
+    /// Overrides the base URL for quote HTML pages (used for scraping).
+    /// Default: `https://finance.yahoo.com/quote/`.
     pub fn base_quote(mut self, url: Url) -> Self {
         self.base_quote = Some(url);
         self
     }
 
-    /// Override the chart API base (e.g., `https://query1.finance.yahoo.com/v8/finance/chart/`).
+    /// Overrides the base URL for the chart API (used for historical data).
+    /// Default: `https://query1.finance.yahoo.com/v8/finance/chart/`.
     pub fn base_chart(mut self, url: Url) -> Self {
         self.base_chart = Some(url);
         self
     }
 
-    /// Override the quoteSummary API base (e.g., `https://query1.finance.yahoo.com/v10/finance/quoteSummary/`).
+    /// Overrides the base URL for the `quoteSummary` API (used for profiles, financials, etc.).
+    /// Default: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/`.
     pub fn base_quote_api(mut self, url: Url) -> Self {
         self.base_quote_api = Some(url);
         self
     }
 
-    /// Override the cookie bootstrap URL.
+    /// Overrides the URL used to acquire an initial cookie.
     pub fn cookie_url(mut self, url: Url) -> Self {
         self.cookie_url = Some(url);
         self
     }
 
-    /// Override the crumb URL.
+    /// Overrides the URL used to acquire a crumb for authenticated requests.
     pub fn crumb_url(mut self, url: Url) -> Self {
         self.crumb_url = Some(url);
         self
     }
 
+    /// Sets the entire retry configuration.
+    ///
+    /// Replaces the default retry settings.
     pub fn retry_config(mut self, cfg: RetryConfig) -> Self {
         self.retry = Some(cfg);
         self
     }
+
+    /// A convenience method to enable or disable the retry mechanism.
     pub fn retry_enabled(mut self, yes: bool) -> Self {
         let mut cfg = self.retry.unwrap_or_default();
         cfg.enabled = yes;
         self.retry = Some(cfg);
         self
     }
+
+    /// Disables in-memory caching for this client.
     pub fn no_cache(mut self) -> Self {
         self.cache_ttl = None;
         self
     }
 
     #[cfg(feature = "test-mode")]
-    /// Choose which data source path to use in tests.
+    /// (Test mode only) Chooses which data source path to use for profile lookups.
     pub fn api_preference(mut self, pref: ApiPreference) -> Self {
         self.api_preference = Some(pref);
         self
     }
 
     #[cfg(feature = "test-mode")]
-    /// Provide pre-auth credentials (bypass cookie/crumb fetch) in tests.
+    /// (Test mode only) Provides pre-authenticated credentials to bypass the cookie/crumb fetch.
     pub fn preauth(mut self, cookie: impl Into<String>, crumb: impl Into<String>) -> Self {
         self.preauth_cookie = Some(cookie.into());
         self.preauth_crumb = Some(crumb.into());
         self
     }
 
-    /// Set a global request timeout (overall). Default: none.
+    /// Sets a global timeout for the entire HTTP request.
+    ///
+    /// Default: none.
     pub fn timeout(mut self, dur: Duration) -> Self {
         self.timeout = Some(dur);
         self
     }
 
-    /// Set a connect timeout. Default: none.
+    /// Sets a timeout for the connection phase of an HTTP request.
+    ///
+    /// Default: none.
     pub fn connect_timeout(mut self, dur: Duration) -> Self {
         self.connect_timeout = Some(dur);
         self
     }
 
-    /// Enable in-memory caching with a default TTL.
-    /// If not set, caching is disabled.
+    /// Enables in-memory caching with a default Time-To-Live (TTL) for all responses.
+    ///
+    /// If not set, caching is disabled by default.
     pub fn cache_ttl(mut self, dur: Duration) -> Self {
         self.cache_ttl = Some(dur);
         self
     }
-
+    /// Builds the `YfClient`.
     pub fn build(self) -> Result<YfClient, YfError> {
         let base_chart = self.base_chart.unwrap_or(Url::parse(DEFAULT_BASE_CHART)?);
         let base_quote = self.base_quote.unwrap_or(Url::parse(DEFAULT_BASE_QUOTE)?);

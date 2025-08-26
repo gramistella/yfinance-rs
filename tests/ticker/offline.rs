@@ -8,7 +8,7 @@ async fn offline_quote_uses_recorded_fixture() {
     let mock = crate::common::mock_quote_v7(&server, sym);
 
     let client = YfClient::builder().build().unwrap();
-    let mut t = Ticker::with_quote_base(
+    let t = Ticker::with_quote_base(
         client,
         sym,
         Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),

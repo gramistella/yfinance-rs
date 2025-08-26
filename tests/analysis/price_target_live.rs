@@ -12,7 +12,7 @@ async fn live_price_target_smoke() {
     let client = YfClient::builder().build().unwrap();
 
     // Pick a very liquid name that usually has coverage.
-    let mut t = Ticker::new(client, "AAPL").unwrap();
+    let t = Ticker::new(client, "AAPL").unwrap();
     let pt = t.analyst_price_target().await.unwrap();
 
     // Basic sanity: at least one of the fields should show up.

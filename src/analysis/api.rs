@@ -33,11 +33,11 @@ pub(super) async fn recommendation_trend(
         .into_iter()
         .map(|n| RecommendationRow {
             period: n.period.unwrap_or_default(),
-            strong_buy: n.strong_buy.unwrap_or(0) as u32,
-            buy: n.buy.unwrap_or(0) as u32,
-            hold: n.hold.unwrap_or(0) as u32,
-            sell: n.sell.unwrap_or(0) as u32,
-            strong_sell: n.strong_sell.unwrap_or(0) as u32,
+            strong_buy: u32::try_from(n.strong_buy.unwrap_or(0)).unwrap_or(0),
+            buy: u32::try_from(n.buy.unwrap_or(0)).unwrap_or(0),
+            hold: u32::try_from(n.hold.unwrap_or(0)).unwrap_or(0),
+            sell: u32::try_from(n.sell.unwrap_or(0)).unwrap_or(0),
+            strong_sell: u32::try_from(n.strong_sell.unwrap_or(0)).unwrap_or(0),
         })
         .collect();
 
@@ -90,11 +90,11 @@ pub(super) async fn recommendation_summary(
 
     Ok(RecommendationSummary {
         latest_period,
-        strong_buy: sb as u32,
-        buy: b as u32,
-        hold: h as u32,
-        sell: s as u32,
-        strong_sell: ss as u32,
+        strong_buy: u32::try_from(sb).unwrap_or(0),
+        buy: u32::try_from(b).unwrap_or(0),
+        hold: u32::try_from(h).unwrap_or(0),
+        sell: u32::try_from(s).unwrap_or(0),
+        strong_sell: u32::try_from(ss).unwrap_or(0),
         mean,
         mean_key,
     })

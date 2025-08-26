@@ -19,7 +19,7 @@ async fn live_analysis_smoke_and_or_record() {
     }
     // Upgrades/Downgrades
     {
-        let mut t = yfinance_rs::Ticker::new(client.clone(), "GOOGL").unwrap();
+        let t = yfinance_rs::Ticker::new(client.clone(), "GOOGL").unwrap();
         let _ = t.upgrades_downgrades().await.unwrap();
     }
 

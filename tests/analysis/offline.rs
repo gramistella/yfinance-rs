@@ -98,7 +98,7 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let mut t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym).unwrap();
     let _rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();

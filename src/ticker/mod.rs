@@ -17,9 +17,40 @@ use crate::{
 const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
 
+/// A high-level interface for a single ticker symbol, providing convenient access to all available data.
+///
+/// This struct is designed to be the primary entry point for users who want to fetch
+/// various types of financial data for a specific security, similar to the `Ticker`
+/// object in the Python `yfinance` library.
+///
+/// A `Ticker` is created with a [`YfClient`] and a symbol. It then provides methods
+/// to fetch quotes, historical prices, options chains, financials, and more.
+///
+/// # Example
+///
+/// ```no_run
+/// # use yfinance_rs::{Ticker, YfClient};
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let client = YfClient::default();
+/// let ticker = Ticker::new(client, "TSLA")?;
+///
+/// // Get the latest quote
+/// let quote = ticker.quote().await?;
+/// println!("Tesla's last price: {}", quote.regular_market_price.unwrap_or_default());
+///
+/// // Get historical prices for the last year
+/// let history = ticker.history(Some(yfinance_rs::Range::Y1), None, false).await?;
+/// println!("Fetched {} days of history.", history.len());
+/// # Ok(())
+/// # }
+/// ```
 pub struct Ticker {
+    #[doc(hidden)]
     pub(crate) client: YfClient,
+    #[doc(hidden)]
     pub(crate) symbol: String,
+    #[doc(hidden)]
     pub(crate) quote_base: Url,
     options_base: Url,
     cache_mode: CacheMode,
@@ -27,6 +58,9 @@ pub struct Ticker {
 }
 
 impl Ticker {
+    /// Creates a new `Ticker` for a given symbol.
+    ///
+    /// This is the standard way to create a ticker instance with default API endpoints.
     pub fn new(client: YfClient, symbol: impl Into<String>) -> Result<Self, crate::core::YfError> {
         Ok(Self {
             client,
@@ -38,16 +72,21 @@ impl Ticker {
         })
     }
 
+    /// Sets the cache mode for all subsequent API calls made by this `Ticker` instance.
+    ///
+    /// This allows you to override the client's default cache behavior for a specific ticker.
     pub fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
+    /// Overrides the client's default retry policy for all subsequent API calls made by this `Ticker` instance.
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
+    /// (For testing) Creates a new `Ticker` with a custom base URL for quote requests.
     pub fn with_quote_base(
         client: YfClient,
         symbol: impl Into<String>,
@@ -63,6 +102,7 @@ impl Ticker {
         })
     }
 
+    /// (For testing) Creates a new `Ticker` with a custom base URL for options requests.
     pub fn with_options_base(
         client: YfClient,
         symbol: impl Into<String>,
@@ -78,6 +118,7 @@ impl Ticker {
         })
     }
 
+    /// (For testing) Creates a new `Ticker` with custom base URLs for both quote and options requests.
     pub fn with_bases(
         client: YfClient,
         symbol: impl Into<String>,
@@ -94,13 +135,15 @@ impl Ticker {
         })
     }
 
+    /// Returns a `HistoryBuilder` to construct a detailed query for historical price data.
     pub fn history_builder(&self) -> HistoryBuilder<'_> {
         HistoryBuilder::new(&self.client, &self.symbol)
     }
 
     /* ---------------- Quotes ---------------- */
 
-    pub async fn quote(&mut self) -> Result<Quote, YfError> {
+    /// Fetches a detailed quote for the ticker.
+    pub async fn quote(&self) -> Result<Quote, YfError> {
         quote::fetch_quote(
             &self.client,
             &self.quote_base,
@@ -111,7 +154,8 @@ impl Ticker {
         .await
     }
 
-    pub async fn fast_info(&mut self) -> Result<FastInfo, YfError> {
+    /// Fetches a "fast" info quote, containing the most essential price and market data.
+    pub async fn fast_info(&self) -> Result<FastInfo, YfError> {
         let q = self.quote().await?;
         let last = q
             .regular_market_price
@@ -130,6 +174,14 @@ impl Ticker {
 
     /* ---------------- History helpers ---------------- */
 
+    /// Fetches historical price candles with default settings.
+    ///
+    /// Prices are automatically adjusted for splits and dividends. For more control, use [`history_builder`].
+    ///
+    /// # Arguments
+    /// * `range` - The relative time range for the data (e.g., `1y`, `6mo`). Defaults to `6mo` if `None`.
+    /// * `interval` - The time interval for each candle (e.g., `1d`, `1wk`). Defaults to `1d` if `None`.
+    /// * `prepost` - Whether to include pre-market and post-market data for intraday intervals.
     pub async fn history(
         &self,
         range: Option<crate::Range>,
@@ -152,6 +204,9 @@ impl Ticker {
         hb.fetch().await
     }
 
+    /// Fetches all corporate actions (dividends and splits) for the given range.
+    ///
+    /// Defaults to the maximum available range if `None`.
     pub async fn actions(
         &self,
         range: Option<crate::Range>,
@@ -162,6 +217,10 @@ impl Ticker {
         Ok(resp.actions)
     }
 
+    /// Fetches all dividend payments for the given range.
+    ///
+    /// Returns a `Vec` of tuples containing `(timestamp, amount)`.
+    /// Defaults to the maximum available range if `None`.
     pub async fn dividends(&self, range: Option<crate::Range>) -> Result<Vec<(i64, f64)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
@@ -173,6 +232,10 @@ impl Ticker {
             .collect())
     }
 
+    /// Fetches all stock splits for the given range.
+    ///
+    /// Returns a `Vec` of tuples containing `(timestamp, numerator, denominator)`.
+    /// Defaults to the maximum available range if `None`.
     pub async fn splits(
         &self,
         range: Option<crate::Range>,
@@ -191,6 +254,7 @@ impl Ticker {
             .collect())
     }
 
+    /// Fetches the metadata associated with the ticker's historical data, such as timezone.
     pub async fn get_history_metadata(
         &self,
         range: Option<crate::Range>,
@@ -208,6 +272,7 @@ impl Ticker {
 
     /* ---------------- Options ---------------- */
 
+    /// Fetches the available expiration dates for the ticker's options as Unix timestamps.
     pub async fn options(&self) -> Result<Vec<i64>, YfError> {
         options::expiration_dates(
             &self.client,
@@ -219,6 +284,9 @@ impl Ticker {
         .await
     }
 
+    /// Fetches the full option chain (calls and puts) for a specific expiration date.
+    ///
+    /// If `date` is `None`, fetches the chain for the nearest expiration date.
     pub async fn option_chain(&self, date: Option<i64>) -> Result<OptionChain, YfError> {
         options::option_chain(
             &self.client,
@@ -233,6 +301,7 @@ impl Ticker {
 
     /* ---------------- Analysis convenience ---------------- */
 
+    /// Fetches the analyst recommendation trend.
     pub async fn recommendations(&self) -> Result<Vec<crate::RecommendationRow>, YfError> {
         AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
@@ -241,6 +310,7 @@ impl Ticker {
             .await
     }
 
+    /// Fetches a summary of the latest analyst recommendations.
     pub async fn recommendations_summary(&self) -> Result<crate::RecommendationSummary, YfError> {
         AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
@@ -249,9 +319,8 @@ impl Ticker {
             .await
     }
 
-    pub async fn upgrades_downgrades(
-        &mut self,
-    ) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
+    /// Fetches the history of analyst upgrades and downgrades.
+    pub async fn upgrades_downgrades(&self) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
         AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
@@ -259,7 +328,8 @@ impl Ticker {
             .await
     }
 
-    pub async fn analyst_price_target(&mut self) -> Result<crate::PriceTarget, YfError> {
+    /// Fetches the analyst price target.
+    pub async fn analyst_price_target(&self) -> Result<crate::PriceTarget, YfError> {
         AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
@@ -275,39 +345,43 @@ impl Ticker {
             .retry_policy(self.retry_override.clone())
     }
 
-    pub async fn income_stmt(&mut self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
+    /// Fetches the annual income statement.
+    pub async fn income_stmt(&self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
         self.fundamentals_builder().income_statement(false).await
     }
 
-    pub async fn quarterly_income_stmt(
-        &mut self,
-    ) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
+    /// Fetches the quarterly income statement.
+    pub async fn quarterly_income_stmt(&self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
         self.fundamentals_builder().income_statement(true).await
     }
 
-    pub async fn balance_sheet(&mut self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
+    /// Fetches the annual balance sheet.
+    pub async fn balance_sheet(&self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
         self.fundamentals_builder().balance_sheet(false).await
     }
 
-    pub async fn quarterly_balance_sheet(
-        &mut self,
-    ) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
+    /// Fetches the quarterly balance sheet.
+    pub async fn quarterly_balance_sheet(&self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
         self.fundamentals_builder().balance_sheet(true).await
     }
 
-    pub async fn cashflow(&mut self) -> Result<Vec<crate::CashflowRow>, YfError> {
+    /// Fetches the annual cash flow statement.
+    pub async fn cashflow(&self) -> Result<Vec<crate::CashflowRow>, YfError> {
         self.fundamentals_builder().cashflow(false).await
     }
 
-    pub async fn quarterly_cashflow(&mut self) -> Result<Vec<crate::CashflowRow>, YfError> {
+    /// Fetches the quarterly cash flow statement.
+    pub async fn quarterly_cashflow(&self) -> Result<Vec<crate::CashflowRow>, YfError> {
         self.fundamentals_builder().cashflow(true).await
     }
 
-    pub async fn earnings(&mut self) -> Result<crate::Earnings, YfError> {
+    /// Fetches earnings history and estimates.
+    pub async fn earnings(&self) -> Result<crate::Earnings, YfError> {
         self.fundamentals_builder().earnings().await
     }
 
-    pub async fn calendar(&mut self) -> Result<crate::FundCalendar, YfError> {
+    /// Fetches corporate calendar events like earnings dates.
+    pub async fn calendar(&self) -> Result<crate::FundCalendar, YfError> {
         self.fundamentals_builder().calendar().await
     }
 }

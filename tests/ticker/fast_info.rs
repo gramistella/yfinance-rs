@@ -30,7 +30,7 @@ async fn fast_info_uses_previous_close_when_price_missing() {
     });
 
     let client = YfClient::builder().build().unwrap();
-    let mut t = Ticker::with_quote_base(
+    let t = Ticker::with_quote_base(
         client,
         "AAPL",
         Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),

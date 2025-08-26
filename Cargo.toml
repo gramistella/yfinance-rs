@@ -2,9 +2,13 @@
 name = "yfinance-rs"
 version = "0.0.1"
 edition = "2024"
-description = "Ergonomic Yahoo Finance client for Rust (history, streaming, profiles)."
+description = "Ergonomic Rust client for Yahoo Finance, supporting historical prices, real-time streaming, options, fundamentals, and more."
 license = "MIT"
 repository = "https://github.com/gramistella/yfinance-rs"
+documentation = "https://docs.rs/yfinance-rs"
+readme = "README.md"
+keywords = ["yahoo", "finance", "stocks", "trading", "yfinance"]
+categories = ["api-bindings", "finance"]
 build = "build.rs"
 
 [dependencies]

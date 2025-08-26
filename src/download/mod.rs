@@ -8,31 +8,26 @@ use crate::{
     history::HistoryBuilder,
 };
 
-/// Result of a multi-symbol download.
+/// The result of a multi-symbol download operation.
 #[derive(Debug, Clone)]
 pub struct DownloadResult {
-    /// Adjusted (per builder settings) OHLCV series per symbol.
+    /// A map of symbol to its corresponding time series of price `Candle`s.
     pub series: HashMap<String, Vec<Candle>>,
-    /// History metadata (timezone/gmtoffset) per symbol.
+    /// A map of symbol to its historical metadata (timezone, etc.).
     pub meta: HashMap<String, Option<HistoryMeta>>,
-    /// Corporate actions per symbol (only populated if `actions(true)` on the builder).
+    /// A map of symbol to its corporate `Action`s (dividends and splits).
+    /// This is only populated if `actions(true)` was set on the builder.
     pub actions: HashMap<String, Vec<Action>>,
-    /// Whether prices were adjusted (true if `auto_adjust` OR `back_adjust` were applied).
+    /// `true` if prices were adjusted for splits and dividends.
     pub adjusted: bool,
 }
 
-/// Multi-symbol history downloader similar to `yfinance.download`.
+/// A builder for downloading historical data for multiple symbols concurrently.
 ///
-/// Parity knobs supported:
-/// - `auto_adjust(true)`: adjust OHLC (incl. Close) using adjclose/splits
-/// - `back_adjust(true)`: adjust O/H/L but keep Close as the *raw* close
-/// - `keepna(true)`: keep rows with missing OHLC (filled with NaN)
-/// - `rounding(true)`: round prices to 2 decimals
-/// - `repair(true)`: fix obvious 100× outliers in price rows (simple heuristic)
+/// This provides a convenient way to fetch data for a list of tickers with the same
+/// parameters in parallel, similar to `yfinance.download` in Python.
 ///
-/// Notes:
-/// - If `back_adjust(true)` is used, the internal fetch will force adjustment so
-///   we can back-fill O/H/L while preserving raw Close values.
+/// Many of the configuration methods mirror those on [`HistoryBuilder`].
 pub struct DownloadBuilder<'a> {
     client: &'a YfClient,
     symbols: Vec<String>,
@@ -56,7 +51,7 @@ pub struct DownloadBuilder<'a> {
 }
 
 impl<'a> DownloadBuilder<'a> {
-    /// Start a new multi-symbol download builder.
+    /// Creates a new `DownloadBuilder`.
     pub fn new(client: &'a YfClient) -> Self {
         Self {
             client,
@@ -76,17 +71,19 @@ impl<'a> DownloadBuilder<'a> {
         }
     }
 
+    /// Sets the cache mode for all API calls made by this builder.
     pub fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
+    /// Overrides the default retry policy for all API calls made by this builder.
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
-    /// Replace the full symbol list.
+    /// Replaces the current list of symbols with a new list.
     pub fn symbols<I, S>(mut self, syms: I) -> Self
     where
         I: IntoIterator<Item = S>,
@@ -96,20 +93,20 @@ impl<'a> DownloadBuilder<'a> {
         self
     }
 
-    /// Add a single symbol.
+    /// Adds a single symbol to the list of symbols to download.
     pub fn add_symbol(mut self, sym: impl Into<String>) -> Self {
         self.symbols.push(sym.into());
         self
     }
 
-    /// Use a relative range (e.g., 1d, 6mo, ytd, 10y, max).
+    /// Sets a relative time range for the request (e.g., `1y`, `6mo`).
     pub fn range(mut self, range: Range) -> Self {
         self.period = None;
         self.range = Some(range);
         self
     }
 
-    /// Use absolute start/end timestamps instead of a range.
+    /// Sets an absolute time period for the request using start and end timestamps.
     pub fn between(
         mut self,
         start: chrono::DateTime<chrono::Utc>,
@@ -120,56 +117,58 @@ impl<'a> DownloadBuilder<'a> {
         self
     }
 
-    /// Set the bar interval (default: 1d).
+    /// Sets the time interval for each data point (candle).
     pub fn interval(mut self, interval: Interval) -> Self {
         self.interval = interval;
         self
     }
 
-    /// Auto-adjust OHLC using adjclose and split factors (default: true).
+    /// Sets whether to automatically adjust prices for splits and dividends. (Default: `true`)
     pub fn auto_adjust(mut self, yes: bool) -> Self {
         self.auto_adjust = yes;
         self
     }
 
-    /// Back-adjust: adjust O/H/L but keep Close as the *raw* (unadjusted) close.
-    /// This will force internal adjustment of O/H/L even if `auto_adjust(false)`.
+    /// Sets whether to back-adjust prices.
+    ///
+    /// Back-adjustment adjusts the Open, High, and Low prices, but keeps the Close price as the
+    /// raw, unadjusted close. This forces an internal adjustment even if `auto_adjust` is false.
     pub fn back_adjust(mut self, yes: bool) -> Self {
         self.back_adjust = yes;
         self
     }
 
-    /// Include pre/post-market bars for intraday (default: false).
+    /// Sets whether to include pre-market and post-market data for intraday intervals. (Default: `false`)
     pub fn prepost(mut self, yes: bool) -> Self {
         self.include_prepost = yes;
         self
     }
 
-    /// Include dividends/splits in output `actions` (default: true).
+    /// Sets whether to include corporate actions (dividends and splits) in the result. (Default: `true`)
     pub fn actions(mut self, yes: bool) -> Self {
         self.include_actions = yes;
         self
     }
 
-    /// Keep rows with missing OHLC (as NaN). Default false (drop NA rows).
+    /// Sets whether to keep data rows that have missing OHLC values. (Default: `false`)
     pub fn keepna(mut self, yes: bool) -> Self {
         self.keepna = yes;
         self
     }
 
-    /// Round prices to 2 decimals (yfinance default when rounding enabled).
+    /// Sets whether to round prices to 2 decimal places. (Default: `false`)
     pub fn rounding(mut self, yes: bool) -> Self {
         self.rounding = yes;
         self
     }
 
-    /// Repair obvious 100× spikes/dips (currency/outlier fix).
+    /// Sets whether to attempt to repair obvious price outliers (e.g., 100x errors). (Default: `false`)
     pub fn repair(mut self, yes: bool) -> Self {
         self.repair = yes;
         self
     }
 
-    /// Execute the download concurrently and collect results.
+    /// Executes the download by fetching data for all specified symbols concurrently.
     pub async fn run(self) -> Result<DownloadResult, YfError> {
         if self.symbols.is_empty() {
             return Err(YfError::Data("no symbols specified".into()));

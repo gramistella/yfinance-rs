@@ -121,23 +121,25 @@ impl StreamBuilder {
         })
     }
 
+    /// Sets the cache mode for this specific API call (only affects polling mode).
     pub fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
+    /// Overrides the default retry policy for this specific API call (only affects polling mode).
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
-    /// Sets the base URL for polling quote requests. (For testing purposes).
+    /// (For testing) Sets the base URL for polling quote requests.
     pub fn quote_base(mut self, base: Url) -> Self {
         self.quote_base = base;
         self
     }
 
-    /// Sets the URL for the WebSocket stream. (For testing purposes).
+    /// (For testing) Sets the URL for the WebSocket stream.
     pub fn stream_url(mut self, url: Url) -> Self {
         self.stream_url = url;
         self
@@ -177,7 +179,7 @@ impl StreamBuilder {
         self
     }
 
-    /// Starts the stream, returning a handle to control it and a receiver for quote updates.
+    /// Starts the stream, returning a handle to control it and a channel receiver for quote updates.
     pub fn start(
         self,
     ) -> Result<(StreamHandle, tokio::sync::mpsc::Receiver<QuoteUpdate>), crate::core::YfError>

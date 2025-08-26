@@ -1,5 +1,3 @@
-// src/analysis/mod.rs
-
 mod api;
 mod model;
 
@@ -13,7 +11,7 @@ use crate::{
     core::client::{CacheMode, RetryConfig},
 };
 
-/// Builder for analysis module API calls.
+/// A builder for fetching analyst-related data for a specific symbol.
 pub struct AnalysisBuilder {
     client: YfClient,
     symbol: String,
@@ -22,7 +20,7 @@ pub struct AnalysisBuilder {
 }
 
 impl AnalysisBuilder {
-    /// Creates a new builder for a given symbol.
+    /// Creates a new `AnalysisBuilder` for a given symbol.
     pub fn new(client: YfClient, symbol: impl Into<String>) -> Self {
         Self {
             client,
@@ -44,7 +42,7 @@ impl AnalysisBuilder {
         self
     }
 
-    /// Fetches the analyst recommendation trend.
+    /// Fetches the analyst recommendation trend over time.
     pub async fn recommendations(self) -> Result<Vec<RecommendationRow>, YfError> {
         api::recommendation_trend(
             &self.client,
@@ -66,7 +64,7 @@ impl AnalysisBuilder {
         .await
     }
 
-    /// Fetches the history of analyst upgrades and downgrades.
+    /// Fetches the history of analyst upgrades and downgrades for the symbol.
     pub async fn upgrades_downgrades(self) -> Result<Vec<UpgradeDowngradeRow>, YfError> {
         api::upgrades_downgrades(
             &self.client,
@@ -77,7 +75,7 @@ impl AnalysisBuilder {
         .await
     }
 
-    /// Fetches the analyst price target.
+    /// Fetches the analyst price target summary.
     pub async fn analyst_price_target(self) -> Result<PriceTarget, YfError> {
         api::analyst_price_target(
             &self.client,

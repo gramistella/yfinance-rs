@@ -1,10 +1,10 @@
 //! Public profile types + loading strategy (API first, then scrape).
 //!
 //! Internals are split into:
-//! - `api`:    quoteSummary v10 API path
+//! - `api`:    quoteSummary v10 API path
 //! - `scrape`: HTML scrape + JSON extraction path
 //! - `internal`: common utilities for both API and scrape
-//! - `debug`:  optional debug dump helpers (only in debug builds or with `debug-dumps` feature)
+//! - `debug`:  optional debug dump helpers (only in debug builds or with `debug-dumps` feature)
 
 mod api;
 mod scrape;
@@ -18,11 +18,13 @@ mod model;
 pub use model::{Address, Company, Fund, Profile};
 
 impl Profile {
-    /// Load a profile for `symbol`. In normal builds:
-    /// 1) Ensure credentials (cookie + crumb)
-    /// 2) Try API; if it errors, fall back to scraping the HTML page.
+    /// Loads the profile for a given symbol.
     ///
-    /// In `test-mode`, the behavior follows `ApiPreference`.
+    /// This method first attempts to fetch the profile from the `quoteSummary` API.
+    /// If that fails, it falls back to scraping the profile from the Yahoo Finance website.
+    ///
+    /// The behavior can be controlled in `test-mode` builds using `ApiPreference`
+    /// on the `YfClientBuilder`.
     pub async fn load(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
         #[cfg(not(feature = "test-mode"))]
         {
