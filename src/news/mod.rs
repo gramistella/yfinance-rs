@@ -32,8 +32,8 @@ impl NewsTab {
 }
 
 /// A builder for fetching news articles for a specific symbol.
-pub struct NewsBuilder<'a> {
-    client: &'a YfClient,
+pub struct NewsBuilder {
+    client: YfClient,
     symbol: String,
     count: u32,
     tab: NewsTab,
@@ -41,11 +41,11 @@ pub struct NewsBuilder<'a> {
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> NewsBuilder<'a> {
+impl NewsBuilder {
     /// Creates a new `NewsBuilder` for a given symbol.
-    pub fn new(client: &'a YfClient, symbol: impl Into<String>) -> Self {
+    pub fn new(client: &YfClient, symbol: impl Into<String>) -> Self {
         Self {
-            client,
+            client: client.clone(),
             symbol: symbol.into(),
             count: 10,
             tab: NewsTab::default(),
@@ -82,7 +82,7 @@ impl<'a> NewsBuilder<'a> {
     /// Executes the request and fetches the news articles.
     pub async fn fetch(self) -> Result<Vec<NewsArticle>, YfError> {
         api::fetch_news(
-            self.client,
+            &self.client,
             &self.symbol,
             self.count,
             self.tab,

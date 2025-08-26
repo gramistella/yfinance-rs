@@ -44,7 +44,7 @@ use yfinance_rs::{Interval, Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = YfClient::new();
+    let client = YfClient::default();
     let ticker = Ticker::new(client, "AAPL".to_string());
 
     // Get the latest quote

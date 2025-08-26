@@ -44,7 +44,7 @@ impl HoldersBuilder {
     }
 
     /// Fetches the major holders breakdown (e.g., % insiders, % institutions).
-    pub async fn major_holders(self) -> Result<Vec<MajorHolder>, YfError> {
+    pub async fn major_holders(&self) -> Result<Vec<MajorHolder>, YfError> {
         api::major_holders(
             &self.client,
             &self.symbol,
@@ -55,7 +55,7 @@ impl HoldersBuilder {
     }
 
     /// Fetches a list of the top institutional holders.
-    pub async fn institutional_holders(self) -> Result<Vec<InstitutionalHolder>, YfError> {
+    pub async fn institutional_holders(&self) -> Result<Vec<InstitutionalHolder>, YfError> {
         api::institutional_holders(
             &self.client,
             &self.symbol,
@@ -66,7 +66,7 @@ impl HoldersBuilder {
     }
 
     /// Fetches a list of the top mutual fund holders.
-    pub async fn mutual_fund_holders(self) -> Result<Vec<InstitutionalHolder>, YfError> {
+    pub async fn mutual_fund_holders(&self) -> Result<Vec<InstitutionalHolder>, YfError> {
         api::mutual_fund_holders(
             &self.client,
             &self.symbol,
@@ -77,7 +77,7 @@ impl HoldersBuilder {
     }
 
     /// Fetches a list of recent insider transactions.
-    pub async fn insider_transactions(self) -> Result<Vec<InsiderTransaction>, YfError> {
+    pub async fn insider_transactions(&self) -> Result<Vec<InsiderTransaction>, YfError> {
         api::insider_transactions(
             &self.client,
             &self.symbol,
@@ -88,7 +88,7 @@ impl HoldersBuilder {
     }
 
     /// Fetches a roster of company insiders and their holdings.
-    pub async fn insider_roster_holders(self) -> Result<Vec<InsiderRosterHolder>, YfError> {
+    pub async fn insider_roster_holders(&self) -> Result<Vec<InsiderRosterHolder>, YfError> {
         api::insider_roster_holders(
             &self.client,
             &self.symbol,
@@ -100,7 +100,7 @@ impl HoldersBuilder {
 
     /// Fetches a summary of net insider purchase and sale activity.
     pub async fn net_share_purchase_activity(
-        self,
+        &self,
     ) -> Result<Option<NetSharePurchaseActivity>, YfError> {
         api::net_share_purchase_activity(
             &self.client,

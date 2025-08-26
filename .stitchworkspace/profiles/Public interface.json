@@ -3,7 +3,7 @@
   "settings": {
     "version": 1,
     "ext_filter": ".rs, .toml",
-    "exclude_dirs": ".git, node_modules, target, _target, .elan, .lake, .idea, .vscode, _app, .svelte-kit, .sqlx, venv, .venv, __pycache__, LICENSES, fixtures, tests",
+    "exclude_dirs": ".git, node_modules, target, _target, .elan, .lake, .idea, .vscode, _app, .svelte-kit, .sqlx, venv, .venv, __pycache__, LICENSES, fixtures, tests, examples",
     "exclude_files": "LICENSE, Cargo.lock, package-lock.json, yarn.lock, .DS_Store, .dockerignore, .gitignore, .npmignore, .pre-commit-config.yaml, .prettierignore, .prettierrc, eslint.config.js, .env, Thumbs.db",
     "remove_prefix": "//",
     "remove_regex": "(?s)/\\*.*?\\*/ ",
@@ -13,31 +13,7 @@
   },
   "explicit": [
     {
-      "path": "src/profile/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/lib.rs",
-      "state": true
-    },
-    {
-      "path": "src/analysis/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/quote/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/ticker/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/history/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/download/mod.rs",
+      "path": "src/fundamentals/model.rs",
       "state": true
     },
     {
@@ -45,19 +21,27 @@
       "state": true
     },
     {
+      "path": "src/history/builder.rs",
+      "state": true
+    },
+    {
+      "path": "src/history/mod.rs",
+      "state": true
+    },
+    {
       "path": "src/core/client/mod.rs",
       "state": true
     },
     {
-      "path": "src/fundamentals/model.rs",
+      "path": "src/quote/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/lib.rs",
       "state": true
     },
     {
       "path": "src/core/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/history/builder.rs",
       "state": true
     },
     {
@@ -69,23 +53,7 @@
       "state": true
     },
     {
-      "path": "src/profile/model.rs",
-      "state": true
-    },
-    {
-      "path": "src/core/error.rs",
-      "state": true
-    },
-    {
-      "path": "src/core/models.rs",
-      "state": true
-    },
-    {
       "path": "src/stream/mod.rs",
-      "state": true
-    },
-    {
-      "path": "src/core/services.rs",
       "state": true
     },
     {
@@ -94,6 +62,62 @@
     },
     {
       "path": "src/fundamentals/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/holders/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/esg/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/profile/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/download/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/news/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/ticker/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/models.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/services.rs",
+      "state": true
+    },
+    {
+      "path": "src/holders/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/news/model.rs",
+      "state": true
+    },
+    {
+      "path": "src/profile/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/core/error.rs",
+      "state": true
+    },
+    {
+      "path": "src/esg/mod.rs",
+      "state": true
+    },
+    {
+      "path": "src/analysis/mod.rs",
       "state": true
     }
   ]

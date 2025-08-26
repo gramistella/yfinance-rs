@@ -49,7 +49,7 @@ impl FundamentalsBuilder {
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
     pub async fn income_statement(
-        self,
+        &self,
         quarterly: bool,
     ) -> Result<Vec<IncomeStatementRow>, YfError> {
         api::income_statement(
@@ -65,7 +65,7 @@ impl FundamentalsBuilder {
     /// Fetches the balance sheet.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
-    pub async fn balance_sheet(self, quarterly: bool) -> Result<Vec<BalanceSheetRow>, YfError> {
+    pub async fn balance_sheet(&self, quarterly: bool) -> Result<Vec<BalanceSheetRow>, YfError> {
         api::balance_sheet(
             &self.client,
             &self.symbol,
@@ -79,7 +79,7 @@ impl FundamentalsBuilder {
     /// Fetches the cash flow statement.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
-    pub async fn cashflow(self, quarterly: bool) -> Result<Vec<CashflowRow>, YfError> {
+    pub async fn cashflow(&self, quarterly: bool) -> Result<Vec<CashflowRow>, YfError> {
         api::cashflow(
             &self.client,
             &self.symbol,
@@ -91,7 +91,7 @@ impl FundamentalsBuilder {
     }
 
     /// Fetches earnings history and estimates.
-    pub async fn earnings(self) -> Result<Earnings, YfError> {
+    pub async fn earnings(&self) -> Result<Earnings, YfError> {
         api::earnings(
             &self.client,
             &self.symbol,
@@ -102,7 +102,7 @@ impl FundamentalsBuilder {
     }
 
     /// Fetches corporate calendar events like earnings dates.
-    pub async fn calendar(self) -> Result<Calendar, YfError> {
+    pub async fn calendar(&self) -> Result<Calendar, YfError> {
         api::calendar(
             &self.client,
             &self.symbol,

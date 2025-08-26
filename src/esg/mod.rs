@@ -10,18 +10,18 @@ use crate::{
 };
 
 /// A builder for fetching ESG (Environmental, Social, and Governance) data for a specific symbol.
-pub struct EsgBuilder<'a> {
-    client: &'a YfClient,
+pub struct EsgBuilder {
+    client: YfClient,
     symbol: String,
     cache_mode: CacheMode,
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> EsgBuilder<'a> {
+impl EsgBuilder {
     /// Creates a new `EsgBuilder` for a given symbol.
-    pub fn new(client: &'a YfClient, symbol: impl Into<String>) -> Self {
+    pub fn new(client: &YfClient, symbol: impl Into<String>) -> Self {
         Self {
-            client,
+            client: client.clone(),
             symbol: symbol.into(),
             cache_mode: CacheMode::Use,
             retry_override: None,
@@ -43,7 +43,7 @@ impl<'a> EsgBuilder<'a> {
     /// Fetches the ESG scores and involvement data for the symbol.
     pub async fn fetch(self) -> Result<EsgScores, YfError> {
         api::fetch_esg_scores(
-            self.client,
+            &self.client,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),

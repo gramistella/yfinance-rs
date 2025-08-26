@@ -1,7 +1,6 @@
 use serde::Deserialize;
+use serde::Deserializer;
 use std::collections::BTreeMap;
-
-/* Internal response mapping (only fields we need) */
 
 #[derive(Deserialize)]
 pub(crate) struct ChartEnvelope {
@@ -83,9 +82,68 @@ pub(crate) struct DividendEvent {
 
 #[derive(Deserialize)]
 pub(crate) struct SplitEvent {
+    #[serde(default, deserialize_with = "de_opt_u64_from_mixed")]
     pub(crate) numerator: Option<u64>,
+    #[serde(default, deserialize_with = "de_opt_u64_from_mixed")]
     pub(crate) denominator: Option<u64>,
     #[serde(rename = "splitRatio")]
     pub(crate) split_ratio: Option<String>,
     pub(crate) date: Option<i64>,
+}
+
+/// Accepts u64, integer-like f64 (e.g., 4.0), numeric strings ("4"), or null/missing.
+/// Rounds floats and rejects non-finite or clearly non-integer floats.
+fn de_opt_u64_from_mixed<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+    use serde_json::Value;
+
+    let v = Option::<Value>::deserialize(deserializer)?;
+    let some = match v {
+        None => return Ok(None),
+        Some(Value::Null) => return Ok(None),
+        Some(Value::Number(n)) => {
+            if let Some(u) = n.as_u64() {
+                Some(u)
+            } else if let Some(f) = n.as_f64() {
+                if !f.is_finite() {
+                    return Err(D::Error::custom("non-finite float for split field"));
+                }
+                let r = f.round();
+                // Require the float to be very close to an integer
+                if (f - r).abs() < 1e-9 && r >= 0.0 {
+                    Some(r as u64)
+                } else {
+                    return Err(D::Error::custom(format!(
+                        "expected integer-like float for split field, got {f}"
+                    )));
+                }
+            } else {
+                return Err(D::Error::custom("unsupported number type for split field"));
+            }
+        }
+        Some(Value::String(s)) => {
+            let s = s.trim();
+            if s.is_empty() {
+                None
+            } else {
+                match s.parse::<u64>() {
+                    Ok(u) => Some(u),
+                    Err(_) => {
+                        return Err(D::Error::custom(format!(
+                            "invalid numeric string '{s}' for split field"
+                        )));
+                    }
+                }
+            }
+        }
+        Some(other) => {
+            return Err(D::Error::custom(format!(
+                "unexpected JSON type for split field: {other}"
+            )));
+        }
+    };
+    Ok(some)
 }

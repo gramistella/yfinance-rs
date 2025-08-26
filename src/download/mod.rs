@@ -28,8 +28,8 @@ pub struct DownloadResult {
 /// parameters in parallel, similar to `yfinance.download` in Python.
 ///
 /// Many of the configuration methods mirror those on [`HistoryBuilder`].
-pub struct DownloadBuilder<'a> {
-    client: &'a YfClient,
+pub struct DownloadBuilder {
+    client: YfClient,
     symbols: Vec<String>,
 
     // date / time controls
@@ -50,11 +50,11 @@ pub struct DownloadBuilder<'a> {
     retry_override: Option<RetryConfig>,
 }
 
-impl<'a> DownloadBuilder<'a> {
+impl DownloadBuilder {
     /// Creates a new `DownloadBuilder`.
-    pub fn new(client: &'a YfClient) -> Self {
+    pub fn new(client: &YfClient) -> Self {
         Self {
-            client,
+            client: client.clone(),
             symbols: Vec::new(),
             range: Some(Range::M6),
             period: None,
@@ -194,7 +194,7 @@ impl<'a> DownloadBuilder<'a> {
 
         let futures = self.symbols.iter().map(|sym| {
             let sym = sym.clone();
-            let mut hb: HistoryBuilder<'_> = HistoryBuilder::new(self.client, sym.clone())
+            let mut hb: HistoryBuilder = HistoryBuilder::new(&self.client, sym.clone())
                 .interval(self.interval)
                 .auto_adjust(need_adjust_in_fetch)
                 .prepost(self.include_prepost)

@@ -4,18 +4,22 @@ mod wire;
 pub use builder::HistoryBuilder;
 
 use crate::core::{HistoryRequest, HistoryResponse, HistoryService, YfClient, YfError};
+use core::future::Future;
+use core::pin::Pin;
 
 impl HistoryService for YfClient {
     fn fetch_full_history<'a>(
         &'a self,
         symbol: &'a str,
         req: HistoryRequest,
-    ) -> core::pin::Pin<
-        Box<dyn core::future::Future<Output = Result<HistoryResponse, YfError>> + Send + 'a>,
-    > {
+    ) -> Pin<Box<dyn Future<Output = Result<HistoryResponse, YfError>> + Send + 'a>> {
+        // Own everything the async block needs:
+        let client = self.clone(); // YfClient: Clone
+        let symbol = symbol.to_owned(); // own the symbol
         Box::pin(async move {
-            // Adapt the old HistoryBuilder to the request struct
-            let mut hb = builder::HistoryBuilder::new(self, symbol.to_string())
+            // HistoryBuilder::new(&YfClient, impl Into<String>) clones internally,
+            // so passing &client here is fine.
+            let mut hb = builder::HistoryBuilder::new(&client, &symbol)
                 .interval(req.interval)
                 .auto_adjust(req.auto_adjust)
                 .prepost(req.include_prepost)

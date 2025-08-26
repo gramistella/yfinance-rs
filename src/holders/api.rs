@@ -48,7 +48,7 @@ pub(super) async fn major_holders(
 
     if let Some(v) = f(breakdown.insiders_percent_held) {
         result.push(MajorHolder {
-            category: "% of Shares Held by All Insider".into(),
+            category: "% of Shares Held by All Insiders".into(),
             value: percent_fmt(Some(v)),
         });
     }

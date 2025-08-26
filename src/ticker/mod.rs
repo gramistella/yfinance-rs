@@ -132,7 +132,7 @@ impl Ticker {
     /* ---------------- News convenience ---------------- */
 
     /// Returns a `NewsBuilder` to construct a query for news articles.
-    pub fn news_builder(&self) -> NewsBuilder<'_> {
+    pub fn news_builder(&self) -> NewsBuilder {
         NewsBuilder::new(&self.client, &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
@@ -146,7 +146,7 @@ impl Ticker {
     /* ---------------- History helpers ---------------- */
 
     /// Returns a `HistoryBuilder` to construct a detailed query for historical price data.
-    pub fn history_builder(&self) -> HistoryBuilder<'_> {
+    pub fn history_builder(&self) -> HistoryBuilder {
         HistoryBuilder::new(&self.client, &self.symbol)
     }
 
@@ -362,7 +362,7 @@ impl Ticker {
 
     /* ---------------- ESG / Sustainability ---------------- */
 
-    fn esg_builder(&self) -> EsgBuilder<'_> {
+    fn esg_builder(&self) -> EsgBuilder {
         EsgBuilder::new(&self.client, &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())

@@ -18,9 +18,9 @@ use fetch::fetch_chart;
 /// This builder provides fine-grained control over the parameters for a historical
 /// data request, including the time range, interval, and data adjustments.
 #[derive(Clone)]
-pub struct HistoryBuilder<'a> {
+pub struct HistoryBuilder {
     #[doc(hidden)]
-    pub(crate) client: &'a YfClient,
+    pub(crate) client: YfClient,
     #[doc(hidden)]
     pub(crate) symbol: String,
     #[doc(hidden)]
@@ -43,11 +43,11 @@ pub struct HistoryBuilder<'a> {
     pub(crate) retry_override: Option<RetryConfig>,
 }
 
-impl<'a> HistoryBuilder<'a> {
+impl HistoryBuilder {
     /// Creates a new `HistoryBuilder` for a given symbol.
-    pub fn new(client: &'a YfClient, symbol: impl Into<String>) -> Self {
+    pub fn new(client: &YfClient, symbol: impl Into<String>) -> Self {
         Self {
-            client,
+            client: client.clone(),
             symbol: symbol.into(),
             range: Some(Range::M6),
             period: None,
@@ -138,7 +138,7 @@ impl<'a> HistoryBuilder<'a> {
     pub async fn fetch_full(self) -> Result<HistoryResponse, YfError> {
         // 1) Fetch and parse the /chart payload into owned blocks
         let fetched = fetch_chart(
-            self.client,
+            &self.client,
             &self.symbol,
             self.range,
             self.period,
