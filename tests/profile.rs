@@ -9,4 +9,4 @@ mod profile_live;
 #[path = "profile/scrape_smoke.rs"]
 mod profile_scrape_smoke;
 #[path = "profile/scrape_variants_synthetic.rs"]
-mod scrape_variants_synth; // #[ignore] + YF_LIVE/YF_RECORD
+mod scrape_variants_synth;

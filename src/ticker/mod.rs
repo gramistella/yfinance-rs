@@ -5,11 +5,7 @@ mod quote;
 pub use model::{FastInfo, OptionChain, OptionContract};
 
 use crate::{
-    Quote, YfClient, YfError,
-    analysis::AnalysisBuilder,
-    core::client::{CacheMode, RetryConfig},
-    fundamentals::FundamentalsBuilder,
-    history::HistoryBuilder,
+    analysis::AnalysisBuilder, core::client::{CacheMode, RetryConfig}, fundamentals::FundamentalsBuilder, history::HistoryBuilder, HoldersBuilder, Quote, YfClient, YfError
 };
 
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
@@ -238,6 +234,46 @@ impl Ticker {
         .await
     }
 
+    /* ---------------- Holders convenience ---------------- */
+
+    fn holders_builder(&self) -> HoldersBuilder {
+        HoldersBuilder::new(self.client.clone(), &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+    }
+
+    /// Fetches the major holders breakdown (e.g., % insiders, % institutions).
+    pub async fn major_holders(&self) -> Result<Vec<crate::MajorHolder>, YfError> {
+        self.holders_builder().major_holders().await
+    }
+
+    /// Fetches a list of the top institutional holders.
+    pub async fn institutional_holders(&self) -> Result<Vec<crate::InstitutionalHolder>, YfError> {
+        self.holders_builder().institutional_holders().await
+    }
+
+    /// Fetches a list of the top mutual fund holders.
+    pub async fn mutual_fund_holders(&self) -> Result<Vec<crate::InstitutionalHolder>, YfError> {
+        self.holders_builder().mutual_fund_holders().await
+    }
+
+    /// Fetches a list of recent insider transactions.
+    pub async fn insider_transactions(&self) -> Result<Vec<crate::InsiderTransaction>, YfError> {
+        self.holders_builder().insider_transactions().await
+    }
+
+    /// Fetches a roster of company insiders and their holdings.
+    pub async fn insider_roster_holders(&self) -> Result<Vec<crate::InsiderRosterHolder>, YfError> {
+        self.holders_builder().insider_roster_holders().await
+    }
+
+    /// Fetches a summary of net insider purchase and sale activity.
+    pub async fn net_share_purchase_activity(
+        &self,
+    ) -> Result<Option<crate::NetSharePurchaseActivity>, YfError> {
+        self.holders_builder().net_share_purchase_activity().await
+    }
+    
     /* ---------------- Analysis convenience ---------------- */
 
     fn analysis_builder(&self) -> AnalysisBuilder {

@@ -3,11 +3,10 @@ use serde::Deserialize;
 use url::Url;
 
 use crate::{
-    YfClient, YfError,
     core::{
         client::{CacheMode, RetryConfig},
         net,
-    },
+    }, Quote, YfClient, YfError
 };
 
 // Centralized wire model for the v7 quote API
@@ -137,4 +136,21 @@ pub(crate) async fn fetch_v7_quotes(
         .quote_response
         .and_then(|qr| qr.result)
         .unwrap_or_default())
+}
+
+impl From<V7QuoteNode> for Quote {
+    fn from(n: V7QuoteNode) -> Self {
+        Quote {
+            symbol: n.symbol.unwrap_or_default(),
+            regular_market_price: n.regular_market_price,
+            regular_market_previous_close: n.regular_market_previous_close,
+            currency: n.currency,
+            exchange: n
+                .full_exchange_name
+                .or(n.exchange)
+                .or(n.market)
+                .or(n.market_cap_figure_exchange),
+            market_state: n.market_state,
+        }
+    }
 }

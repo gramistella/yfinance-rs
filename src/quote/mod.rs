@@ -78,21 +78,6 @@ impl QuotesBuilder {
         )
         .await?;
 
-        Ok(results.into_iter().map(map_v7_to_public).collect())
-    }
-}
-
-fn map_v7_to_public(n: core_quotes::V7QuoteNode) -> Quote {
-    Quote {
-        symbol: n.symbol.unwrap_or_default(),
-        regular_market_price: n.regular_market_price,
-        regular_market_previous_close: n.regular_market_previous_close,
-        currency: n.currency,
-        exchange: n
-            .full_exchange_name
-            .or(n.exchange)
-            .or(n.market)
-            .or(n.market_cap_figure_exchange),
-        market_state: n.market_state,
+        Ok(results.into_iter().map(Into::into).collect())
     }
 }
