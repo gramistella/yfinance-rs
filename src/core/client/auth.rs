@@ -5,23 +5,20 @@ use reqwest::header::SET_COOKIE;
 
 impl super::YfClient {
     pub(crate) async fn ensure_credentials(&self) -> Result<(), YfError> {
-        // First check with a read lock is fast and allows concurrency.
+        // Fast path: check if credentials exist with a read lock.
         if self.state.read().await.crumb.is_some() {
             return Ok(());
         }
 
-        // If the crumb is missing, acquire a write lock.
-        let state = self.state.write().await;
+        // Slow path: acquire the dedicated fetch lock to ensure only one task proceeds.
+        let _guard = self.credential_fetch_lock.lock().await;
 
-        // Double-check: another task might have acquired the lock and set credentials
-        // while this one was waiting.
-        if state.crumb.is_some() {
+        // Double-check: another task might have fetched credentials while this one was waiting.
+        if self.state.read().await.crumb.is_some() {
             return Ok(());
         }
 
-        // Now, with the write lock held, fetch the credentials.
-        // We need to temporarily release the state lock to make HTTP calls.
-        drop(state);
+        // With the lock held, we can safely perform the network operations.
         self.get_cookie().await?;
         self.get_crumb_internal().await?;
 

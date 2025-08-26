@@ -2,10 +2,10 @@ mod model;
 mod options;
 mod quote;
 
-pub use model::{FastInfo, OptionChain, OptionContract, Quote};
+pub use model::{FastInfo, OptionChain, OptionContract};
 
 use crate::{
-    YfClient, YfError,
+    Quote, YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
     fundamentals::FundamentalsBuilder,
@@ -240,40 +240,30 @@ impl Ticker {
 
     /* ---------------- Analysis convenience ---------------- */
 
-    /// Fetches the analyst recommendation trend.
-    pub async fn recommendations(&self) -> Result<Vec<crate::RecommendationRow>, YfError> {
+    fn analysis_builder(&self) -> AnalysisBuilder {
         AnalysisBuilder::new(self.client.clone(), &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
-            .recommendations()
-            .await
+    }
+
+    /// Fetches the analyst recommendation trend.
+    pub async fn recommendations(&self) -> Result<Vec<crate::RecommendationRow>, YfError> {
+        self.analysis_builder().recommendations().await
     }
 
     /// Fetches a summary of the latest analyst recommendations.
     pub async fn recommendations_summary(&self) -> Result<crate::RecommendationSummary, YfError> {
-        AnalysisBuilder::new(self.client.clone(), &self.symbol)
-            .cache_mode(self.cache_mode)
-            .retry_policy(self.retry_override.clone())
-            .recommendations_summary()
-            .await
+        self.analysis_builder().recommendations_summary().await
     }
 
     /// Fetches the history of analyst upgrades and downgrades.
     pub async fn upgrades_downgrades(&self) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
-        AnalysisBuilder::new(self.client.clone(), &self.symbol)
-            .cache_mode(self.cache_mode)
-            .retry_policy(self.retry_override.clone())
-            .upgrades_downgrades()
-            .await
+        self.analysis_builder().upgrades_downgrades().await
     }
 
     /// Fetches the analyst price target.
     pub async fn analyst_price_target(&self) -> Result<crate::PriceTarget, YfError> {
-        AnalysisBuilder::new(self.client.clone(), &self.symbol)
-            .cache_mode(self.cache_mode)
-            .retry_policy(self.retry_override.clone())
-            .analyst_price_target()
-            .await
+        self.analysis_builder().analyst_price_target().await
     }
 
     /* ---------------- Fundamentals convenience ---------------- */

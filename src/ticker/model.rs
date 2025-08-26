@@ -1,20 +1,3 @@
-/// A detailed quote for a specific ticker.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Quote {
-    /// The ticker symbol.
-    pub symbol: String,
-    /// The last traded price in the regular market session.
-    pub regular_market_price: Option<f64>,
-    /// The closing price of the previous regular market session.
-    pub regular_market_previous_close: Option<f64>,
-    /// The currency in which the security is traded.
-    pub currency: Option<String>,
-    /// The full name of the exchange where the security is traded.
-    pub exchange: Option<String>,
-    /// The current state of the market for this security (e.g., "REGULAR", "PRE", "POST").
-    pub market_state: Option<String>,
-}
-
 /// A compact quote summary, useful for quick price checks.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FastInfo {

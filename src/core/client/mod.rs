@@ -70,6 +70,7 @@ pub struct YfClient {
     user_agent: String,
 
     state: Arc<RwLock<ClientState>>,
+    credential_fetch_lock: Arc<tokio::sync::Mutex<()>>,
 
     #[cfg(feature = "test-mode")]
     api_preference: ApiPreference,
@@ -453,6 +454,7 @@ impl YfClientBuilder {
             crumb_url,
             user_agent,
             state: Arc::new(RwLock::new(initial_state)),
+            credential_fetch_lock: Arc::new(tokio::sync::Mutex::new(())),
             #[cfg(feature = "test-mode")]
             api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
             retry: self.retry.unwrap_or_default(),

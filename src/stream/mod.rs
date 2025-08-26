@@ -306,7 +306,9 @@ async fn run_websocket_stream(
 
                         match decode_and_map_message(&text) {
                             Ok(update) => {
-                                let _ = tx.send(update).await;
+                                if tx.send(update).await.is_err() {
+                                    break; // Receiver was dropped, exit loop
+                                }
                             },
                             Err(e) => {
                                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -321,7 +323,9 @@ async fn run_websocket_stream(
                         let mut handled = false;
                         if let Ok(as_text) = std::str::from_utf8(&bin)
                             && let Ok(update) = decode_and_map_message(as_text) {
-                                let _ = tx.send(update).await;
+                                if tx.send(update).await.is_err() {
+                                    break; // Receiver was dropped
+                                }
                                 handled = true;
                             }
                         // If not handled, treat as raw protobuf bytes
@@ -335,7 +339,9 @@ async fn run_websocket_stream(
                                         currency: Some(ticker.currency),
                                         ts: ticker.time,
                                     };
-                                    let _ = tx.send(update).await;
+                                    if tx.send(update).await.is_err() {
+                                        break; // Receiver was dropped
+                                    }
                                 }
                                 Err(e) => {
                                     if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -417,6 +423,7 @@ async fn run_polling_stream(
     loop {
         tokio::select! {
             _ = ticker.tick() => {
+                if tx.is_closed() { break; }
                 let ts = chrono::Utc::now().timestamp();
                 match crate::core::quotes::fetch_v7_quotes(&client, &symbol_slices, cache_mode, retry_override).await {
                     Ok(quotes) => {
@@ -436,6 +443,7 @@ async fn run_polling_stream(
                                 currency: q.currency,
                                 ts,
                             }).await.is_err() {
+                                // Break outer loop if receiver is dropped
                                 break;
                             }
                         }
