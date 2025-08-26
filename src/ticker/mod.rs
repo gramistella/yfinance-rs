@@ -1,7 +1,9 @@
+mod info;
 mod model;
 mod options;
 mod quote;
 
+pub use info::Info;
 pub use model::{FastInfo, OptionChain, OptionContract};
 
 use crate::{
@@ -77,9 +79,23 @@ impl Ticker {
         self
     }
 
-    /// Returns a `HistoryBuilder` to construct a detailed query for historical price data.
-    pub fn history_builder(&self) -> HistoryBuilder<'_> {
-        HistoryBuilder::new(&self.client, &self.symbol)
+    /// Fetches a comprehensive `Info` struct containing quote, profile, analysis, and ESG data.
+    ///
+    /// This method conveniently aggregates data from multiple endpoints into a single struct,
+    /// similar to the `.info` attribute in the Python `yfinance` library. It makes several
+    /// API calls concurrently to gather the data efficiently.
+    ///
+    /// If a non-essential part of the data fails to load (e.g., ESG scores), the corresponding
+    /// fields in the `Info` struct will be `None`. A failure to load the core profile
+    /// will result in an error.
+    pub async fn info(&self) -> Result<Info, YfError> {
+        info::fetch_info(
+            &self.client,
+            &self.symbol,
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await
     }
 
     /* ---------------- Quotes ---------------- */
@@ -128,6 +144,11 @@ impl Ticker {
     }
 
     /* ---------------- History helpers ---------------- */
+
+    /// Returns a `HistoryBuilder` to construct a detailed query for historical price data.
+    pub fn history_builder(&self) -> HistoryBuilder<'_> {
+        HistoryBuilder::new(&self.client, &self.symbol)
+    }
 
     /// Fetches historical price candles with default settings.
     ///
@@ -231,19 +252,14 @@ impl Ticker {
     /// This mimics the approach used by the Python `yfinance` library.
     /// It returns `None` for assets that don't have an ISIN, such as indices.
     pub async fn isin(&self) -> Result<Option<String>, YfError> {
-        // Trivial rejection for indices, etc., which don't have an ISIN.
         if self.symbol.contains('^') {
             return Ok(None);
         }
 
-        // Get quote to find the shortName for a better search query.
-        let quote = self.quote().await?;
-        let query = quote.shortname.as_deref().unwrap_or(&self.symbol);
-
         fetch_and_parse_isin(
             &self.client,
             &self.symbol,
-            query,
+            &self.symbol,
             self.retry_override.as_ref(),
         )
         .await
@@ -413,44 +429,246 @@ async fn fetch_and_parse_isin(
 ) -> Result<Option<String>, YfError> {
     let mut url = client.base_insider_search().clone();
     url.query_pairs_mut()
-        .append_pair("max_results", "1")
+        .append_pair("max_results", "5")
         .append_pair("query", query);
 
     let req = client.http().get(url.clone());
-    let resp = client
-        .send_with_retry(req, retry_override)
-        .await?;
+    let resp = client.send_with_retry(req, retry_override).await?;
 
     if !resp.status().is_success() {
-        // This is a non-critical, third-party endpoint. Return None instead of an error.
         return Ok(None);
     }
 
     let body = crate::core::net::get_text(resp, "isin_search", symbol, "json").await?;
+    let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
 
-    // A temporary struct for deserializing the search result from Business Insider.
     #[derive(serde::Deserialize)]
-    struct InsiderSearchResult {
-        #[serde(rename = "Value")]
-        value: String,
+    struct FlatSuggest {
+        #[serde(alias = "Value", alias = "value")]
+        value: Option<String>,
+        #[serde(alias = "Symbol", alias = "symbol")]
+        symbol: Option<String>,
+        #[serde(alias = "Isin", alias = "isin", alias = "ISIN")]
+        isin: Option<String>,
     }
 
-    let results: Vec<InsiderSearchResult> = match serde_json::from_str(&body) {
-        Ok(r) => r,
-        // If parsing fails, it's not the expected format. Return None.
-        Err(_) => return Ok(None),
+    // ---- Helpers ----
+    let normalize_sym = |s: &str| {
+        let mut t = s.trim().replace('-', ".");
+        for sep in ['.', ':', ' ', '\t', '\n', '\r'] {
+            if let Some(idx) = t.find(sep) {
+                t.truncate(idx);
+                break;
+            }
+        }
+        t.to_ascii_lowercase()
     };
 
-    if let Some(first_result) = results.first() {
-        let parts: Vec<&str> = first_result.value.split('|').collect();
-        // The value is like "SYMBOL|ISIN|Name|...". Check that the symbol matches.
-        if parts.len() > 1 && parts[0].eq_ignore_ascii_case(symbol) {
-            let isin = parts[1];
-            if !isin.is_empty() {
-                return Ok(Some(isin.to_string()));
+    let looks_like_isin = |s: &str| {
+        let t = s.trim();
+        if t.len() != 12 {
+            return false;
+        }
+        let b = t.as_bytes();
+        if !(b[0].is_ascii_alphabetic() && b[1].is_ascii_alphabetic()) {
+            return false;
+        }
+        if !t[2..11].chars().all(|c| c.is_ascii_alphanumeric()) {
+            return false;
+        }
+        b[11].is_ascii_digit()
+    };
+
+    let pick_from_parts = |parts: &[String], target_norm: &str| -> Option<String> {
+        if let Some(first) = parts.first()
+            && normalize_sym(first) == target_norm
+        {
+            // NOTE: parts.iter() yields &String; find gets &&String; deref once.
+            if let Some(isin) = parts
+                .iter()
+                .map(|s| s.as_str())
+                .find(|s| looks_like_isin(s))
+            {
+                return Some(isin.to_uppercase());
+            }
+        }
+        None
+    };
+
+    let extract_from_json_value = |v: &serde_json::Value, target_norm: &str| -> Option<String> {
+        let mut arrays: Vec<&serde_json::Value> = Vec::new();
+
+        match v {
+            serde_json::Value::Array(_) => arrays.push(v),
+            serde_json::Value::Object(map) => {
+                for key in [
+                    "Suggestions",
+                    "suggestions",
+                    "items",
+                    "results",
+                    "Result",
+                    "data",
+                ] {
+                    if let Some(val) = map.get(key)
+                        && val.is_array()
+                    {
+                        arrays.push(val);
+                    }
+                }
+                if arrays.is_empty() {
+                    for (_, val) in map {
+                        if val.is_array() {
+                            arrays.push(val);
+                        } else if let Some(obj) = val.as_object() {
+                            for (_, inner) in obj {
+                                if inner.is_array() {
+                                    arrays.push(inner);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        for arr in arrays {
+            if let Some(a) = arr.as_array() {
+                for item in a {
+                    if let Some(obj) = item.as_object() {
+                        // Direct ISIN fields
+                        for k in ["Isin", "isin", "ISIN"] {
+                            if let Some(isin_val) = obj.get(k).and_then(|x| x.as_str())
+                                && looks_like_isin(isin_val)
+                            {
+                                let sym = obj
+                                    .get("Symbol")
+                                    .and_then(|x| x.as_str())
+                                    .or_else(|| obj.get("symbol").and_then(|x| x.as_str()))
+                                    .unwrap_or("");
+                                if sym.is_empty() || normalize_sym(sym) == target_norm {
+                                    return Some(isin_val.to_uppercase());
+                                }
+                            }
+                        }
+
+                        // Pipe-delimited "Value"
+                        let value_str = obj
+                            .get("Value")
+                            .and_then(|x| x.as_str())
+                            .or_else(|| obj.get("value").and_then(|x| x.as_str()))
+                            .unwrap_or("");
+                        if !value_str.is_empty() {
+                            let parts: Vec<String> = value_str
+                                .split('|')
+                                .map(|p| p.trim().to_string())
+                                .filter(|p| !p.is_empty())
+                                .collect();
+                            if let Some(isin) = pick_from_parts(&parts, target_norm) {
+                                return Some(isin);
+                            }
+                        }
+
+                        // Probe any string field if symbol matches
+                        if let Some(sym) = obj
+                            .get("Symbol")
+                            .and_then(|x| x.as_str())
+                            .or_else(|| obj.get("symbol").and_then(|x| x.as_str()))
+                            && normalize_sym(sym) == target_norm
+                        {
+                            for (_k, v) in obj {
+                                if let Some(s) = v.as_str()
+                                    && looks_like_isin(s)
+                                {
+                                    return Some(s.to_uppercase());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    };
+
+    // ---- Parse attempts ----
+    let input_norm = normalize_sym(symbol);
+
+    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&body) {
+        if let Some(hit) = extract_from_json_value(&val, &input_norm) {
+            if debug {
+                eprintln!(
+                    "YF_DEBUG(isin): ISIN extracted from JSON structures: {}",
+                    hit
+                );
+            }
+            return Ok(Some(hit));
+        }
+    } else if debug {
+        eprintln!(
+            "YF_DEBUG(isin): failed to parse JSON response for query '{}'",
+            query
+        );
+    }
+
+    if let Ok(raw_arr) = serde_json::from_str::<Vec<FlatSuggest>>(&body) {
+        for r in &raw_arr {
+            if let Some(isin) = r.isin.as_deref()
+                && looks_like_isin(isin)
+                && r.symbol.as_deref().map(normalize_sym) == Some(input_norm.clone())
+            {
+                return Ok(Some(isin.to_uppercase()));
+            }
+            if let Some(value) = r.value.as_deref() {
+                let parts: Vec<String> = value
+                    .split('|')
+                    .map(|p| p.trim().to_string())
+                    .filter(|p| !p.is_empty())
+                    .collect();
+                if let Some(isin) = pick_from_parts(&parts, &input_norm) {
+                    return Ok(Some(isin));
+                }
+            }
+        }
+        // Fallback within the flat array: any ISIN-like token
+        for r in &raw_arr {
+            if let Some(isin) = r.isin.as_deref()
+                && looks_like_isin(isin)
+            {
+                return Ok(Some(isin.to_uppercase()));
+            }
+            if let Some(value) = r.value.as_deref()
+                && let Some(tok) = value
+                    .split('|')
+                    .map(|p| p.trim())
+                    .find(|tok| looks_like_isin(tok))
+            {
+                return Ok(Some((*tok).to_uppercase()));
             }
         }
     }
 
+    // Raw-body scan fallback
+    let mut token = String::new();
+    for ch in body.chars() {
+        if ch.is_ascii_alphanumeric() {
+            token.push(ch);
+            if token.len() > 12 {
+                token.remove(0);
+            }
+            if token.len() == 12 && looks_like_isin(&token) {
+                if debug {
+                    eprintln!("YF_DEBUG(isin): Fallback raw scan found ISIN: {}", token);
+                }
+                return Ok(Some(token.to_uppercase()));
+            }
+        } else {
+            token.clear();
+        }
+    }
+
+    if debug {
+        eprintln!("YF_DEBUG(isin): No matching ISIN found in any response shape.");
+    }
     Ok(None)
 }

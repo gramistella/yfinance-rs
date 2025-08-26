@@ -1,5 +1,7 @@
+use serde::Serialize;
+
 /// Represents a physical address for a company.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Address {
     /// Street address line 1.
     pub street1: Option<String>,

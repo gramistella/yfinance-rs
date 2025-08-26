@@ -22,7 +22,10 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api", sym));
+            .body(fixture(
+                "fundamentals_api_incomeStatementHistoryQuarterly",
+                sym,
+            ));
     });
 
     let client = YfClient::builder()
@@ -56,7 +59,7 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api", sym));
+            .body(fixture("fundamentals_api_balanceSheetHistory", sym));
     });
 
     let client = YfClient::builder()
@@ -90,7 +93,7 @@ async fn offline_cashflow_annual_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api", sym));
+            .body(fixture("fundamentals_api_cashflowStatementHistory", sym));
     });
 
     let client = YfClient::builder()
@@ -124,7 +127,7 @@ async fn offline_earnings_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api", sym));
+            .body(fixture("fundamentals_api_earnings", sym));
     });
 
     let client = YfClient::builder()
@@ -161,7 +164,7 @@ async fn offline_calendar_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api", sym));
+            .body(fixture("fundamentals_api_calendarEvents", sym));
     });
 
     let client = YfClient::builder()

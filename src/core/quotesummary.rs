@@ -66,7 +66,13 @@ pub(crate) async fn fetch(
 
         let req = client.http().get(url.clone());
         let resp = client.send_with_retry(req, retry_override).await?;
-        let text = net::get_text(resp, &format!("{caller}_api"), symbol, "json").await?;
+
+        // Create a sanitized key from module names for a unique fixture filename.
+        let module_key = modules
+            .replace(',', "-")
+            .replace(|c: char| !c.is_alphanumeric() && c != '-', "");
+        let fixture_endpoint = format!("{caller}_api_{module_key}");
+        let text = net::get_text(resp, &fixture_endpoint, symbol, "json").await?;
 
         #[cfg(any(debug_assertions, feature = "debug-dumps"))]
         let _ = debug_dump_api(symbol, &text);

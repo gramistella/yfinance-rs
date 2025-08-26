@@ -18,7 +18,11 @@ async fn api_fetches_cookie_and_crumb_first() {
             .query_param("crumb", "crumb-value");
         then.status(200)
             .header("content-type", "application/json")
-            .body(common::fixture("profile_api", sym, "json"));
+            .body(common::fixture(
+                "profile_api_assetProfile-quoteType-fundProfile",
+                sym,
+                "json",
+            ));
     });
 
     let client = YfClient::builder()
@@ -81,7 +85,11 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
             .query_param("crumb", "crumb-value");
         then.status(200)
             .header("content-type", "application/json")
-            .body(common::fixture("profile_api", sym, "json"));
+            .body(common::fixture(
+                "profile_api_assetProfile-quoteType-fundProfile",
+                sym,
+                "json",
+            ));
     });
 
     let p = Profile::load(&client, sym).await.unwrap();

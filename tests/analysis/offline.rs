@@ -12,7 +12,6 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
     let sym = "AAPL";
     let server = MockServer::start();
 
-    // Trend only
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v10/finance/quoteSummary/{}", sym))
@@ -20,7 +19,7 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("analysis_api", sym));
+            .body(fixture("analysis_api_recommendationTrend", sym));
     });
 
     let client = YfClient::builder()
@@ -44,7 +43,6 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
     let sym = "MSFT";
     let server = MockServer::start();
 
-    // Combined modules (trend + mean)
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v10/finance/quoteSummary/{}", sym))
@@ -52,7 +50,10 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("analysis_api", sym));
+            .body(fixture(
+                "analysis_api_recommendationTrend-recommendationMean",
+                sym,
+            ));
     });
 
     let client = YfClient::builder()
@@ -86,7 +87,7 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("analysis_api", sym));
+            .body(fixture("analysis_api_upgradeDowngradeHistory", sym));
     });
 
     let client = YfClient::builder()
@@ -102,5 +103,4 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
     let _rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();
-    // After recording, this should be non-empty for many large-caps — but allow empty in case the day is quiet.
 }

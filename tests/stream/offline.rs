@@ -12,12 +12,11 @@ async fn stream_websocket_fallback_to_polling_offline() {
             .query_param("symbols", "AAPL");
         then.status(200)
             .header("content-type", "application/json")
-            .body(crate::common::fixture("quote_v7", "MULTI", "json"));
+            .body(crate::common::fixture("quote_v7", "AAPL", "json"));
     });
 
     let client = yfinance_rs::YfClient::builder()
         .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
-        // Provide an invalid websocket URL to force fallback
         .base_stream(Url::parse("wss://invalid-url-for-testing.invalid/").unwrap())
         .build()
         .unwrap();
@@ -33,7 +32,6 @@ async fn stream_websocket_fallback_to_polling_offline() {
     let got = timeout(Duration::from_secs(3), rx.recv()).await;
     handle.abort();
 
-    // The polling mock should have been hit
     mock.assert();
 
     let update = got
@@ -57,7 +55,7 @@ async fn stream_polling_explicitly_offline() {
             .query_param("symbols", "MSFT");
         then.status(200)
             .header("content-type", "application/json")
-            .body(crate::common::fixture("quote_v7", "MULTI", "json"));
+            .body(crate::common::fixture("quote_v7", "MSFT", "json"));
     });
 
     let client = yfinance_rs::YfClient::builder()

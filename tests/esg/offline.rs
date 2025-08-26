@@ -18,7 +18,7 @@ async fn offline_esg_uses_recorded_fixture() {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("esg_api", sym));
+            .body(fixture("esg_api_esgScores", sym));
     });
 
     let client = YfClient::builder()

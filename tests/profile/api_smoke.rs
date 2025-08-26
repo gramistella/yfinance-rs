@@ -1,4 +1,5 @@
-use crate::common::{mock_profile_api, setup_server};
+use crate::common::setup_server;
+use httpmock::Method::GET;
 use url::Url;
 use yfinance_rs::{ApiPreference, Profile, YfClient};
 
@@ -7,7 +8,20 @@ async fn profile_api_company_happy() {
     let server = setup_server();
     let sym = "AAPL";
     let crumb = "test-crumb";
-    let mock = mock_profile_api(&server, sym, crumb);
+
+    let mock = server.mock(|when, then| {
+        when.method(GET)
+            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .query_param("modules", "assetProfile,quoteType,fundProfile")
+            .query_param("crumb", crumb);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(crate::common::fixture(
+                "profile_api_assetProfile-quoteType-fundProfile",
+                sym,
+                "json",
+            ));
+    });
 
     let client = YfClient::builder()
         .base_quote_api(
@@ -37,7 +51,20 @@ async fn profile_api_fund_happy() {
     let server = setup_server();
     let sym = "QQQ";
     let crumb = "test-crumb";
-    let mock = mock_profile_api(&server, sym, crumb);
+
+    let mock = server.mock(|when, then| {
+        when.method(GET)
+            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .query_param("modules", "assetProfile,quoteType,fundProfile")
+            .query_param("crumb", crumb);
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(crate::common::fixture(
+                "profile_api_assetProfile-quoteType-fundProfile",
+                sym,
+                "json",
+            ));
+    });
 
     let client = YfClient::builder()
         .base_quote_api(

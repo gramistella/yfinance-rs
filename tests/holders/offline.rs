@@ -15,8 +15,8 @@ fn setup_holders_mock<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("holders_api", symbol));
-    })
+            .body(fixture("holders_api_institutionOwnership-fundOwnership-majorHoldersBreakdown-insiderTransactions-insiderHolders-netSharePurchaseActivity", symbol));
+            })
 }
 
 #[tokio::test]

@@ -6,6 +6,10 @@ mod actions;
 mod fast_info;
 #[path = "ticker/history_convenience.rs"]
 mod history_convenience;
+#[path = "ticker/info_live.rs"]
+mod info_live;
+#[path = "ticker/info_offline.rs"]
+mod info_offline;
 #[path = "ticker/isin_live.rs"]
 mod isin_live;
 #[path = "ticker/isin_offline.rs"]

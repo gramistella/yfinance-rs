@@ -111,7 +111,7 @@ pub use profile::{Address, Company, Fund, Profile};
 pub use quote::{QuotesBuilder, quotes};
 pub use search::{SearchBuilder, SearchQuote, SearchResponse};
 pub use stream::{QuoteUpdate, StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
-pub use ticker::{FastInfo, OptionChain, OptionContract, Ticker};
+pub use ticker::{FastInfo, Info, OptionChain, OptionContract, Ticker};
 
 #[cfg(feature = "test-mode")]
 #[doc(hidden)]

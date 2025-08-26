@@ -143,3 +143,40 @@ test-full +args='':
 		echo "  just test-record {{args}}"; \
 		exit $status; \
 	fi
+
+test-full-debug +args='':
+    @just banner "Full test DEBUG (Phase 1: live/record → Phase 2: offline)"
+    @set -euo pipefail; \
+    ts() { date '+%Y-%m-%d %H:%M:%S'; }; \
+    TARGET_OPT=(); TEST_ARGS=(); \
+    if [ -n "{{args}}" ]; then \
+        set -- {{args}}; \
+        first="${1:-}"; shift || true; \
+        if [ -n "$first" ] && [[ "$first" != --* ]] && [[ "$first" != *::* ]]; then \
+            TARGET_OPT=(--test "$first"); \
+            TEST_ARGS=("$@"); \
+        else \
+            TEST_ARGS=("$first" "$@"); \
+        fi; \
+    fi; \
+    echo "[$(ts)] 🟦 Phase 1/2 START — Live/Record DEBUG (runs ignored, writes fixtures)"; \
+    if YF_DEBUG=1 YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"; then \
+        echo "[$(ts)] ✅ Phase 1/2 PASS — Live/Record passed"; \
+        echo "[$(ts)] 🟩 Phase 2/2 START — Offline replay DEBUG (cached fixtures)"; \
+        if YF_DEBUG=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"; then \
+            echo "[$(ts)] ✅ Phase 2/2 PASS — Offline replay passed"; \
+            echo "[$(ts)] 🎉 Full debug test complete: BOTH phases passed"; \
+        else \
+            status=$?; \
+            echo "[$(ts)] ❌ Phase 2/2 FAIL — Offline replay failed (exit $status)"; \
+            echo "Tip: re-run only the offline pass with:"; \
+            echo "  just test-offline {{args}}"; \
+            exit $status; \
+        fi; \
+    else \
+        status=$?; \
+        echo "[$(ts)] ❌ Phase 1/2 FAIL — Live/Record failed (exit $status)"; \
+        echo "Skipping offline. Tip: re-run only the live/record pass with:"; \
+        echo "  just test-record {{args}}"; \
+        exit $status; \
+    fi
