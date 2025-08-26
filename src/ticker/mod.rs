@@ -258,24 +258,32 @@ impl Ticker {
 
         let body = crate::core::net::get_text(resp, "isin_search", &self.symbol, "json").await?;
 
-        // The response is a JSON array string, e.g.,
-        // `[{"Label":"Apple Inc.","Value":"AAPL|US0378331005|Apple Inc.|NASDAQ|Stock|13"}]`
-        // We parse the string to find the ISIN.
-        let search_str = format!("\"{}|", self.symbol);
-        if let Some(start) = body.find(&search_str) {
-            let remainder = &body[start + search_str.len()..];
-            if let Some(isin_part) = remainder.split('|').next() {
-                if let Some(isin) = isin_part.split('"').next() {
-                    if !isin.is_empty() {
-                        return Ok(Some(isin.to_string()));
-                    }
+        // A temporary struct for deserializing the search result from Business Insider.
+        #[derive(serde::Deserialize)]
+        struct InsiderSearchResult {
+            #[serde(rename = "Value")]
+            value: String,
+        }
+
+        let results: Vec<InsiderSearchResult> = match serde_json::from_str(&body) {
+            Ok(r) => r,
+            // If parsing fails, it's not the expected format. Return None.
+            Err(_) => return Ok(None),
+        };
+
+        if let Some(first_result) = results.first() {
+            let parts: Vec<&str> = first_result.value.split('|').collect();
+            // The value is like "SYMBOL|ISIN|Name|...". Check that the symbol matches.
+            if parts.len() > 1 && parts[0].eq_ignore_ascii_case(&self.symbol) {
+                let isin = parts[1];
+                if !isin.is_empty() {
+                    return Ok(Some(isin.to_string()));
                 }
             }
         }
 
         Ok(None)
     }
-
 
     /* ---------------- Options ---------------- */
 

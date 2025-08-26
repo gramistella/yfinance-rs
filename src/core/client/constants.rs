@@ -34,7 +34,8 @@ pub(crate) const DEFAULT_BASE_OPTIONS_V7: &str =
 pub(crate) const DEFAULT_BASE_STREAM: &str = "wss://streamer.finance.yahoo.com/?version=2";
 
 /// Base URL for the Business Insider search API (for ISIN lookup).
-pub(crate) const DEFAULT_BASE_INSIDER_SEARCH: &str =  "https://markets.businessinsider.com/ajax/SearchController_Suggest";
+pub(crate) const DEFAULT_BASE_INSIDER_SEARCH: &str =
+    "https://markets.businessinsider.com/ajax/SearchController_Suggest";
 
 /// Base URL for Yahoo Finance site (used for news).
 pub(crate) const DEFAULT_BASE_NEWS: &str = "https://finance.yahoo.com";

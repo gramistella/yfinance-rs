@@ -5,8 +5,8 @@ mod auth;
 mod constants;
 mod retry;
 
-use crate::core::client::constants::DEFAULT_BASE_INSIDER_SEARCH;
 use crate::core::YfError;
+use crate::core::client::constants::DEFAULT_BASE_INSIDER_SEARCH;
 pub use retry::{Backoff, CacheMode, RetryConfig};
 
 use constants::{
