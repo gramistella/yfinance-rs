@@ -3,10 +3,11 @@ use serde::Deserialize;
 use url::Url;
 
 use crate::{
+    Quote, YfClient, YfError,
     core::{
         client::{CacheMode, RetryConfig},
         net,
-    }, Quote, YfClient, YfError
+    },
 };
 
 // Centralized wire model for the v7 quote API

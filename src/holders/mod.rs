@@ -3,13 +3,13 @@ mod model;
 mod wire;
 
 pub use model::{
-    InstitutionalHolder, InsiderRosterHolder, InsiderTransaction, MajorHolder,
+    InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
     NetSharePurchaseActivity,
 };
 
 use crate::{
-    core::client::{CacheMode, RetryConfig},
     YfClient, YfError,
+    core::client::{CacheMode, RetryConfig},
 };
 
 /// A builder for fetching holder data for a specific symbol.

@@ -65,6 +65,7 @@ pub struct YfClient {
     base_quote_v7: Url,
     base_options_v7: Url,
     base_stream: Url,
+    base_news: Url,
     cookie_url: Url,
     crumb_url: Url,
     user_agent: String,
@@ -122,6 +123,10 @@ impl YfClient {
 
     pub(crate) fn base_stream(&self) -> &Url {
         &self.base_stream
+    }
+
+    pub(crate) fn base_news(&self) -> &Url {
+        &self.base_news
     }
 
     #[cfg(feature = "test-mode")]
@@ -244,6 +249,7 @@ pub struct YfClientBuilder {
     base_quote_v7: Option<Url>,
     base_options_v7: Option<Url>,
     base_stream: Option<Url>,
+    base_news: Option<Url>,
     cookie_url: Option<Url>,
     crumb_url: Option<Url>,
 
@@ -311,6 +317,13 @@ impl YfClientBuilder {
     /// Sets a custom base URL for the streaming API.
     pub fn base_stream(mut self, url: Url) -> Self {
         self.base_stream = Some(url);
+        self
+    }
+
+    /// Sets a custom base URL for the news endpoint.
+    /// Default: `https://finance.yahoo.com`.
+    pub fn base_news(mut self, url: Url) -> Self {
+        self.base_news = Some(url);
         self
     }
 
@@ -402,6 +415,9 @@ impl YfClientBuilder {
         let base_stream = self
             .base_stream
             .unwrap_or(Url::parse(constants::DEFAULT_BASE_STREAM)?);
+        let base_news = self
+            .base_news
+            .unwrap_or(Url::parse(constants::DEFAULT_BASE_NEWS)?);
         let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
@@ -450,6 +466,7 @@ impl YfClientBuilder {
             base_quote_v7,
             base_options_v7,
             base_stream,
+            base_news,
             cookie_url,
             crumb_url,
             user_agent,

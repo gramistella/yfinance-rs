@@ -32,3 +32,6 @@ pub(crate) const DEFAULT_BASE_OPTIONS_V7: &str =
 
 /// Base URL for the Yahoo Finance search API.
 pub(crate) const DEFAULT_BASE_STREAM: &str = "wss://streamer.finance.yahoo.com/?version=2";
+
+/// Base URL for Yahoo Finance site (used for news).
+pub(crate) const DEFAULT_BASE_NEWS: &str = "https://finance.yahoo.com";

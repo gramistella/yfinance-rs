@@ -1,10 +1,10 @@
 use crate::{
+    Quote, YfClient, YfError,
     core::{
         client::{CacheMode, RetryConfig},
         quotes,
-    }, Quote, YfClient, YfError
+    },
 };
-
 
 pub(crate) async fn fetch_quote(
     client: &YfClient,

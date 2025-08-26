@@ -5,7 +5,11 @@ mod quote;
 pub use model::{FastInfo, OptionChain, OptionContract};
 
 use crate::{
-    analysis::AnalysisBuilder, core::client::{CacheMode, RetryConfig}, fundamentals::FundamentalsBuilder, history::HistoryBuilder, HoldersBuilder, Quote, YfClient, YfError
+    HoldersBuilder, NewsBuilder, Quote, YfClient, YfError,
+    analysis::AnalysisBuilder,
+    core::client::{CacheMode, RetryConfig},
+    fundamentals::FundamentalsBuilder,
+    history::HistoryBuilder,
 };
 
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
@@ -107,6 +111,20 @@ impl Ticker {
             exchange: q.exchange,
             market_state: q.market_state,
         })
+    }
+
+    /* ---------------- News convenience ---------------- */
+
+    /// Returns a `NewsBuilder` to construct a query for news articles.
+    pub fn news_builder(&self) -> NewsBuilder<'_> {
+        NewsBuilder::new(&self.client, &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+    }
+
+    /// Fetches the latest news articles for the ticker.
+    pub async fn news(&self) -> Result<Vec<crate::NewsArticle>, YfError> {
+        self.news_builder().fetch().await
     }
 
     /* ---------------- History helpers ---------------- */
@@ -273,7 +291,7 @@ impl Ticker {
     ) -> Result<Option<crate::NetSharePurchaseActivity>, YfError> {
         self.holders_builder().net_share_purchase_activity().await
     }
-    
+
     /* ---------------- Analysis convenience ---------------- */
 
     fn analysis_builder(&self) -> AnalysisBuilder {

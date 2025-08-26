@@ -1,12 +1,13 @@
-use crate::core::{
-    client::{CacheMode, RetryConfig},
-    quotesummary, YfClient, YfError,
-};
 use super::model::{
-    InstitutionalHolder, InsiderRosterHolder, InsiderTransaction, MajorHolder,
+    InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
     NetSharePurchaseActivity,
 };
 use super::wire::{RawNum, V10Result};
+use crate::core::{
+    YfClient, YfError,
+    client::{CacheMode, RetryConfig},
+    quotesummary,
+};
 
 const MODULES: &str = "institutionOwnership,fundOwnership,majorHoldersBreakdown,insiderTransactions,insiderHolders,netSharePurchaseActivity";
 
@@ -16,7 +17,15 @@ async fn fetch_holders_modules(
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<V10Result, YfError> {
-    quotesummary::fetch_module_result(client, symbol, MODULES, "holders", cache_mode, retry_override).await
+    quotesummary::fetch_module_result(
+        client,
+        symbol,
+        MODULES,
+        "holders",
+        cache_mode,
+        retry_override,
+    )
+    .await
 }
 
 fn f<T: Copy>(r: Option<RawNum<T>>) -> Option<T> {
@@ -157,8 +166,9 @@ pub(super) async fn net_share_purchase_activity(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Option<NetSharePurchaseActivity>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
-    Ok(root.net_share_purchase_activity.map(|n| {
-        NetSharePurchaseActivity {
+    Ok(root
+        .net_share_purchase_activity
+        .map(|n| NetSharePurchaseActivity {
             period: n.period.unwrap_or_default(),
             buy_info_shares: f(n.buy_info_shares).unwrap_or(0),
             buy_info_count: f(n.buy_info_count).unwrap_or(0),
@@ -168,6 +178,5 @@ pub(super) async fn net_share_purchase_activity(
             net_info_count: f(n.net_info_count).unwrap_or(0),
             total_insider_shares: f(n.total_insider_shares).unwrap_or(0),
             net_percent_insider_shares: f(n.net_percent_insider_shares).unwrap_or(0.0),
-        }
-    }))
+        }))
 }

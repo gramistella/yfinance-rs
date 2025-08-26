@@ -39,12 +39,16 @@ async fn offline_all_holders_from_fixture() {
     // Major Holders
     let major = t.major_holders().await.unwrap();
     assert!(!major.is_empty(), "major holders missing from fixture");
-    assert!(major
-        .iter()
-        .any(|h| h.category.contains("Held by All Insider")));
-    assert!(major
-        .iter()
-        .any(|h| h.category.contains("Held by Institutions")));
+    assert!(
+        major
+            .iter()
+            .any(|h| h.category.contains("Held by All Insider"))
+    );
+    assert!(
+        major
+            .iter()
+            .any(|h| h.category.contains("Held by Institutions"))
+    );
 
     // Institutional Holders
     let institutional = t.institutional_holders().await.unwrap();
@@ -68,9 +72,11 @@ async fn offline_all_holders_from_fixture() {
         !insider_roster.is_empty(),
         "insider roster missing from fixture"
     );
-    assert!(insider_roster
-        .iter()
-        .any(|h| h.name.to_lowercase().contains("cook")));
+    assert!(
+        insider_roster
+            .iter()
+            .any(|h| h.name.to_lowercase().contains("cook"))
+    );
 
     // Net Share Purchase Activity
     let net_purchase = t.net_share_purchase_activity().await.unwrap().unwrap();

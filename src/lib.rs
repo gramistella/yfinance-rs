@@ -71,10 +71,12 @@ pub mod analysis;
 pub mod download;
 /// Fetch financial statements (income, balance sheet, cash flow) and earnings data.
 pub mod fundamentals;
-/// Fetch holder information, including major, institutional, and insider holders.
-pub mod holders;
 /// Fetch historical OHLCV data for a single symbol.
 pub mod history;
+/// Fetch holder information, including major, institutional, and insider holders.
+pub mod holders;
+/// Fetch news articles for a ticker.
+pub mod news;
 /// Retrieve company or fund profile information.
 pub mod profile;
 /// Fetch quotes for multiple symbols.
@@ -96,11 +98,12 @@ pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
     EarningsQuarterEps, EarningsYear, FundamentalsBuilder, IncomeStatementRow, Num,
 };
+pub use history::HistoryBuilder;
 pub use holders::{
-    HoldersBuilder, InstitutionalHolder, InsiderRosterHolder, InsiderTransaction, MajorHolder,
+    HoldersBuilder, InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
     NetSharePurchaseActivity,
 };
-pub use history::HistoryBuilder;
+pub use news::{NewsArticle, NewsBuilder, NewsTab};
 pub use profile::{Address, Company, Fund, Profile};
 pub use quote::{QuotesBuilder, quotes};
 pub use search::{SearchBuilder, SearchQuote, SearchResponse};
