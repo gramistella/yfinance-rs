@@ -85,4 +85,4 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Run offline tests
-        run: just test-offline
+        run: just test-full

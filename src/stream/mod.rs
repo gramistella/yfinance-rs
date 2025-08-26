@@ -1,7 +1,7 @@
 use base64::{Engine as _, engine::general_purpose};
 use futures_util::{SinkExt, StreamExt};
 use prost::Message;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use std::time::Duration;
 use tokio::{
     select,
@@ -400,7 +400,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
 
 #[allow(clippy::too_many_arguments)]
 async fn run_polling_stream(
-    mut client: crate::core::YfClient,
+    client: crate::core::YfClient,
     symbols: Vec<String>,
     cfg: StreamConfig,
     tx: tokio::sync::mpsc::Sender<QuoteUpdate>,
@@ -411,25 +411,26 @@ async fn run_polling_stream(
     let mut ticker = tokio::time::interval(cfg.interval);
     let mut last_price: std::collections::HashMap<String, Option<f64>> =
         std::collections::HashMap::new();
-    let fixture_key = symbols.join(",");
-    let base = client.base_quote_v7().clone();
+    
+    let symbol_slices: Vec<&str> = symbols.iter().map(AsRef::as_ref).collect();
 
     loop {
         tokio::select! {
             _ = ticker.tick() => {
                 let ts = chrono::Utc::now().timestamp();
-                match fetch_quotes_multi(&mut client, &base, &symbols, &fixture_key, cache_mode, retry_override).await {
+                match crate::core::quotes::fetch_v7_quotes(&client, &symbol_slices, cache_mode, retry_override).await {
                     Ok(quotes) => {
                         for q in quotes {
                             let lp = q.regular_market_price.or(q.regular_market_previous_close);
                             if cfg.diff_only {
-                                let prev = last_price.insert(q.symbol.clone(), lp);
+                                let symbol = q.symbol.clone().unwrap_or_default();
+                                let prev = last_price.insert(symbol, lp);
                                 if prev == Some(lp) {
                                     continue;
                                 }
                             }
                             if tx.send(QuoteUpdate {
-                                symbol: q.symbol,
+                                symbol: q.symbol.unwrap_or_default(),
                                 last_price: lp,
                                 previous_close: q.regular_market_previous_close,
                                 currency: q.currency,
@@ -450,126 +451,4 @@ async fn run_polling_stream(
             _ = &mut *stop_rx => { break; }
         }
     }
-}
-
-async fn fetch_quotes_multi(
-    client: &mut crate::core::YfClient,
-    base: &url::Url,
-    symbols: &[String],
-    fixture_key: &str,
-    cache_mode: CacheMode,
-    retry_override: Option<&RetryConfig>,
-) -> Result<Vec<V7QuoteNode>, crate::core::YfError> {
-    let http = client.http().clone();
-
-    let mut url = base.clone();
-    {
-        let mut qp = url.query_pairs_mut();
-        qp.append_pair("symbols", &symbols.join(","));
-    }
-
-    if cache_mode == CacheMode::Use
-        && let Some(body) = client.cache_get(&url).await
-    {
-        let env: V7Envelope = serde_json::from_str(&body)
-            .map_err(|e| crate::core::YfError::Data(format!("quote json parse: {e}")))?;
-        let result = env
-            .quote_response
-            .and_then(|qr| qr.result)
-            .unwrap_or_default();
-        return Ok(result);
-    }
-
-    let mut resp = client
-        .send_with_retry(
-            http.get(url.clone()).header("accept", "application/json"),
-            retry_override,
-        )
-        .await?;
-
-    if resp.status().is_success() {
-        return parse_v7_multi(resp, fixture_key, client, &url, cache_mode).await;
-    }
-
-    let code = resp.status().as_u16();
-    if code != 401 && code != 403 {
-        return Err(crate::core::YfError::Status {
-            status: code,
-            url: url.to_string(),
-        });
-    }
-
-    client.ensure_credentials().await?;
-    let crumb = client
-        .crumb()
-        .await
-        .ok_or_else(|| crate::core::YfError::Data("Crumb is not set".into()))?;
-
-    let mut url2 = base.clone();
-    {
-        let mut qp = url2.query_pairs_mut();
-        qp.append_pair("symbols", &symbols.join(","));
-        qp.append_pair("crumb", &crumb);
-    }
-
-    resp = client
-        .send_with_retry(
-            http.get(url2.clone()).header("accept", "application/json"),
-            retry_override,
-        )
-        .await?;
-
-    if !resp.status().is_success() {
-        return Err(crate::core::YfError::Status {
-            status: resp.status().as_u16(),
-            url: url2.to_string(),
-        });
-    }
-
-    parse_v7_multi(resp, fixture_key, client, &url2, cache_mode).await
-}
-
-// helper used above
-async fn parse_v7_multi(
-    resp: reqwest::Response,
-    fixture_key: &str,
-    client: &crate::core::YfClient,
-    url: &url::Url,
-    cache_mode: CacheMode,
-) -> Result<Vec<V7QuoteNode>, crate::core::YfError> {
-    let body = crate::core::net::get_text(resp, "quote_v7", fixture_key, "json").await?;
-    if cache_mode != CacheMode::Bypass {
-        client.cache_put(url, &body, None).await;
-    }
-    let env: V7Envelope = serde_json::from_str(&body)
-        .map_err(|e| crate::core::YfError::Data(format!("quote json parse: {e}")))?;
-    let result = env
-        .quote_response
-        .and_then(|qr| qr.result)
-        .unwrap_or_default();
-    Ok(result)
-}
-
-#[derive(Deserialize)]
-struct V7Envelope {
-    #[serde(rename = "quoteResponse")]
-    quote_response: Option<V7QuoteResponse>,
-}
-
-#[derive(Deserialize)]
-struct V7QuoteResponse {
-    result: Option<Vec<V7QuoteNode>>,
-    #[allow(dead_code)]
-    error: Option<serde_json::Value>,
-}
-
-#[derive(Deserialize, Clone)]
-struct V7QuoteNode {
-    #[serde(default)]
-    symbol: String,
-    #[serde(rename = "regularMarketPrice")]
-    regular_market_price: Option<f64>,
-    #[serde(rename = "regularMarketPreviousClose")]
-    regular_market_previous_close: Option<f64>,
-    currency: Option<String>,
 }
