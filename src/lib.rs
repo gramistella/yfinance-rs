@@ -69,6 +69,8 @@ pub mod core;
 pub mod analysis;
 /// Download historical data for multiple symbols concurrently.
 pub mod download;
+/// Fetch ESG (Environmental, Social, Governance) scores and involvement data.
+pub mod esg;
 /// Fetch financial statements (income, balance sheet, cash flow) and earnings data.
 pub mod fundamentals;
 /// Fetch historical OHLCV data for a single symbol.
@@ -94,6 +96,7 @@ pub use core::{
     Action, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, YfClient, YfError,
 };
 pub use download::{DownloadBuilder, DownloadResult};
+pub use esg::{EsgBuilder, EsgInvolvement, EsgScores};
 pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
     EarningsQuarterEps, EarningsYear, FundamentalsBuilder, IncomeStatementRow, Num,

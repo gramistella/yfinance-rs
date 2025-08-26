@@ -5,7 +5,7 @@ mod quote;
 pub use model::{FastInfo, OptionChain, OptionContract};
 
 use crate::{
-    HoldersBuilder, NewsBuilder, Quote, YfClient, YfError,
+    EsgBuilder, HoldersBuilder, NewsBuilder, Quote, YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
     fundamentals::FundamentalsBuilder,
@@ -380,6 +380,18 @@ impl Ticker {
         self.analysis_builder().analyst_price_target().await
     }
 
+    /* ---------------- ESG / Sustainability ---------------- */
+
+    fn esg_builder(&self) -> EsgBuilder<'_> {
+        EsgBuilder::new(&self.client, &self.symbol)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone())
+    }
+
+    /// Fetches the ESG (Environmental, Social, Governance) scores for the ticker.
+    pub async fn sustainability(&self) -> Result<crate::EsgScores, YfError> {
+        self.esg_builder().fetch().await
+    }
     /* ---------------- Fundamentals convenience ---------------- */
 
     fn fundamentals_builder(&self) -> FundamentalsBuilder {
