@@ -40,7 +40,7 @@ async fn ticker_history_convenience_builds_expected_query() {
         .build()
         .unwrap();
 
-    let ticker = yfinance_rs::Ticker::new(client, "AAPL").unwrap();
+    let ticker = yfinance_rs::Ticker::new(client, "AAPL");
     let bars = ticker
         .history(Some(Range::Ytd), Some(Interval::D1), false)
         .await

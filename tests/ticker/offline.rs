@@ -11,7 +11,7 @@ async fn offline_quote_uses_recorded_fixture() {
         .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
         .build()
         .unwrap();
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
 
     let q = t.quote().await.unwrap();
     mock.assert();
@@ -33,7 +33,7 @@ async fn offline_options_uses_recorded_fixtures() {
         .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
         .build()
         .unwrap();
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
 
     let expiries = t.options().await.unwrap();
     mock_exp.assert();

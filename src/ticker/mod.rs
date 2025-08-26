@@ -28,7 +28,7 @@ use crate::{
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let client = YfClient::default();
-/// let ticker = Ticker::new(client, "TSLA")?;
+/// let ticker = Ticker::new(client, "TSLA");
 ///
 /// // Get the latest quote
 /// let quote = ticker.quote().await?;
@@ -54,13 +54,13 @@ impl Ticker {
     /// Creates a new `Ticker` for a given symbol.
     ///
     /// This is the standard way to create a ticker instance with default API endpoints.
-    pub fn new(client: YfClient, symbol: impl Into<String>) -> Result<Self, crate::core::YfError> {
-        Ok(Self {
+    pub fn new(client: YfClient, symbol: impl Into<String>) -> Self {
+        Self {
             client,
             symbol: symbol.into(),
             cache_mode: CacheMode::Use,
             retry_override: None,
-        })
+        }
     }
 
     /// Sets the cache mode for all subsequent API calls made by this `Ticker` instance.

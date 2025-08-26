@@ -36,7 +36,7 @@ async fn quote_v7_happy_path() {
         .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
         .build()
         .unwrap();
-    let ticker = Ticker::new(client, "AAPL").unwrap();
+    let ticker = Ticker::new(client, "AAPL");
 
     let q = ticker.quote().await.unwrap();
     mock.assert();
@@ -82,7 +82,7 @@ async fn fast_info_derives_last_price() {
         .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
         .build()
         .unwrap();
-    let ticker = Ticker::new(client, "MSFT").unwrap();
+    let ticker = Ticker::new(client, "MSFT");
 
     let fi = ticker.fast_info().await.unwrap();
     mock.assert();
@@ -107,7 +107,7 @@ async fn live_quote_smoke() {
     }
 
     let client = YfClient::builder().build().unwrap();
-    let ticker = Ticker::new(client, "AAPL").unwrap();
+    let ticker = Ticker::new(client, "AAPL");
     let fi = ticker.fast_info().await.unwrap();
 
     if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {

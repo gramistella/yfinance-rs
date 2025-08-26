@@ -8,7 +8,7 @@ where
     I: IntoIterator<Item = S>,
     S: Into<String>,
 {
-    QuotesBuilder::new(client.clone())?
+    QuotesBuilder::new(client.clone())
         .symbols(symbols)
         .fetch()
         .await
@@ -24,13 +24,13 @@ pub struct QuotesBuilder {
 
 impl QuotesBuilder {
     /// Creates a new `QuotesBuilder`.
-    pub fn new(client: YfClient) -> Result<Self, YfError> {
-        Ok(Self {
+    pub fn new(client: YfClient) -> Self {
+        Self {
             client,
             symbols: Vec::new(),
             cache_mode: CacheMode::Use,
             retry_override: None,
-        })
+        }
     }
 
     /// Sets the cache mode for this specific API call.

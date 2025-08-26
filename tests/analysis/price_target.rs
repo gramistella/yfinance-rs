@@ -41,7 +41,7 @@ async fn offline_price_target_happy() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let pt = t.analyst_price_target().await.unwrap();
 
     mock.assert();
@@ -115,7 +115,7 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let pt = t.analyst_price_target().await.unwrap();
 
     first.assert();

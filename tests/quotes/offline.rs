@@ -24,7 +24,6 @@ async fn offline_multi_quotes_uses_recorded_fixture() {
         .unwrap();
 
     let quotes = yfinance_rs::QuotesBuilder::new(client)
-        .unwrap()
         .symbols(["AAPL", "MSFT"])
         .fetch()
         .await

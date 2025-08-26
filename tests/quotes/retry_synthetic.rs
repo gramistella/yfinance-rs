@@ -54,7 +54,6 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
         .unwrap();
 
     let quotes = yfinance_rs::QuotesBuilder::new(client)
-        .unwrap()
         .symbols(["AAPL", "MSFT"])
         .fetch()
         .await

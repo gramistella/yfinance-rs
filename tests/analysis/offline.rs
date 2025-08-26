@@ -32,7 +32,7 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let rows = t.recommendations().await.unwrap();
 
     mock.assert();
@@ -64,7 +64,7 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let s = t.recommendations_summary().await.unwrap();
 
     mock.assert();
@@ -98,7 +98,7 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let _rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();

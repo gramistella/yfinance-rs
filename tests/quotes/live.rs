@@ -14,7 +14,6 @@ async fn record_multi_quotes_live() {
 
     // Use the real base URL; this will record to quote_v7_MULTI.json
     let _ = yfinance_rs::QuotesBuilder::new(client)
-        .unwrap()
         .symbols(["AAPL", "MSFT"])
         .fetch()
         .await

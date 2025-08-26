@@ -41,7 +41,7 @@ async fn option_chain_expiration_falls_back_to_url_date() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, "AAPL").unwrap();
+    let t = Ticker::new(client, "AAPL");
 
     let chain = t.option_chain(Some(date)).await.unwrap();
 

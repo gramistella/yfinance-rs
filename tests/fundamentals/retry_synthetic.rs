@@ -71,7 +71,7 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let e = t.earnings().await.unwrap();
 
     first.assert();

@@ -1,7 +1,7 @@
 use base64::{Engine as _, engine::general_purpose};
 use futures_util::{SinkExt, StreamExt};
 use prost::Message;
-use serde::{Serialize};
+use serde::Serialize;
 use std::time::Duration;
 use tokio::{
     select,
@@ -411,7 +411,7 @@ async fn run_polling_stream(
     let mut ticker = tokio::time::interval(cfg.interval);
     let mut last_price: std::collections::HashMap<String, Option<f64>> =
         std::collections::HashMap::new();
-    
+
     let symbol_slices: Vec<&str> = symbols.iter().map(AsRef::as_ref).collect();
 
     loop {

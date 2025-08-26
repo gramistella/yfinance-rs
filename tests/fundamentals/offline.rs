@@ -34,7 +34,7 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let rows = t.quarterly_income_stmt().await.unwrap();
 
     mock.assert();
@@ -68,7 +68,7 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let rows = t.balance_sheet().await.unwrap();
 
     mock.assert();
@@ -102,7 +102,7 @@ async fn offline_cashflow_annual_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let rows = t.cashflow().await.unwrap();
 
     mock.assert();
@@ -136,7 +136,7 @@ async fn offline_earnings_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let e = t.earnings().await.unwrap();
 
     mock.assert();
@@ -173,7 +173,7 @@ async fn offline_calendar_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym).unwrap();
+    let t = Ticker::new(client, sym);
     let cal = t.calendar().await.unwrap();
 
     mock.assert();

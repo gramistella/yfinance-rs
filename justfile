@@ -133,13 +133,13 @@ test-full +args='':
 			status=$?; \
 			echo "[$(ts)] ❌ Phase 2/2 FAIL — Offline replay failed (exit $status)"; \
 			echo "Tip: re-run only the offline pass with:"; \
-			echo "  just offline {{args}}"; \
+			echo "  just test-offline {{args}}"; \
 			exit $status; \
 		fi; \
 	else \
 		status=$?; \
 		echo "[$(ts)] ❌ Phase 1/2 FAIL — Live/Record failed (exit $status)"; \
 		echo "Skipping offline. Tip: re-run only the live/record pass with:"; \
-		echo "  just record {{args}}"; \
+		echo "  just test-record {{args}}"; \
 		exit $status; \
 	fi
