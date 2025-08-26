@@ -1,10 +1,11 @@
 [package]
 name = "yfinance-rs"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2024"
 description = "Ergonomic Rust client for Yahoo Finance, supporting historical prices, real-time streaming, options, fundamentals, and more."
 license = "MIT"
 repository = "https://github.com/gramistella/yfinance-rs"
+homepage = "https://github.com/gramistella/yfinance-rs"
 documentation = "https://docs.rs/yfinance-rs"
 readme = "README.md"
 keywords = ["yahoo", "finance", "stocks", "trading", "yfinance"]
