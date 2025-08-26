@@ -27,9 +27,8 @@ pub(crate) const DEFAULT_CRUMB_URL: &str = "https://query1.finance.yahoo.com/v1/
 pub(crate) const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 
 /// Base URL for the Yahoo Finance v7 options API.
-pub(crate) const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
+pub(crate) const DEFAULT_BASE_OPTIONS_V7: &str =
+    "https://query1.finance.yahoo.com/v7/finance/options/";
 
 /// Base URL for the Yahoo Finance search API.
 pub(crate) const DEFAULT_BASE_STREAM: &str = "wss://streamer.finance.yahoo.com/?version=2";
-
-

@@ -118,7 +118,7 @@ impl YfClient {
     pub(crate) fn base_options_v7(&self) -> &Url {
         &self.base_options_v7
     }
-    
+
     pub(crate) fn base_stream(&self) -> &Url {
         &self.base_stream
     }

@@ -109,7 +109,7 @@ async fn fetch_options_raw(
 ) -> Result<(String, Url), YfError> {
     let http = client.http().clone();
     let base = client.base_options_v7();
-    
+
     let mut url = base.join(symbol)?;
     {
         let mut qp = url.query_pairs_mut();

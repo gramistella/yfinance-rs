@@ -27,12 +27,11 @@ async fn options_expirations_happy() {
             .body(body);
     });
 
-    let client = YfClient::builder().base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap()).build().unwrap();
-    let t = Ticker::new(
-        client,
-        "AAPL",
-    )
-    .unwrap();
+    let client = YfClient::builder()
+        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let t = Ticker::new(client, "AAPL").unwrap();
 
     let expiries = t.options().await.unwrap();
     mock.assert();
@@ -93,12 +92,11 @@ async fn option_chain_for_specific_date() {
             .body(body);
     });
 
-    let client = YfClient::builder().base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap()).build().unwrap();
-    let t = Ticker::new(
-        client,
-        "AAPL",
-    )
-    .unwrap();
+    let client = YfClient::builder()
+        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let t = Ticker::new(client, "AAPL").unwrap();
 
     let chain = t.option_chain(Some(date)).await.unwrap();
     mock.assert();
@@ -198,11 +196,7 @@ async fn options_retry_with_crumb_on_403() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(
-        client,
-        "MSFT",
-    )
-    .unwrap();
+    let t = Ticker::new(client, "MSFT").unwrap();
 
     let chain = t.option_chain(Some(date)).await.unwrap();
     assert!(chain.calls.is_empty() && chain.puts.is_empty());

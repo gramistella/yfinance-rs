@@ -15,7 +15,6 @@ use tokio_tungstenite::{
         protocol::Message as WsMessage,
     },
 };
-use url::Url;
 
 use crate::{
     YfClient, YfError,
@@ -192,8 +191,7 @@ impl StreamBuilder {
                 match self.method {
                     StreamMethod::Websocket => {
                         if let Err(e) =
-                            run_websocket_stream(&mut client, symbols, tx, &mut stop_rx)
-                                .await
+                            run_websocket_stream(&mut client, symbols, tx, &mut stop_rx).await
                             && std::env::var("YF_DEBUG").ok().as_deref() == Some("1")
                         {
                             eprintln!("YF_DEBUG(stream): websocket stream failed: {e}");

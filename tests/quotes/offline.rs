@@ -18,7 +18,10 @@ async fn offline_multi_quotes_uses_recorded_fixture() {
     let _mock = mock_quote_v7_multi(&server, "AAPL,MSFT");
 
     let base = Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap();
-    let client = yfinance_rs::YfClient::builder().base_quote_v7(base).build().unwrap();
+    let client = yfinance_rs::YfClient::builder()
+        .base_quote_v7(base)
+        .build()
+        .unwrap();
 
     let quotes = yfinance_rs::QuotesBuilder::new(client)
         .unwrap()

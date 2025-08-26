@@ -1,5 +1,3 @@
-use url::Url;
-
 use crate::{
     YfClient, YfError,
     core::{
@@ -17,8 +15,7 @@ pub(crate) async fn fetch_quote(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Quote, YfError> {
     let symbols = [symbol];
-    let mut results =
-        quotes::fetch_v7_quotes(client, &symbols, cache_mode, retry_override).await?;
+    let mut results = quotes::fetch_v7_quotes(client, &symbols, cache_mode, retry_override).await?;
 
     let result = results
         .pop()

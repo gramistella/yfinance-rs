@@ -1,5 +1,3 @@
-use url::Url;
-
 use crate::core::client::CacheMode;
 use crate::core::client::RetryConfig;
 use crate::core::{Quote, YfClient, YfError, quotes as core_quotes};

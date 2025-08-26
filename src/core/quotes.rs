@@ -110,14 +110,8 @@ pub(crate) async fn fetch_v7_quotes(
             })?;
 
             // Second attempt, with a crumb.
-            let (body, url, maybe_status) = attempt_fetch(
-                client,
-                symbols,
-                Some(&crumb),
-                cache_mode,
-                retry_override,
-            )
-            .await?;
+            let (body, url, maybe_status) =
+                attempt_fetch(client, symbols, Some(&crumb), cache_mode, retry_override).await?;
 
             if let Some(status_code) = maybe_status {
                 return Err(YfError::Status {

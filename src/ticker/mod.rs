@@ -4,8 +4,6 @@ mod quote;
 
 pub use model::{FastInfo, OptionChain, OptionContract, Quote};
 
-use url::Url;
-
 use crate::{
     YfClient, YfError,
     analysis::AnalysisBuilder,
