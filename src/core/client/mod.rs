@@ -5,6 +5,7 @@ mod auth;
 mod constants;
 mod retry;
 
+use crate::core::client::constants::DEFAULT_BASE_INSIDER_SEARCH;
 use crate::core::YfError;
 pub use retry::{Backoff, CacheMode, RetryConfig};
 
@@ -66,6 +67,7 @@ pub struct YfClient {
     base_options_v7: Url,
     base_stream: Url,
     base_news: Url,
+    base_insider_search: Url,
     cookie_url: Url,
     crumb_url: Url,
     user_agent: String,
@@ -127,6 +129,10 @@ impl YfClient {
 
     pub(crate) fn base_news(&self) -> &Url {
         &self.base_news
+    }
+
+    pub(crate) fn base_insider_search(&self) -> &Url {
+        &self.base_insider_search
     }
 
     #[cfg(feature = "test-mode")]
@@ -250,6 +256,7 @@ pub struct YfClientBuilder {
     base_options_v7: Option<Url>,
     base_stream: Option<Url>,
     base_news: Option<Url>,
+    base_insider_search: Option<Url>,
     cookie_url: Option<Url>,
     crumb_url: Option<Url>,
 
@@ -324,6 +331,12 @@ impl YfClientBuilder {
     /// Default: `https://finance.yahoo.com`.
     pub fn base_news(mut self, url: Url) -> Self {
         self.base_news = Some(url);
+        self
+    }
+
+    /// Sets a custom base URL for the Business Insider search (for ISIN lookup).
+    pub fn base_insider_search(mut self, url: Url) -> Self {
+        self.base_insider_search = Some(url);
         self
     }
 
@@ -418,6 +431,9 @@ impl YfClientBuilder {
         let base_news = self
             .base_news
             .unwrap_or(Url::parse(constants::DEFAULT_BASE_NEWS)?);
+        let base_insider_search = self
+            .base_insider_search
+            .unwrap_or(Url::parse(DEFAULT_BASE_INSIDER_SEARCH)?);
         let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
@@ -467,6 +483,7 @@ impl YfClientBuilder {
             base_options_v7,
             base_stream,
             base_news,
+            base_insider_search,
             cookie_url,
             crumb_url,
             user_agent,

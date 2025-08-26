@@ -28,6 +28,8 @@ pub(crate) struct V7QuoteResponse {
 pub(crate) struct V7QuoteNode {
     #[serde(default)]
     pub(crate) symbol: Option<String>,
+    #[serde(rename = "shortName")]
+    pub(crate) short_name: Option<String>,
     #[serde(rename = "regularMarketPrice")]
     pub(crate) regular_market_price: Option<f64>,
     #[serde(rename = "regularMarketPreviousClose")]
@@ -143,6 +145,7 @@ impl From<V7QuoteNode> for Quote {
     fn from(n: V7QuoteNode) -> Self {
         Quote {
             symbol: n.symbol.unwrap_or_default(),
+            shortname: n.short_name,
             regular_market_price: n.regular_market_price,
             regular_market_previous_close: n.regular_market_previous_close,
             currency: n.currency,

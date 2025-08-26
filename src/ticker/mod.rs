@@ -225,6 +225,58 @@ impl Ticker {
         Ok(resp.meta)
     }
 
+    /// Fetches the company profile to retrieve the ISIN identifier.
+    /// Fetches the ISIN for the ticker by searching on markets.businessinsider.com.
+    ///
+    /// This mimics the approach used by the Python `yfinance` library.
+    /// It returns `None` for assets that don't have an ISIN, such as indices.
+    pub async fn isin(&self) -> Result<Option<String>, YfError> {
+        // Trivial rejection for indices, etc., which don't have an ISIN.
+        if self.symbol.contains('^') {
+            return Ok(None);
+        }
+
+        // Get quote to find the shortName for a better search query.
+        let quote = self.quote().await?;
+        let query = quote.shortname.as_deref().unwrap_or(&self.symbol);
+
+        let mut url = self.client.base_insider_search().clone();
+        url.query_pairs_mut()
+            .append_pair("max_results", "1")
+            .append_pair("query", query);
+
+        let req = self.client.http().get(url.clone());
+        let resp = self
+            .client
+            .send_with_retry(req, self.retry_override.as_ref())
+            .await?;
+
+        if !resp.status().is_success() {
+            // This is a non-critical, third-party endpoint. Return None instead of an error.
+            return Ok(None);
+        }
+
+        let body = crate::core::net::get_text(resp, "isin_search", &self.symbol, "json").await?;
+
+        // The response is a JSON array string, e.g.,
+        // `[{"Label":"Apple Inc.","Value":"AAPL|US0378331005|Apple Inc.|NASDAQ|Stock|13"}]`
+        // We parse the string to find the ISIN.
+        let search_str = format!("\"{}|", self.symbol);
+        if let Some(start) = body.find(&search_str) {
+            let remainder = &body[start + search_str.len()..];
+            if let Some(isin_part) = remainder.split('|').next() {
+                if let Some(isin) = isin_part.split('"').next() {
+                    if !isin.is_empty() {
+                        return Ok(Some(isin.to_string()));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+
     /* ---------------- Options ---------------- */
 
     /// Fetches the available expiration dates for the ticker's options as Unix timestamps.

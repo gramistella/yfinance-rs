@@ -14,6 +14,9 @@ mod options;
 mod options_expiry_from_url_fallback;
 #[path = "ticker/quote.rs"]
 mod quote;
-
 #[path = "ticker/fast_info.rs"]
 mod fast_info;
+#[path = "ticker/isin_live.rs"]
+mod isin_live;
+#[path = "ticker/isin_offline.rs"]
+mod isin_offline;

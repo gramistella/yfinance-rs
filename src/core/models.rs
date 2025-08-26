@@ -6,6 +6,8 @@ use serde::Serialize;
 pub struct Quote {
     /// The ticker symbol of the security.
     pub symbol: String,
+    /// The short name of the security.
+    pub shortname: Option<String>,
     /// The last traded price in the regular market session.
     pub regular_market_price: Option<f64>,
     /// The closing price of the previous regular market session.

@@ -30,6 +30,8 @@ pub struct Company {
     pub address: Option<Address>,
     /// A summary of the company's business operations.
     pub summary: Option<String>,
+    /// The International Securities Identification Number.
+    pub isin: Option<String>,
 }
 
 /// Represents the profile of a fund (e.g., an ETF).
@@ -41,6 +43,8 @@ pub struct Fund {
     pub family: Option<String>,
     /// The legal type of the fund (e.g., "Exchange Traded Fund").
     pub kind: String,
+    /// The International Securities Identification Number.
+    pub isin: Option<String>,
 }
 
 /// An enum representing either a `Company` or a `Fund` profile.
@@ -50,4 +54,14 @@ pub enum Profile {
     Company(Company),
     /// The profile for a fund.
     Fund(Fund),
+}
+
+impl Profile {
+    /// Returns the ISIN for the company or fund, if available.
+    pub fn isin(&self) -> Option<&str> {
+        match self {
+            Profile::Company(c) => c.isin.as_deref(),
+            Profile::Fund(f) => f.isin.as_deref(),
+        }
+    }
 }

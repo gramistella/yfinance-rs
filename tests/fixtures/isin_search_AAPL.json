@@ -1,0 +1,1 @@
+mmSuggestDeliver(0, new Array("Name", "Category", "Keywords", "Bias", "Extension", "IDs"), new Array(new Array("Apple Inc.", "Stocks", "AAPL|US0378331005|AAPL||AAPL", "75", "", "aapl|AAPL|1|869")), 1, 0);

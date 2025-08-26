@@ -12,8 +12,6 @@ pub(crate) mod extract;
 pub(crate) mod utils;
 use extract::extract_bootstrap_json;
 
-// src/profile/scrape/mod.rs
-
 pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
 
@@ -118,6 +116,7 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
                 website: sp.website,
                 summary: sp.long_business_summary,
                 address: Some(address),
+                isin: sp.isin,
             }))
         }
         "ETF" => {
@@ -128,6 +127,7 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
                 name,
                 family: fp.family,
                 kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
+                isin: fp.isin,
             }))
         }
         other => Err(YfError::Data(format!(
@@ -209,6 +209,7 @@ struct SummaryProfileNode {
     long_business_summary: Option<String>,
 
     website: Option<String>,
+    isin: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -216,4 +217,5 @@ struct FundProfileNode {
     #[serde(rename = "legalType")]
     legal_type: Option<String>,
     family: Option<String>,
+    isin: Option<String>,
 }

@@ -21,6 +21,7 @@ pub(crate) async fn fetch_quote(
 
     Ok(Quote {
         symbol: result.symbol.unwrap_or_else(|| symbol.to_string()),
+        shortname: result.short_name,
         regular_market_price: result.regular_market_price,
         regular_market_previous_close: result.regular_market_previous_close,
         currency: result.currency,

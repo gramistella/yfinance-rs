@@ -54,6 +54,7 @@ pub(crate) async fn load_from_quote_summary_api(
                 website: sp.website,
                 summary: sp.long_business_summary,
                 address: Some(address),
+                isin: sp.isin,
             }))
         }
         "ETF" => {
@@ -64,6 +65,7 @@ pub(crate) async fn load_from_quote_summary_api(
                 name,
                 family: fp.family,
                 kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
+                isin: fp.isin,
             }))
         }
         other => Err(YfError::Data(format!("unsupported quoteType: {other}"))),
@@ -95,6 +97,7 @@ struct V10AssetProfile {
     website: Option<String>,
     #[serde(rename = "longBusinessSummary")]
     long_business_summary: Option<String>,
+    isin: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -102,6 +105,7 @@ struct V10FundProfile {
     #[serde(rename = "legalType")]
     legal_type: Option<String>,
     family: Option<String>,
+    isin: Option<String>,
 }
 
 #[derive(Deserialize)]
