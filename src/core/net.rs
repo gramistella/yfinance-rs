@@ -1,3 +1,4 @@
+#[cfg(feature = "test-mode")]
 use std::env;
 
 /// Read the response body as text.
