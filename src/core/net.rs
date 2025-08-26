@@ -16,7 +16,7 @@ pub(crate) async fn get_text(
         if env::var("YF_RECORD").ok().as_deref() == Some("1")
             && let Err(e) = crate::core::fixtures::record_fixture(_endpoint, _symbol, _ext, &text)
         {
-            eprintln!("YF_RECORD: failed to write fixture for {symbol}: {e}");
+            eprintln!("YF_RECORD: failed to write fixture for {_symbol}: {e}");
         }
     }
 
