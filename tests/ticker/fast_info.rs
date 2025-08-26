@@ -29,13 +29,11 @@ async fn fast_info_uses_previous_close_when_price_missing() {
             .body(body);
     });
 
-    let client = YfClient::builder().build().unwrap();
-    let t = Ticker::with_quote_base(
-        client,
-        "AAPL",
-        Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
-    )
-    .unwrap();
+    let client = YfClient::builder()
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let t = Ticker::new(client, "AAPL").unwrap();
 
     let fi = t.fast_info().await.unwrap();
     mock.assert();

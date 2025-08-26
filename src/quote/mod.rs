@@ -19,7 +19,6 @@ where
 /// A builder for fetching quotes for one or more symbols.
 pub struct QuotesBuilder {
     client: YfClient,
-    quote_base: Url,
     symbols: Vec<String>,
     cache_mode: CacheMode,
     retry_override: Option<RetryConfig>,
@@ -30,7 +29,6 @@ impl QuotesBuilder {
     pub fn new(client: YfClient) -> Result<Self, YfError> {
         Ok(Self {
             client,
-            quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
             symbols: Vec::new(),
             cache_mode: CacheMode::Use,
             retry_override: None,
@@ -46,12 +44,6 @@ impl QuotesBuilder {
     /// Overrides the default retry policy for this specific API call.
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
-        self
-    }
-
-    /// (For testing) Overrides the base URL for the quote API.
-    pub fn quote_base(mut self, base: Url) -> Self {
-        self.quote_base = base;
         self
     }
 
@@ -82,7 +74,6 @@ impl QuotesBuilder {
         let symbol_slices: Vec<&str> = self.symbols.iter().map(AsRef::as_ref).collect();
         let results = core_quotes::fetch_v7_quotes(
             &self.client,
-            &self.quote_base,
             &symbol_slices,
             self.cache_mode,
             self.retry_override.as_ref(),
@@ -92,8 +83,6 @@ impl QuotesBuilder {
         Ok(results.into_iter().map(map_v7_to_public).collect())
     }
 }
-
-const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
 
 fn map_v7_to_public(n: core_quotes::V7QuoteNode) -> Quote {
     Quote {

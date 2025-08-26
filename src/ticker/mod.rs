@@ -14,9 +14,6 @@ use crate::{
     history::HistoryBuilder,
 };
 
-const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
-const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
-
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
 ///
 /// This struct is designed to be the primary entry point for users who want to fetch
@@ -51,8 +48,6 @@ pub struct Ticker {
     #[doc(hidden)]
     pub(crate) symbol: String,
     #[doc(hidden)]
-    pub(crate) quote_base: Url,
-    options_base: Url,
     cache_mode: CacheMode,
     retry_override: Option<RetryConfig>,
 }
@@ -65,8 +60,6 @@ impl Ticker {
         Ok(Self {
             client,
             symbol: symbol.into(),
-            quote_base: url::Url::parse(DEFAULT_BASE_QUOTE_V7)?,
-            options_base: url::Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
             cache_mode: CacheMode::Use,
             retry_override: None,
         })
@@ -86,55 +79,6 @@ impl Ticker {
         self
     }
 
-    /// (For testing) Creates a new `Ticker` with a custom base URL for quote requests.
-    pub fn with_quote_base(
-        client: YfClient,
-        symbol: impl Into<String>,
-        base: Url,
-    ) -> Result<Self, YfError> {
-        Ok(Self {
-            client,
-            symbol: symbol.into(),
-            quote_base: base,
-            options_base: Url::parse(DEFAULT_BASE_OPTIONS_V7)?,
-            cache_mode: CacheMode::Use,
-            retry_override: None,
-        })
-    }
-
-    /// (For testing) Creates a new `Ticker` with a custom base URL for options requests.
-    pub fn with_options_base(
-        client: YfClient,
-        symbol: impl Into<String>,
-        base: Url,
-    ) -> Result<Self, YfError> {
-        Ok(Self {
-            client,
-            symbol: symbol.into(),
-            quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
-            options_base: base,
-            cache_mode: CacheMode::Use,
-            retry_override: None,
-        })
-    }
-
-    /// (For testing) Creates a new `Ticker` with custom base URLs for both quote and options requests.
-    pub fn with_bases(
-        client: YfClient,
-        symbol: impl Into<String>,
-        quote_base: Url,
-        options_base: Url,
-    ) -> Result<Self, YfError> {
-        Ok(Self {
-            client,
-            symbol: symbol.into(),
-            quote_base,
-            options_base,
-            cache_mode: CacheMode::Use,
-            retry_override: None,
-        })
-    }
-
     /// Returns a `HistoryBuilder` to construct a detailed query for historical price data.
     pub fn history_builder(&self) -> HistoryBuilder<'_> {
         HistoryBuilder::new(&self.client, &self.symbol)
@@ -146,7 +90,6 @@ impl Ticker {
     pub async fn quote(&self) -> Result<Quote, YfError> {
         quote::fetch_quote(
             &self.client,
-            &self.quote_base,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),
@@ -276,7 +219,6 @@ impl Ticker {
     pub async fn options(&self) -> Result<Vec<i64>, YfError> {
         options::expiration_dates(
             &self.client,
-            &self.options_base,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),
@@ -290,7 +232,6 @@ impl Ticker {
     pub async fn option_chain(&self, date: Option<i64>) -> Result<OptionChain, YfError> {
         options::option_chain(
             &self.client,
-            &self.options_base,
             &self.symbol,
             date,
             self.cache_mode,

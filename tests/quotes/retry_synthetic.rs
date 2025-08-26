@@ -44,17 +44,18 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
         then.status(200).body("crumb-value");
     });
 
+    let base = Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap();
+    
     let client = yfinance_rs::YfClient::builder()
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
+        .base_quote_v7(base)
         .build()
         .unwrap();
 
-    let base = Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap();
 
     let quotes = yfinance_rs::QuotesBuilder::new(client)
         .unwrap()
-        .quote_base(base)
         .symbols(["AAPL", "MSFT"])
         .fetch()
         .await

@@ -12,14 +12,13 @@ use super::model::Quote;
 
 pub(crate) async fn fetch_quote(
     client: &YfClient,
-    base: &Url,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<Quote, YfError> {
     let symbols = [symbol];
     let mut results =
-        quotes::fetch_v7_quotes(client, base, &symbols, cache_mode, retry_override).await?;
+        quotes::fetch_v7_quotes(client, &symbols, cache_mode, retry_override).await?;
 
     let result = results
         .pop()

@@ -15,13 +15,12 @@ use super::model::{OptionChain, OptionContract};
 
 pub(crate) async fn expiration_dates(
     client: &YfClient,
-    base: &Url,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<i64>, YfError> {
     let (body, _used_url) =
-        fetch_options_raw(client, base, symbol, None, cache_mode, retry_override).await?;
+        fetch_options_raw(client, symbol, None, cache_mode, retry_override).await?;
     let env: OptEnvelope = serde_json::from_str(&body)
         .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
 
@@ -36,14 +35,13 @@ pub(crate) async fn expiration_dates(
 
 pub(crate) async fn option_chain(
     client: &YfClient,
-    base: &Url,
     symbol: &str,
     date: Option<i64>,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<OptionChain, YfError> {
     let (body, used_url) =
-        fetch_options_raw(client, base, symbol, date, cache_mode, retry_override).await?;
+        fetch_options_raw(client, symbol, date, cache_mode, retry_override).await?;
     let env: OptEnvelope = serde_json::from_str(&body)
         .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
 
@@ -104,14 +102,14 @@ pub(crate) async fn option_chain(
 
 async fn fetch_options_raw(
     client: &YfClient,
-    base: &Url,
     symbol: &str,
     date: Option<i64>,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<(String, Url), YfError> {
     let http = client.http().clone();
-
+    let base = client.base_options_v7();
+    
     let mut url = base.join(symbol)?;
     {
         let mut qp = url.query_pairs_mut();

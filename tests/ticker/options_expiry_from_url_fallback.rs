@@ -36,13 +36,12 @@ async fn option_chain_expiration_falls_back_to_url_date() {
             .body(body);
     });
 
-    let client = YfClient::builder().build().unwrap();
-    let t = Ticker::with_options_base(
-        client,
-        "AAPL",
-        Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
-    )
-    .unwrap();
+    let client = YfClient::builder()
+        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let t = Ticker::new(client, "AAPL").unwrap();
 
     let chain = t.option_chain(Some(date)).await.unwrap();
 

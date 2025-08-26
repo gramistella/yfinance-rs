@@ -32,13 +32,11 @@ async fn quote_v7_happy_path() {
             .body(body);
     });
 
-    let client = YfClient::builder().build().unwrap();
-    let ticker = Ticker::with_quote_base(
-        client,
-        "AAPL",
-        Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
-    )
-    .unwrap();
+    let client = YfClient::builder()
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let ticker = Ticker::new(client, "AAPL").unwrap();
 
     let q = ticker.quote().await.unwrap();
     mock.assert();
@@ -80,13 +78,11 @@ async fn fast_info_derives_last_price() {
             .body(body);
     });
 
-    let client = YfClient::builder().build().unwrap();
-    let ticker = Ticker::with_quote_base(
-        client,
-        "MSFT",
-        Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
-    )
-    .unwrap();
+    let client = YfClient::builder()
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let ticker = Ticker::new(client, "MSFT").unwrap();
 
     let fi = ticker.fast_info().await.unwrap();
     mock.assert();

@@ -7,11 +7,10 @@ async fn offline_quote_uses_recorded_fixture() {
     let sym = "AAPL";
     let mock = crate::common::mock_quote_v7(&server, sym);
 
-    let client = YfClient::builder().build().unwrap();
-    let t = Ticker::with_quote_base(
+    let client = YfClient::builder().base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),).build().unwrap();
+    let t = Ticker::new(
         client,
         sym,
-        Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap(),
     )
     .unwrap();
 
@@ -31,11 +30,11 @@ async fn offline_options_uses_recorded_fixtures() {
     // Expirations (no date)
     let mock_exp = crate::common::mock_options_v7(&server, sym);
 
-    let client = YfClient::builder().build().unwrap();
-    let t = Ticker::with_options_base(
+    let client = YfClient::builder()
+                        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),).build().unwrap();
+    let t = Ticker::new(
         client,
         sym,
-        Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap(),
     )
     .unwrap();
 

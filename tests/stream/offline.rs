@@ -15,14 +15,15 @@ async fn stream_websocket_fallback_to_polling_offline() {
             .body(crate::common::fixture("quote_v7", "MULTI", "json"));
     });
 
-    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let client = yfinance_rs::YfClient::builder()
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        // Provide an invalid websocket URL to force fallback
+        .base_stream(Url::parse("wss://invalid-url-for-testing.invalid/").unwrap())
+        .build().unwrap();
 
     let builder = yfinance_rs::StreamBuilder::new(&client)
         .unwrap()
         .symbols(["AAPL"])
-        .quote_base(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
-        // Provide an invalid websocket URL to force fallback
-        .stream_url(Url::parse("wss://invalid-url-for-testing.invalid/").unwrap())
         .method(StreamMethod::WebsocketWithFallback)
         .interval(Duration::from_millis(40));
 
@@ -58,12 +59,11 @@ async fn stream_polling_explicitly_offline() {
             .body(crate::common::fixture("quote_v7", "MULTI", "json"));
     });
 
-    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let client = yfinance_rs::YfClient::builder().base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap()).build().unwrap();
 
     let builder = yfinance_rs::StreamBuilder::new(&client)
         .unwrap()
         .symbols(["MSFT"])
-        .quote_base(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
         .method(StreamMethod::Polling)
         .interval(Duration::from_millis(50));
 

@@ -47,7 +47,6 @@ pub(crate) struct V7QuoteNode {
 /// It handles caching, retries, and authentication (crumb).
 pub(crate) async fn fetch_v7_quotes(
     client: &YfClient,
-    base: &Url,
     symbols: &[&str],
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
@@ -55,13 +54,12 @@ pub(crate) async fn fetch_v7_quotes(
     // Inner function to attempt the fetch, allowing for an auth retry.
     async fn attempt_fetch(
         client: &YfClient,
-        base: &Url,
         symbols: &[&str],
         crumb: Option<&str>,
         cache_mode: CacheMode,
         retry_override: Option<&RetryConfig>,
     ) -> Result<(String, Url, Option<u16>), YfError> {
-        let mut url = base.clone();
+        let mut url = client.base_quote_v7().clone();
         {
             let mut qp = url.query_pairs_mut();
             qp.append_pair("symbols", &symbols.join(","));
@@ -101,7 +99,7 @@ pub(crate) async fn fetch_v7_quotes(
 
     // First attempt, without a crumb.
     let (body, url, maybe_status) =
-        attempt_fetch(client, base, symbols, None, cache_mode, retry_override).await?;
+        attempt_fetch(client, symbols, None, cache_mode, retry_override).await?;
 
     let body_to_parse = if let Some(status_code) = maybe_status {
         // If unauthorized, get a crumb and retry.
@@ -114,7 +112,6 @@ pub(crate) async fn fetch_v7_quotes(
             // Second attempt, with a crumb.
             let (body, url, maybe_status) = attempt_fetch(
                 client,
-                base,
                 symbols,
                 Some(&crumb),
                 cache_mode,

@@ -62,6 +62,9 @@ pub struct YfClient {
     base_chart: Url,
     base_quote: Url,
     base_quote_api: Url,
+    base_quote_v7: Url,
+    base_options_v7: Url,
+    base_stream: Url,
     cookie_url: Url,
     crumb_url: Url,
     user_agent: String,
@@ -107,6 +110,19 @@ impl YfClient {
     pub(crate) fn base_quote_api(&self) -> &Url {
         &self.base_quote_api
     }
+
+    pub(crate) fn base_quote_v7(&self) -> &Url {
+        &self.base_quote_v7
+    }
+
+    pub(crate) fn base_options_v7(&self) -> &Url {
+        &self.base_options_v7
+    }
+    
+    pub(crate) fn base_stream(&self) -> &Url {
+        &self.base_stream
+    }
+
     #[cfg(feature = "test-mode")]
     pub(crate) fn api_preference(&self) -> ApiPreference {
         self.api_preference
@@ -224,6 +240,9 @@ pub struct YfClientBuilder {
     base_chart: Option<Url>,
     base_quote: Option<Url>,
     base_quote_api: Option<Url>,
+    base_quote_v7: Option<Url>,
+    base_options_v7: Option<Url>,
+    base_stream: Option<Url>,
     cookie_url: Option<Url>,
     crumb_url: Option<Url>,
 
@@ -267,6 +286,30 @@ impl YfClientBuilder {
     /// Default: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/`.
     pub fn base_quote_api(mut self, url: Url) -> Self {
         self.base_quote_api = Some(url);
+        self
+    }
+
+    /// Sets a custom base URL for the v7 quote endpoint.
+    ///
+    /// This is primarily used for testing or to target a different Yahoo Finance region.
+    /// If not set, a default URL (`https://query1.finance.yahoo.com/v7/finance/quote`) is used.
+    pub fn base_quote_v7(mut self, url: Url) -> Self {
+        self.base_quote_v7 = Some(url);
+        self
+    }
+
+    /// Sets a custom base URL for the v7 options endpoint.
+    ///
+    /// This is primarily used for testing or to target a different Yahoo Finance region.
+    /// If not set, a default URL (`https://query1.finance.yahoo.com/v7/finance/options/`) is used.
+    pub fn base_options_v7(mut self, url: Url) -> Self {
+        self.base_options_v7 = Some(url);
+        self
+    }
+
+    /// Sets a custom base URL for the streaming API.
+    pub fn base_stream(mut self, url: Url) -> Self {
+        self.base_stream = Some(url);
         self
     }
 
@@ -349,6 +392,15 @@ impl YfClientBuilder {
         let base_quote_api = self
             .base_quote_api
             .unwrap_or(Url::parse(DEFAULT_BASE_QUOTE_API)?);
+        let base_quote_v7 = self
+            .base_quote_v7
+            .unwrap_or(Url::parse(constants::DEFAULT_BASE_QUOTE_V7)?);
+        let base_options_v7 = self
+            .base_options_v7
+            .unwrap_or(Url::parse(constants::DEFAULT_BASE_OPTIONS_V7)?);
+        let base_stream = self
+            .base_stream
+            .unwrap_or(Url::parse(constants::DEFAULT_BASE_STREAM)?);
         let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
@@ -394,6 +446,9 @@ impl YfClientBuilder {
             base_chart,
             base_quote,
             base_quote_api,
+            base_quote_v7,
+            base_options_v7,
+            base_stream,
             cookie_url,
             crumb_url,
             user_agent,

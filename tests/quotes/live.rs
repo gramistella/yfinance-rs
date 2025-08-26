@@ -6,12 +6,12 @@ use url::Url;
 #[tokio::test]
 #[ignore]
 async fn record_multi_quotes_live() {
-    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let url = Url::parse("https://query1.finance.yahoo.com/v7/finance/quote").unwrap();
+    let client = yfinance_rs::YfClient::builder().base_quote_v7(url).build().unwrap();
 
     // Use the real base URL; this will record to quote_v7_MULTI.json
     let _ = yfinance_rs::QuotesBuilder::new(client)
         .unwrap()
-        .quote_base(Url::parse("https://query1.finance.yahoo.com/v7/finance/quote").unwrap())
         .symbols(["AAPL", "MSFT"])
         .fetch()
         .await

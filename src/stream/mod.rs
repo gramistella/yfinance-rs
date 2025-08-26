@@ -98,8 +98,6 @@ pub enum StreamMethod {
 pub struct StreamBuilder {
     client: YfClient,
     symbols: Vec<String>,
-    quote_base: Url,
-    stream_url: Url,
     cfg: StreamConfig,
     method: StreamMethod,
     cache_mode: CacheMode,
@@ -112,8 +110,6 @@ impl StreamBuilder {
         Ok(Self {
             client: client.clone(),
             symbols: Vec::new(),
-            quote_base: Url::parse(DEFAULT_BASE_QUOTE_V7)?,
-            stream_url: Url::parse(DEFAULT_STREAM_URL)?,
             cfg: StreamConfig::default(),
             method: StreamMethod::default(),
             cache_mode: CacheMode::Use,
@@ -130,18 +126,6 @@ impl StreamBuilder {
     /// Overrides the default retry policy for this specific API call (only affects polling mode).
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
-        self
-    }
-
-    /// (For testing) Sets the base URL for polling quote requests.
-    pub fn quote_base(mut self, base: Url) -> Self {
-        self.quote_base = base;
-        self
-    }
-
-    /// (For testing) Sets the URL for the WebSocket stream.
-    pub fn stream_url(mut self, url: Url) -> Self {
-        self.stream_url = url;
         self
     }
 
@@ -197,8 +181,7 @@ impl StreamBuilder {
             let mut client = self.client.clone();
             let symbols = self.symbols.clone();
             let cfg = self.cfg.clone();
-            let quote_base = self.quote_base.clone();
-            let stream_url = self.stream_url.clone();
+
             let mut stop_rx = stop_rx;
 
             // NEW:
@@ -209,7 +192,7 @@ impl StreamBuilder {
                 match self.method {
                     StreamMethod::Websocket => {
                         if let Err(e) =
-                            run_websocket_stream(&mut client, symbols, stream_url, tx, &mut stop_rx)
+                            run_websocket_stream(&mut client, symbols, tx, &mut stop_rx)
                                 .await
                             && std::env::var("YF_DEBUG").ok().as_deref() == Some("1")
                         {
@@ -220,7 +203,6 @@ impl StreamBuilder {
                         if let Err(e) = run_websocket_stream(
                             &mut client,
                             symbols.clone(),
-                            stream_url,
                             tx.clone(),
                             &mut stop_rx,
                         )
@@ -234,7 +216,6 @@ impl StreamBuilder {
                             run_polling_stream(
                                 client,
                                 symbols,
-                                quote_base,
                                 cfg,
                                 tx,
                                 &mut stop_rx,
@@ -248,7 +229,6 @@ impl StreamBuilder {
                         run_polling_stream(
                             client,
                             symbols,
-                            quote_base,
                             cfg,
                             tx,
                             &mut stop_rx,
@@ -271,9 +251,6 @@ impl StreamBuilder {
     }
 }
 
-const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
-const DEFAULT_STREAM_URL: &str = "wss://streamer.finance.yahoo.com/?version=2";
-
 #[derive(Serialize)]
 struct WsSubscribe<'a> {
     subscribe: &'a [String],
@@ -282,16 +259,16 @@ struct WsSubscribe<'a> {
 async fn run_websocket_stream(
     client: &mut YfClient,
     symbols: Vec<String>,
-    stream_url: Url,
     tx: mpsc::Sender<QuoteUpdate>,
     stop_rx: &mut oneshot::Receiver<()>,
 ) -> Result<(), YfError> {
-    let host = stream_url
+    let base = client.base_stream();
+    let host = base
         .host_str()
         .ok_or_else(|| YfError::Data("URL has no host".into()))?;
 
     let request = Request::builder()
-        .uri(stream_url.as_str())
+        .uri(base.as_str())
         .header("Host", host)
         .header("Origin", "https://finance.yahoo.com")
         .header("User-Agent", client.user_agent())
@@ -427,7 +404,6 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
 async fn run_polling_stream(
     mut client: crate::core::YfClient,
     symbols: Vec<String>,
-    base: url::Url,
     cfg: StreamConfig,
     tx: tokio::sync::mpsc::Sender<QuoteUpdate>,
     stop_rx: &mut tokio::sync::oneshot::Receiver<()>,
@@ -438,6 +414,7 @@ async fn run_polling_stream(
     let mut last_price: std::collections::HashMap<String, Option<f64>> =
         std::collections::HashMap::new();
     let fixture_key = symbols.join(",");
+    let base = client.base_quote_v7().clone();
 
     loop {
         tokio::select! {

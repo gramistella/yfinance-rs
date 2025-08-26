@@ -22,3 +22,14 @@ pub(crate) const DEFAULT_COOKIE_URL: &str = "https://fc.yahoo.com/consent";
 
 /// URL to fetch a crumb (requires cookie from `DEFAULT_COOKIE_URL`).
 pub(crate) const DEFAULT_CRUMB_URL: &str = "https://query1.finance.yahoo.com/v1/test/getcrumb";
+
+/// Base URL for the Yahoo Finance v7 quote API.
+pub(crate) const DEFAULT_BASE_QUOTE_V7: &str = "https://query1.finance.yahoo.com/v7/finance/quote";
+
+/// Base URL for the Yahoo Finance v7 options API.
+pub(crate) const DEFAULT_BASE_OPTIONS_V7: &str = "https://query1.finance.yahoo.com/v7/finance/options/";
+
+/// Base URL for the Yahoo Finance search API.
+pub(crate) const DEFAULT_BASE_STREAM: &str = "wss://streamer.finance.yahoo.com/?version=2";
+
+
