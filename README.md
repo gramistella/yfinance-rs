@@ -45,7 +45,7 @@ use yfinance_rs::{Interval, Ticker, YfClient};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::new();
-    let ticker = Ticker::new(client, "AAPL".to_string())?;
+    let ticker = Ticker::new(client, "AAPL".to_string());
 
     // Get the latest quote
     let quote = ticker.quote().await?;
@@ -53,13 +53,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get historical data for the last 6 months
     let history = ticker.history(None, Some(Interval::D1), false).await?;
-    if let some(last_bar) = history.last() {
+    if let Some(last_bar) = history.last() {
         println!("Last closing price: ${:.2} on timestamp {}", last_bar.close, last_bar.ts);
     }
 
     // Get analyst recommendations
     let recs = ticker.recommendations().await?;
-    if let some(latest_rec) = recs.first() {
+    if let Some(latest_rec) = recs.first() {
         println!("Latest recommendation period: {}", latest_rec.period);
     }
 

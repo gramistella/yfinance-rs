@@ -240,49 +240,13 @@ impl Ticker {
         let quote = self.quote().await?;
         let query = quote.shortname.as_deref().unwrap_or(&self.symbol);
 
-        let mut url = self.client.base_insider_search().clone();
-        url.query_pairs_mut()
-            .append_pair("max_results", "1")
-            .append_pair("query", query);
-
-        let req = self.client.http().get(url.clone());
-        let resp = self
-            .client
-            .send_with_retry(req, self.retry_override.as_ref())
-            .await?;
-
-        if !resp.status().is_success() {
-            // This is a non-critical, third-party endpoint. Return None instead of an error.
-            return Ok(None);
-        }
-
-        let body = crate::core::net::get_text(resp, "isin_search", &self.symbol, "json").await?;
-
-        // A temporary struct for deserializing the search result from Business Insider.
-        #[derive(serde::Deserialize)]
-        struct InsiderSearchResult {
-            #[serde(rename = "Value")]
-            value: String,
-        }
-
-        let results: Vec<InsiderSearchResult> = match serde_json::from_str(&body) {
-            Ok(r) => r,
-            // If parsing fails, it's not the expected format. Return None.
-            Err(_) => return Ok(None),
-        };
-
-        if let Some(first_result) = results.first() {
-            let parts: Vec<&str> = first_result.value.split('|').collect();
-            // The value is like "SYMBOL|ISIN|Name|...". Check that the symbol matches.
-            if parts.len() > 1 && parts[0].eq_ignore_ascii_case(&self.symbol) {
-                let isin = parts[1];
-                if !isin.is_empty() {
-                    return Ok(Some(isin.to_string()));
-                }
-            }
-        }
-
-        Ok(None)
+        fetch_and_parse_isin(
+            &self.client,
+            &self.symbol,
+            query,
+            self.retry_override.as_ref(),
+        )
+        .await
     }
 
     /* ---------------- Options ---------------- */
@@ -439,4 +403,54 @@ impl Ticker {
     pub async fn calendar(&self) -> Result<crate::FundCalendar, YfError> {
         self.fundamentals_builder().calendar().await
     }
+}
+
+async fn fetch_and_parse_isin(
+    client: &YfClient,
+    symbol: &str,
+    query: &str,
+    retry_override: Option<&RetryConfig>,
+) -> Result<Option<String>, YfError> {
+    let mut url = client.base_insider_search().clone();
+    url.query_pairs_mut()
+        .append_pair("max_results", "1")
+        .append_pair("query", query);
+
+    let req = client.http().get(url.clone());
+    let resp = client
+        .send_with_retry(req, retry_override)
+        .await?;
+
+    if !resp.status().is_success() {
+        // This is a non-critical, third-party endpoint. Return None instead of an error.
+        return Ok(None);
+    }
+
+    let body = crate::core::net::get_text(resp, "isin_search", symbol, "json").await?;
+
+    // A temporary struct for deserializing the search result from Business Insider.
+    #[derive(serde::Deserialize)]
+    struct InsiderSearchResult {
+        #[serde(rename = "Value")]
+        value: String,
+    }
+
+    let results: Vec<InsiderSearchResult> = match serde_json::from_str(&body) {
+        Ok(r) => r,
+        // If parsing fails, it's not the expected format. Return None.
+        Err(_) => return Ok(None),
+    };
+
+    if let Some(first_result) = results.first() {
+        let parts: Vec<&str> = first_result.value.split('|').collect();
+        // The value is like "SYMBOL|ISIN|Name|...". Check that the symbol matches.
+        if parts.len() > 1 && parts[0].eq_ignore_ascii_case(symbol) {
+            let isin = parts[1];
+            if !isin.is_empty() {
+                return Ok(Some(isin.to_string()));
+            }
+        }
+    }
+
+    Ok(None)
 }
