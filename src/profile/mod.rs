@@ -17,6 +17,21 @@ use crate::{YfClient, YfError};
 mod model;
 pub use model::{Address, Company, Fund, Profile};
 
+/// Helper to contain the API->Scrape fallback logic.
+async fn load_with_fallback(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
+    client.ensure_credentials().await?;
+
+    match api::load_from_quote_summary_api(client, symbol).await {
+        Ok(p) => Ok(p),
+        Err(e) => {
+            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                eprintln!("YF_DEBUG: API call failed ({e}), falling back to scrape.");
+            }
+            scrape::load_from_scrape(client, symbol).await
+        }
+    }
+}
+
 impl Profile {
     /// Loads the profile for a given symbol.
     ///
@@ -28,38 +43,14 @@ impl Profile {
     pub async fn load(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
         #[cfg(not(feature = "test-mode"))]
         {
-            client.ensure_credentials().await?;
-
-            match api::load_from_quote_summary_api(client, symbol).await {
-                Ok(p) => return Ok(p),
-                Err(e) => {
-                    if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                        eprintln!("YF_DEBUG: API call failed ({e}), falling back to scrape.");
-                    }
-                }
-            }
-
-            scrape::load_from_scrape(client, symbol).await
+            load_with_fallback(client, symbol).await
         }
 
         #[cfg(feature = "test-mode")]
         {
             use crate::core::client::ApiPreference;
             match client.api_preference() {
-                ApiPreference::ApiThenScrape => {
-                    client.ensure_credentials().await?;
-                    match api::load_from_quote_summary_api(client, symbol).await {
-                        Ok(p) => return Ok(p),
-                        Err(e) => {
-                            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                                eprintln!(
-                                    "YF_DEBUG: API call failed ({e}), falling back to scrape."
-                                );
-                            }
-                        }
-                    }
-                    scrape::load_from_scrape(client, symbol).await
-                }
+                ApiPreference::ApiThenScrape => load_with_fallback(client, symbol).await,
                 ApiPreference::ApiOnly => {
                     client.ensure_credentials().await?;
                     api::load_from_quote_summary_api(client, symbol).await

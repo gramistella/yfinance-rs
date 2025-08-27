@@ -8,16 +8,20 @@
 //!
 //! ## Features
 //!
-//! * **Historical Data**: Fetch daily, weekly, or monthly OHLCV data for any ticker.
+//! * **Historical Data**: Fetch daily, weekly, or monthly OHLCV data.
+//! * **Multi-Symbol Downloads**: Concurrently download historical data for many symbols at once.
 //! * **Real-time Streaming**: Get live quote updates using WebSockets (with an HTTP polling fallback).
-//! * **Company Profiles**: Retrieve detailed information about companies and funds.
+//! * **Company Profiles**: Retrieve detailed information about companies, ETFs, and funds.
 //! * **Options Chains**: Fetch expiration dates and full option chains (calls and puts).
 //! * **Financials**: Access income statements, balance sheets, and cash flow statements (annual & quarterly).
 //! * **Analyst Ratings**: Get price targets, recommendations, and upgrade/downgrade history.
+//! * **Holder Information**: Get major, institutional, and mutual fund holder data.
+//! * **ESG Scores**: Fetch detailed Environmental, Social, and Governance ratings.
+//! * **News**: Retrieve the latest articles and press releases for a ticker.
+//! * **Search**: Find tickers by name or keyword.
 //! * **Async API**: Built on `tokio` and `reqwest` for non-blocking I/O.
 //! * **High-Level `Ticker` Interface**: A convenient, yfinance-like struct for accessing all data for a single symbol.
 //! * **Builder Pattern**: Fluent builders for constructing complex queries.
-//! * **In-memory Caching**: Optional caching to reduce redundant network requests.
 //! * **Configurable Retries**: Automatic retries with exponential backoff for transient network errors.
 //!
 //! ## Quick Start
@@ -33,7 +37,7 @@
 //! Then, create a `YfClient` and use a `Ticker` to fetch data.
 //!
 //! ```no_run
-//! use yfinance_rs::{Interval, Ticker, YfClient};
+//! use yfinance_rs::{Interval, Range, Ticker, YfClient};
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,7 +49,7 @@
 //!     println!("Latest price for AAPL: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
 //!
 //!     // Get historical data for the last 6 months
-//!     let history = ticker.history(None, Some(Interval::D1), false).await?;
+//!     let history = ticker.history(Some(Range::M6), Some(Interval::D1), false).await?;
 //!     if let Some(last_bar) = history.last() {
 //!         println!("Last closing price: ${:.2} on timestamp {}", last_bar.close, last_bar.ts);
 //!     }

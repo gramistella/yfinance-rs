@@ -246,7 +246,6 @@ impl Ticker {
         Ok(resp.meta)
     }
 
-    /// Fetches the company profile to retrieve the ISIN identifier.
     /// Fetches the ISIN for the ticker by searching on markets.businessinsider.com.
     ///
     /// This mimics the approach used by the Python `yfinance` library.
