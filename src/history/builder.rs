@@ -4,7 +4,7 @@ mod assemble;
 mod fetch;
 
 use crate::core::client::{CacheMode, RetryConfig};
-use crate::core::models::{Action, Candle, HistoryMeta, HistoryResponse};
+use crate::core::models::{Candle, HistoryMeta, HistoryResponse};
 use crate::core::{Interval, Range, YfClient, YfError};
 use crate::history::wire::MetaNode;
 
@@ -168,7 +168,9 @@ impl HistoryBuilder {
 
         // ensure actions sorted (extract_actions already sorts, keep consistent)
         actions_out.sort_by_key(|a| match *a {
-            Action::Dividend { ts, .. } | Action::Split { ts, .. } => ts,
+            crate::Action::Dividend { ts, .. }
+            | crate::Action::Split { ts, .. }
+            | crate::Action::CapitalGain { ts, .. } => ts,
         });
 
         // 5) Map metadata

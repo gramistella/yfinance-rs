@@ -4,7 +4,9 @@ mod model;
 mod fetch;
 mod wire;
 
-pub use model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
+pub use model::{
+    EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow,
+};
 
 use crate::{
     YfClient, YfError,
@@ -78,6 +80,19 @@ impl AnalysisBuilder {
     /// Fetches the analyst price target summary.
     pub async fn analyst_price_target(self) -> Result<PriceTarget, YfError> {
         api::analyst_price_target(
+            &self.client,
+            &self.symbol,
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await
+    }
+
+    /// Fetches earnings trend data.
+    ///
+    /// This includes earnings estimates, revenue estimates, EPS trends, and EPS revisions.
+    pub async fn earnings_trend(self) -> Result<Vec<EarningsTrendRow>, YfError> {
+        api::earnings_trend(
             &self.client,
             &self.symbol,
             self.cache_mode,

@@ -52,3 +52,27 @@ async fn live_ticker_options_for_record() {
         }
     }
 }
+
+#[tokio::test]
+#[ignore]
+async fn live_ticker_shares_for_record() {
+    if !crate::common::is_recording() {
+        return;
+    }
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let t = yfinance_rs::Ticker::new(client.clone(), "MSFT");
+    let _ = t.shares().await;
+    let _ = t.quarterly_shares().await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn live_ticker_capital_gains_for_record() {
+    if !crate::common::is_recording() {
+        return;
+    }
+
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let t = yfinance_rs::Ticker::new(client, "VFINX");
+    let _ = t.capital_gains(None).await.unwrap();
+}

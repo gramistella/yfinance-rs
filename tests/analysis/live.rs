@@ -23,6 +23,12 @@ async fn live_analysis_smoke_and_or_record() {
         let _ = t.upgrades_downgrades().await.unwrap();
     }
 
+    // Earnings Trend
+    {
+        let t = yfinance_rs::Ticker::new(client.clone(), "AAPL");
+        let _ = t.earnings_trend().await.unwrap();
+    }
+
     // If not recording, at least assert the calls returned something sane.
     if !crate::common::is_recording() {
         let t = yfinance_rs::Ticker::new(client, "AAPL");

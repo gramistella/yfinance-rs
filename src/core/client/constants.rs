@@ -39,3 +39,7 @@ pub(crate) const DEFAULT_BASE_INSIDER_SEARCH: &str =
 
 /// Base URL for Yahoo Finance site (used for news).
 pub(crate) const DEFAULT_BASE_NEWS: &str = "https://finance.yahoo.com";
+
+/// Base URL for the Yahoo Finance timeseries API.
+pub(crate) const DEFAULT_BASE_TIMESERIES: &str =
+    "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/";

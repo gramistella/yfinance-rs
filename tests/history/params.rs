@@ -12,7 +12,7 @@ async fn history_has_expected_query_params() {
             .path("/v8/finance/chart/AAPL")
             .query_param("range", "6mo")
             .query_param("interval", "1d")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));

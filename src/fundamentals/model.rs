@@ -33,6 +33,8 @@ pub struct BalanceSheetRow {
     pub cash: Option<Num>,
     /// The total long-term debt.
     pub long_term_debt: Option<Num>,
+    /// The number of shares outstanding.
+    pub shares_outstanding: Option<u64>,
 }
 
 /// A row from a cash flow statement (annual or quarterly).
@@ -105,4 +107,13 @@ pub struct Calendar {
     pub ex_dividend_date: Option<i64>,
     /// The dividend payment date as a Unix timestamp.
     pub dividend_date: Option<i64>,
+}
+
+/// Represents a single data point in a time series of shares outstanding.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ShareCount {
+    /// The timestamp for the data point.
+    pub date: i64,
+    /// The number of shares outstanding.
+    pub shares: u64,
 }

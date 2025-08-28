@@ -18,6 +18,15 @@ pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64
         }
     }
 
+    if let Some(gains) = ev.capital_gains.as_ref() {
+        for (k, g) in gains {
+            let ts = k.parse::<i64>().unwrap_or(g.date.unwrap_or(0));
+            if let Some(gain) = g.amount {
+                out.push(Action::CapitalGain { ts, gain });
+            }
+        }
+    }
+
     if let Some(splits) = ev.splits.as_ref() {
         for (k, s) in splits {
             let ts = k.parse::<i64>().unwrap_or(s.date.unwrap_or(0));
@@ -48,7 +57,9 @@ pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64
     }
 
     out.sort_by_key(|a| match *a {
-        Action::Dividend { ts, .. } | Action::Split { ts, .. } => ts,
+        Action::Dividend { ts, .. }
+        | Action::Split { ts, .. }
+        | Action::CapitalGain { ts, .. } => ts,
     });
     split_events.sort_by_key(|(ts, _)| *ts);
 

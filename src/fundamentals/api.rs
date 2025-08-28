@@ -1,6 +1,12 @@
-use crate::core::{
-    YfClient, YfError,
-    client::{CacheMode, RetryConfig},
+use chrono::{Duration, Utc};
+
+use crate::{
+    ShareCount,
+    core::{
+        YfClient, YfError,
+        client::{CacheMode, RetryConfig},
+    },
+    fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
 
 use super::fetch::fetch_modules;
@@ -77,6 +83,7 @@ pub(super) async fn balance_sheet(
             total_equity: n.total_stockholder_equity.and_then(raw_num),
             cash: n.cash.and_then(raw_num),
             long_term_debt: n.long_term_debt.and_then(raw_num),
+            shares_outstanding: n.shares_outstanding.and_then(|s| s.raw).map(|v| v as u64),
         })
         .collect())
 }
@@ -212,4 +219,93 @@ pub(super) async fn calendar(
         ex_dividend_date: c.ex_dividend_date.and_then(|x| x.raw),
         dividend_date: c.dividend_date.and_then(|x| x.raw),
     })
+}
+
+pub(super) async fn shares(
+    client: &YfClient,
+    symbol: &str,
+    start: Option<chrono::DateTime<Utc>>,
+    end: Option<chrono::DateTime<Utc>>,
+    quarterly: bool,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+) -> Result<Vec<ShareCount>, YfError> {
+    let end_ts = end.unwrap_or_else(Utc::now).timestamp();
+    let start_ts = start
+        .unwrap_or_else(|| Utc::now() - Duration::days(548))
+        .timestamp();
+
+    let mut url = client.base_timeseries().join(symbol)?;
+
+    let type_key = if quarterly {
+        "quarterlyBasicAverageShares"
+    } else {
+        "annualBasicAverageShares"
+    };
+
+    url.query_pairs_mut()
+        .append_pair("symbol", symbol)
+        .append_pair("type", type_key)
+        .append_pair("period1", &start_ts.to_string())
+        .append_pair("period2", &end_ts.to_string());
+
+    let body = if cache_mode == CacheMode::Use {
+        if let Some(cached) = client.cache_get(&url).await {
+            cached
+        } else {
+            let resp = client
+                .send_with_retry(client.http().get(url.clone()), retry_override)
+                .await?;
+            let endpoint = format!("timeseries_{}", type_key);
+            let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
+            if cache_mode != CacheMode::Bypass {
+                client.cache_put(&url, &text, None).await;
+            }
+            text
+        }
+    } else {
+        let resp = client
+            .send_with_retry(client.http().get(url.clone()), retry_override)
+            .await?;
+        let endpoint = format!("timeseries_{}", type_key);
+        let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
+        if cache_mode != CacheMode::Bypass {
+            client.cache_put(&url, &text, None).await;
+        }
+        text
+    };
+
+    let envelope: TimeseriesEnvelope = serde_json::from_str(&body)
+        .map_err(|e| YfError::Data(format!("shares timeseries json parse: {e}")))?;
+
+    let result_data: Option<TimeseriesData> = envelope
+        .timeseries
+        .and_then(|ts| ts.result)
+        .and_then(|mut v| v.pop());
+
+    let (timestamps, mut values_map) = match result_data {
+        Some(TimeseriesData {
+            timestamp: Some(ts),
+            values,
+            ..
+        }) => (ts, values),
+        _ => return Ok(vec![]),
+    };
+
+    let values = match values_map.remove(type_key) {
+        Some(v) => v,
+        None => return Ok(vec![]),
+    };
+
+    let counts = timestamps
+        .into_iter()
+        .zip(values.into_iter())
+        .filter_map(|(ts, val)| {
+            val.reported_value
+                .and_then(|rv| rv.raw)
+                .map(|shares| ShareCount { date: ts, shares })
+        })
+        .collect();
+
+    Ok(counts)
 }

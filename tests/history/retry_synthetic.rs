@@ -18,7 +18,7 @@ async fn history_retries_on_persistent_5xx() {
             .path(format!("/v8/finance/chart/{}", sym))
             .query_param("range", "6mo")
             .query_param("interval", "1d")
-            .query_param("events", "div|split")
+            .query_param("events", "div|split|capitalGains")
             .query_param("includePrePost", "false");
         then.status(503).body("Service Unavailable");
     });

@@ -7,7 +7,7 @@ pub use info::Info;
 pub use model::{FastInfo, OptionChain, OptionContract};
 
 use crate::{
-    EsgBuilder, HoldersBuilder, NewsBuilder, Quote, YfClient, YfError,
+    EsgBuilder, HoldersBuilder, NewsBuilder, Quote, ShareCount, YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
     fundamentals::FundamentalsBuilder,
@@ -190,7 +190,13 @@ impl Ticker {
         let mut hb = self.history_builder();
         hb = hb.range(range.unwrap_or(crate::Range::Max));
         let resp = hb.auto_adjust(true).actions(true).fetch_full().await?;
-        Ok(resp.actions)
+        let mut actions = resp.actions;
+        actions.sort_by_key(|a| match *a {
+            crate::Action::Dividend { ts, .. }
+            | crate::Action::Split { ts, .. }
+            | crate::Action::CapitalGain { ts, .. } => ts,
+        });
+        Ok(actions)
     }
 
     /// Fetches all dividend payments for the given range.
@@ -262,6 +268,23 @@ impl Ticker {
             self.retry_override.as_ref(),
         )
         .await
+    }
+
+    /// Retrieves historical capital gain events for the ticker (typically for mutual funds).
+    ///
+    /// A time `range` can be optionally specified. Defaults to the maximum available range.
+    pub async fn capital_gains(
+        &self,
+        range: Option<crate::Range>,
+    ) -> Result<Vec<(i64, f64)>, YfError> {
+        let acts = self.actions(range).await?;
+        Ok(acts
+            .into_iter()
+            .filter_map(|a| match a {
+                crate::Action::CapitalGain { ts, gain } => Some((ts, gain)),
+                _ => None,
+            })
+            .collect())
     }
 
     /* ---------------- Options ---------------- */
@@ -359,6 +382,13 @@ impl Ticker {
         self.analysis_builder().analyst_price_target().await
     }
 
+    /// Fetches earnings trend data for the ticker.
+    ///
+    /// This includes earnings estimates, revenue estimates, EPS trends, and EPS revisions for various periods
+    pub async fn earnings_trend(&self) -> Result<Vec<crate::EarningsTrendRow>, YfError> {
+        self.analysis_builder().earnings_trend().await
+    }
+
     /* ---------------- ESG / Sustainability ---------------- */
 
     fn esg_builder(&self) -> EsgBuilder {
@@ -417,6 +447,16 @@ impl Ticker {
     /// Fetches corporate calendar events like earnings dates.
     pub async fn calendar(&self) -> Result<crate::FundCalendar, YfError> {
         self.fundamentals_builder().calendar().await
+    }
+
+    /// Fetches historical annual shares outstanding.
+    pub async fn shares(&self) -> Result<Vec<ShareCount>, YfError> {
+        self.fundamentals_builder().shares(false).await
+    }
+
+    /// Fetches historical quarterly shares outstanding.
+    pub async fn quarterly_shares(&self) -> Result<Vec<ShareCount>, YfError> {
+        self.fundamentals_builder().shares(true).await
     }
 }
 

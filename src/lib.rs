@@ -95,7 +95,9 @@ pub mod stream;
 pub mod ticker;
 
 // --- re-exports (public API remains the same names as before) ---
-pub use analysis::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
+pub use analysis::{
+    EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow,
+};
 pub use core::{
     Action, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, YfClient, YfError,
 };
@@ -103,7 +105,7 @@ pub use download::{DownloadBuilder, DownloadResult};
 pub use esg::{EsgBuilder, EsgInvolvement, EsgScores};
 pub use fundamentals::{
     BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
-    EarningsQuarterEps, EarningsYear, FundamentalsBuilder, IncomeStatementRow, Num,
+    EarningsQuarterEps, EarningsYear, FundamentalsBuilder, IncomeStatementRow, Num, ShareCount,
 };
 pub use history::HistoryBuilder;
 pub use holders::{

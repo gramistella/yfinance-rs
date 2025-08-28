@@ -25,7 +25,7 @@ async fn history_range_1d_ytd_10y() {
             .path("/v8/finance/chart/AAPL")
             .query_param("range", "1d")
             .query_param("interval", "1d")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(minimal_ok_body());
@@ -36,7 +36,7 @@ async fn history_range_1d_ytd_10y() {
             .path("/v8/finance/chart/AAPL")
             .query_param("range", "ytd")
             .query_param("interval", "1d")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(minimal_ok_body());
@@ -47,7 +47,7 @@ async fn history_range_1d_ytd_10y() {
             .path("/v8/finance/chart/AAPL")
             .query_param("range", "10y")
             .query_param("interval", "1d")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(minimal_ok_body());

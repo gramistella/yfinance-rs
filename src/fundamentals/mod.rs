@@ -6,7 +6,7 @@ mod wire;
 
 pub use model::{
     BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps,
-    EarningsYear, IncomeStatementRow, Num,
+    EarningsYear, IncomeStatementRow, Num, ShareCount,
 };
 
 use crate::{
@@ -106,6 +106,22 @@ impl FundamentalsBuilder {
         api::calendar(
             &self.client,
             &self.symbol,
+            self.cache_mode,
+            self.retry_override.as_ref(),
+        )
+        .await
+    }
+
+    /// Fetches the historical number of shares outstanding.
+    ///
+    /// If `quarterly` is true, fetches quarterly data, otherwise annual data is fetched.
+    pub async fn shares(&self, quarterly: bool) -> Result<Vec<ShareCount>, YfError> {
+        api::shares(
+            &self.client,
+            &self.symbol,
+            None,
+            None,
+            quarterly,
             self.cache_mode,
             self.retry_override.as_ref(),
         )

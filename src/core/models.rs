@@ -57,6 +57,14 @@ pub enum Action {
         /// The denominator of the split ratio (e.g., 1 for a 2-for-1 split).
         denominator: u32,
     },
+
+    /// Represents a capital gain distribution for a fund.
+    CapitalGain {
+        /// The Unix timestamp (in seconds) of the distribution date.
+        ts: i64,
+        /// The distributed gain per share.
+        gain: f64,
+    },
 }
 
 /// Metadata associated with a historical data response.

@@ -44,7 +44,7 @@ async fn ticker_actions_dividends_splits() {
             .path("/v8/finance/chart/TEST")
             .query_param("range", "max")
             .query_param("interval", "1d")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(body_with_actions());

@@ -31,7 +31,7 @@ async fn get_history_metadata_returns_timezone() {
             .path("/v8/finance/chart/MSFT")
             .query_param("range", "1d")
             .query_param("interval", "1d")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(meta_body());

@@ -16,6 +16,7 @@ pub(crate) mod quotes;
 pub(crate) mod quotesummary;
 /// Service traits for abstracting functionality like history fetching.
 pub mod services;
+pub(crate) mod wire;
 
 #[cfg(feature = "test-mode")]
 pub(crate) mod fixtures;

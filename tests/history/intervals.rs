@@ -13,7 +13,7 @@ async fn history_allows_intraday_interval() {
             .query_param("range", "6mo")
             .query_param("interval", "5m")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));

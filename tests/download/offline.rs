@@ -14,7 +14,7 @@ async fn download_multi_symbols_happy_path() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
@@ -26,7 +26,7 @@ async fn download_multi_symbols_happy_path() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "MSFT", "json"));
@@ -74,7 +74,7 @@ async fn download_between_params_applied_to_all_symbols() {
             .query_param("period2", end.timestamp().to_string())
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
@@ -87,7 +87,7 @@ async fn download_between_params_applied_to_all_symbols() {
             .query_param("period2", end.timestamp().to_string())
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "MSFT", "json"));
@@ -131,7 +131,7 @@ async fn download_back_adjust_offline() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
@@ -143,7 +143,7 @@ async fn download_back_adjust_offline() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
@@ -203,7 +203,7 @@ async fn download_repair_is_noop_on_clean_data_offline() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
@@ -215,7 +215,7 @@ async fn download_repair_is_noop_on_clean_data_offline() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(common::fixture("history_chart", "AAPL", "json"));
@@ -269,7 +269,7 @@ async fn download_rounding_and_keepna_offline() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(crate::common::fixture("history_chart", "AAPL", "json"));
@@ -281,7 +281,7 @@ async fn download_rounding_and_keepna_offline() {
             .query_param("range", "6mo")
             .query_param("interval", "1d")
             .query_param("includePrePost", "false")
-            .query_param("events", "div|split");
+            .query_param("events", "div|split|capitalGains");
         then.status(200)
             .header("content-type", "application/json")
             .body(crate::common::fixture("history_chart", "MSFT", "json"));

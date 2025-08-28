@@ -1,4 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
+
+use crate::core::wire::RawNumI64;
 
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
@@ -72,6 +74,8 @@ pub(crate) struct BalanceRowNode {
 
     #[serde(rename = "longTermDebt")]
     pub(crate) long_term_debt: Option<RawNum>,
+    #[serde(rename = "commonStockSharesIssued")]
+    pub(crate) shares_outstanding: Option<RawNumI64>,
 }
 
 /* --- cashflow --- */
@@ -154,6 +158,65 @@ pub(crate) struct CalendarEarningsNode {
     pub(crate) ex_dividend_date: Option<RawDate>,
     #[serde(rename = "dividendDate")]
     pub(crate) dividend_date: Option<RawDate>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct TimeseriesEnvelope {
+    pub(crate) timeseries: Option<TimeseriesResult>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct TimeseriesResult {
+    pub(crate) result: Option<Vec<TimeseriesData>>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct TimeseriesData {
+    pub(crate) timestamp: Option<Vec<i64>>,
+    #[allow(dead_code)]
+    meta: serde_json::Value,
+    #[serde(flatten)]
+    pub(crate) values: std::collections::HashMap<String, Vec<TimeseriesValue>>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct TimeseriesValue {
+    #[serde(rename = "reportedValue")]
+    pub(crate) reported_value: Option<RawNumU64>,
+}
+
+fn de_u64_from_any_number<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum AnyNumber {
+        U64(u64),
+        F64(f64),
+    }
+
+    match Option::<AnyNumber>::deserialize(deserializer)? {
+        Some(AnyNumber::U64(u)) => Ok(Some(u)),
+        Some(AnyNumber::F64(f)) => {
+            if f.fract() == 0.0 && f >= 0.0 {
+                Ok(Some(f as u64))
+            } else {
+                Err(serde::de::Error::custom(format!(
+                    "cannot convert float {} to u64",
+                    f
+                )))
+            }
+        }
+        None => Ok(None),
+    }
+}
+
+#[derive(Deserialize, Clone, Copy)]
+pub(crate) struct RawNumU64 {
+    #[serde(deserialize_with = "de_u64_from_any_number")]
+    pub(crate) raw: Option<u64>,
 }
 
 /* --- shared small wrappers + helpers --- */

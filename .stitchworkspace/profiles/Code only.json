@@ -17,6 +17,10 @@
       "state": false
     },
     {
+      "path": "examples",
+      "state": false
+    },
+    {
       "path": "tests",
       "state": false
     },

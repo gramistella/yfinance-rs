@@ -13,16 +13,20 @@
   },
   "explicit": [
     {
-      "path": "src",
+      "path": "README.md",
       "state": false
     },
     {
-      "path": "README.md",
+      "path": "examples",
       "state": false
     },
     {
       "path": "tests",
       "state": true
+    },
+    {
+      "path": "src",
+      "state": false
     },
     {
       "path": "",

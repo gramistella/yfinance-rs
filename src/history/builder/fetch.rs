@@ -39,7 +39,7 @@ pub(crate) async fn fetch_chart(
 
         qp.append_pair("interval", interval.as_str());
         if include_actions {
-            qp.append_pair("events", "div|split");
+            qp.append_pair("events", "div|split|capitalGains");
         }
         qp.append_pair(
             "includePrePost",

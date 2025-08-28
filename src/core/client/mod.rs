@@ -68,6 +68,7 @@ pub struct YfClient {
     base_stream: Url,
     base_news: Url,
     base_insider_search: Url,
+    base_timeseries: Url,
     cookie_url: Url,
     crumb_url: Url,
     user_agent: String,
@@ -133,6 +134,10 @@ impl YfClient {
 
     pub(crate) fn base_insider_search(&self) -> &Url {
         &self.base_insider_search
+    }
+
+    pub(crate) fn base_timeseries(&self) -> &Url {
+        &self.base_timeseries
     }
 
     #[cfg(feature = "test-mode")]
@@ -257,6 +262,7 @@ pub struct YfClientBuilder {
     base_stream: Option<Url>,
     base_news: Option<Url>,
     base_insider_search: Option<Url>,
+    base_timeseries: Option<Url>,
     cookie_url: Option<Url>,
     crumb_url: Option<Url>,
 
@@ -337,6 +343,12 @@ impl YfClientBuilder {
     /// Sets a custom base URL for the Business Insider search (for ISIN lookup).
     pub fn base_insider_search(mut self, url: Url) -> Self {
         self.base_insider_search = Some(url);
+        self
+    }
+
+    /// Sets a custom base URL for the timeseries endpoint.
+    pub fn base_timeseries(mut self, url: Url) -> Self {
+        self.base_timeseries = Some(url);
         self
     }
 
@@ -434,6 +446,10 @@ impl YfClientBuilder {
         let base_insider_search = self
             .base_insider_search
             .unwrap_or(Url::parse(DEFAULT_BASE_INSIDER_SEARCH)?);
+        let base_timeseries = self
+            .base_timeseries
+            .unwrap_or(Url::parse(constants::DEFAULT_BASE_TIMESERIES)?);
+
         let cookie_url = self.cookie_url.unwrap_or(Url::parse(DEFAULT_COOKIE_URL)?);
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
@@ -484,6 +500,7 @@ impl YfClientBuilder {
             base_stream,
             base_news,
             base_insider_search,
+            base_timeseries,
             cookie_url,
             crumb_url,
             user_agent,

@@ -72,6 +72,8 @@ pub(crate) struct Events {
     pub(crate) dividends: Option<BTreeMap<String, DividendEvent>>,
     #[serde(default)]
     pub(crate) splits: Option<BTreeMap<String, SplitEvent>>,
+    #[serde(default, rename = "capitalGains")]
+    pub(crate) capital_gains: Option<BTreeMap<String, CapitalGainEvent>>,
 }
 
 #[derive(Deserialize)]
@@ -88,6 +90,12 @@ pub(crate) struct SplitEvent {
     pub(crate) denominator: Option<u64>,
     #[serde(rename = "splitRatio")]
     pub(crate) split_ratio: Option<String>,
+    pub(crate) date: Option<i64>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct CapitalGainEvent {
+    pub(crate) amount: Option<f64>,
     pub(crate) date: Option<i64>,
 }
 

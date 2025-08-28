@@ -39,9 +39,16 @@ async fn live_fundamentals_smoke() {
     if !crate::common::is_recording() {
         // If not recording, at least assert we got *some* data from live
         // (No strict expectations; shapes vary by company)
-        let t = yfinance_rs::Ticker::new(client, "AAPL");
+        let t = yfinance_rs::Ticker::new(client.clone(), "AAPL");
         let income = t.quarterly_income_stmt().await.unwrap();
         assert!(!income.is_empty());
+    }
+
+    if !crate::common::is_recording() {
+        let t = yfinance_rs::Ticker::new(client, "MSFT");
+        let balance_sheet = t.balance_sheet().await.unwrap();
+        assert!(!balance_sheet.is_empty());
+        assert!(balance_sheet[0].shares_outstanding.is_some());
     }
 }
 
