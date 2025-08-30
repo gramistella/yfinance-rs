@@ -8,21 +8,74 @@
 //!
 //! ## Features
 //!
-//! * **Historical Data**: Fetch daily, weekly, or monthly OHLCV data.
+//! ### Core Data
+//! * **Historical Data**: Fetch daily, weekly, or monthly OHLCV data with automatic split/dividend adjustments.
+//! * **Real-time Quotes**: Get live quote updates with detailed market information.
+//! * **Fast Quotes**: Optimized quote fetching with essential data only (`fast_info`).
 //! * **Multi-Symbol Downloads**: Concurrently download historical data for many symbols at once.
-//! * **Real-time Streaming**: Get live quote updates using `WebSockets` (with an HTTP polling fallback).
-//! * **Company Profiles**: Retrieve detailed information about companies, ETFs, and funds.
+//! * **Batch Quotes**: Fetch quotes for multiple symbols efficiently.
+//!
+//! ### Corporate Actions & Dividends
+//! * **Dividend History**: Fetch complete dividend payment history with amounts and dates.
+//! * **Stock Splits**: Get stock split history with split ratios.
+//! * **Capital Gains**: Retrieve capital gains distributions (especially for mutual funds).
+//! * **All Corporate Actions**: Comprehensive access to dividends, splits, and capital gains in one call.
+//!
+//! ### Financial Statements & Fundamentals
+//! * **Income Statements**: Access annual and quarterly income statements.
+//! * **Balance Sheets**: Get annual and quarterly balance sheet data.
+//! * **Cash Flow Statements**: Fetch annual and quarterly cash flow data.
+//! * **Earnings Data**: Historical earnings, revenue estimates, and EPS data.
+//! * **Shares Outstanding**: Historical data on shares outstanding (annual and quarterly).
+//! * **Corporate Calendar**: Earnings dates, ex-dividend dates, and dividend payment dates.
+//!
+//! ### Options & Derivatives
 //! * **Options Chains**: Fetch expiration dates and full option chains (calls and puts).
-//! * **Financials**: Access income statements, balance sheets, and cash flow statements (annual & quarterly).
+//! * **Option Contracts**: Detailed option contract information including Greeks.
+//!
+//! ### Analysis & Research
 //! * **Analyst Ratings**: Get price targets, recommendations, and upgrade/downgrade history.
-//! * **Holder Information**: Get major, institutional, and mutual fund holder data.
+//! * **Earnings Trends**: Detailed earnings and revenue estimates from analysts.
+//! * **Recommendations Summary**: Summary of current analyst recommendations.
+//! * **Upgrades/Downgrades**: History of analyst rating changes.
+//!
+//! ### Ownership & Holders
+//! * **Major Holders**: Get major, institutional, and mutual fund holder data.
+//! * **Institutional Holders**: Top institutional shareholders and their holdings.
+//! * **Mutual Fund Holders**: Mutual fund ownership breakdown.
+//! * **Insider Transactions**: Recent insider buying and selling activity.
+//! * **Insider Roster**: Company insiders and their current holdings.
+//! * **Net Share Activity**: Summary of insider purchase/sale activity.
+//!
+//! ### ESG & Sustainability
 //! * **ESG Scores**: Fetch detailed Environmental, Social, and Governance ratings.
-//! * **News**: Retrieve the latest articles and press releases for a ticker.
+//! * **ESG Involvement**: Specific ESG involvement and controversy data.
+//!
+//! ### News & Information
+//! * **Company News**: Retrieve the latest articles and press releases for a ticker.
+//! * **Company Profiles**: Detailed information about companies, ETFs, and funds.
 //! * **Search**: Find tickers by name or keyword.
+//!
+//! ### Real-time Streaming
+//! * **WebSocket Streaming**: Get live quote updates using WebSockets (preferred method).
+//! * **HTTP Polling**: Fallback polling method for real-time data.
+//! * **Configurable Streaming**: Customize update frequency and change-only filtering.
+//!
+//! ### Advanced Features
+//! * **Data Repair**: Automatic detection and repair of price outliers.
+//! * **Data Rounding**: Control price precision and rounding.
+//! * **Missing Data Handling**: Configurable handling of NA/missing values.
+//! * **Back Adjustment**: Alternative price adjustment methods.
+//! * **Historical Metadata**: Timezone and other metadata for historical data.
+//! * **ISIN Lookup**: Get International Securities Identification Numbers.
+//!
+//! ### Developer Experience
 //! * **Async API**: Built on `tokio` and `reqwest` for non-blocking I/O.
 //! * **High-Level `Ticker` Interface**: A convenient, yfinance-like struct for accessing all data for a single symbol.
 //! * **Builder Pattern**: Fluent builders for constructing complex queries.
 //! * **Configurable Retries**: Automatic retries with exponential backoff for transient network errors.
+//! * **Caching**: Configurable caching behavior for API responses.
+//! * **Custom Timeouts**: Configurable request timeouts and connection settings.
 //!
 //! ## Quick Start
 //!
@@ -30,7 +83,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! yfinance-rs = "0.1.1"
+//! yfinance-rs = "0.1.2"
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!

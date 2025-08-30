@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.1.2] - 2025-08-30
+
+### Added
+- **New Examples**: Added new examples (`10_convenience_methods.rs`, `11_builder_configuration.rs`, `12_advanced_client.rs`) to showcase convenience methods, advanced builder usage, cache management, and error handling.
+- **Development Tooling**: Added `justfile` recipes for linting (`lint`, `lint-fix`, `lint-strict`) to streamline the development and contribution workflow.
+
+### Changed
+- **Improved Ergonomics**: Re-exported `YfClientBuilder` at the crate root, allowing for a simpler import (`use yfinance_rs::YfClientBuilder`).
+- **Internal Refactoring**: Centralized raw data types (e.g., `RawNum`) into a single `src/core/wire.rs` module to eliminate code duplication and improve maintainability.
+- **API Update**: Adapted the analyst recommendations API to use the `financialData` field, replacing the incorrect `recommendationMean` field to align with the data source.
+- **Debug Output**: Gated all debug file dumps behind the `debug-dumps` feature flag to prevent unintended file system writes.
+
+### Fixed
+- **StreamBuilder Ownership**: Corrected an ownership issue in `StreamBuilder` that caused an unnecessary mutable borrow
+
 ## [0.1.1] - 2025-08-28
 
 ### Added
