@@ -1,27 +1,37 @@
 use serde::{Deserialize, Deserializer};
 
 #[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNum<T> {
+pub struct RawNum<T> {
     pub(crate) raw: Option<T>,
 }
 
-pub(crate) fn from_raw<T>(raw: Option<RawNum<T>>) -> Option<T> {
+pub fn from_raw<T>(raw: Option<RawNum<T>>) -> Option<T> {
     raw.and_then(|n| n.raw)
 }
 
-pub(crate) fn from_raw_u32_round(r: Option<RawNum<f64>>) -> Option<u32> {
-    r.and_then(|n| n.raw).map(|v| v.round() as u32)
+pub fn from_raw_u32_round(r: Option<RawNum<f64>>) -> Option<u32> {
+    r.and_then(|n| n.raw).and_then(|v| {
+        let rounded = v.round();
+        if rounded >= 0.0 && rounded <= f64::from(u32::MAX) {
+            // This cast is safe as we check the bounds of rounded.
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            Some(rounded as u32)
+        } else {
+            None
+        }
+    })
 }
 
 #[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawDate {
+pub struct RawDate {
     pub(crate) raw: Option<i64>,
 }
 
-pub(crate) fn from_raw_date(r: Option<RawDate>) -> Option<i64> {
+pub fn from_raw_date(r: Option<RawDate>) -> Option<i64> {
     r.and_then(|d| d.raw)
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn de_u64_from_any_number<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
 where
     D: Deserializer<'de>,
@@ -40,8 +50,7 @@ where
                 Ok(Some(f as u64))
             } else {
                 Err(serde::de::Error::custom(format!(
-                    "cannot convert float {} to u64",
-                    f
+                    "cannot convert float {f} to u64"
                 )))
             }
         }
@@ -50,7 +59,7 @@ where
 }
 
 #[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNumU64 {
+pub struct RawNumU64 {
     #[serde(deserialize_with = "de_u64_from_any_number")]
     pub(crate) raw: Option<u64>,
 }

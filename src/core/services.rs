@@ -5,6 +5,7 @@ use crate::core::{HistoryResponse, Interval, Range, YfError};
 /// This struct is used as a generic way to request historical data, decoupling modules
 /// like `download` from the specific implementation details of `history::HistoryBuilder`.
 #[derive(Debug, Clone, Copy)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct HistoryRequest {
     /// A relative time range for the request (e.g., `1y`, `6mo`).
     ///

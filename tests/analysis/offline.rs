@@ -14,7 +14,7 @@ async fn offline_recommendations_trend_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "recommendationTrend")
             .query_param("crumb", "crumb");
         then.status(200)
@@ -45,7 +45,7 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "recommendationTrend,recommendationMean")
             .query_param("crumb", "crumb");
         then.status(200)
@@ -82,7 +82,7 @@ async fn offline_upgrades_downgrades_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "upgradeDowngradeHistory")
             .query_param("crumb", "crumb");
         then.status(200)

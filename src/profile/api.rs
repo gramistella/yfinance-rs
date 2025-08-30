@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};
 
-pub(crate) async fn load_from_quote_summary_api(
+pub async fn load_from_quote_summary_api(
     client: &YfClient,
     symbol: &str,
 ) -> Result<Profile, YfError> {
@@ -31,7 +31,7 @@ pub(crate) async fn load_from_quote_summary_api(
     let name = first
         .quote_type
         .as_ref()
-        .and_then(|q| q.long_name.clone().or(q.short_name.clone()))
+        .and_then(|q| q.long_name.clone().or_else(|| q.short_name.clone()))
         .unwrap_or_else(|| symbol.to_string());
 
     match kind {

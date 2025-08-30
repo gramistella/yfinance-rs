@@ -7,7 +7,7 @@ use super::helpers::{
 use crate::profile::scrape::utils::{find_matching_brace, iter_json_scripts};
 
 /// Strategy A: look for `root.App.main = {...};`
-pub(crate) fn try_root_app_main(body: &str, debug: bool) -> Option<String> {
+pub fn try_root_app_main(body: &str, debug: bool) -> Option<String> {
     if let Some(start) = body.find("root.App.main") {
         let after = &body[start..];
         if let Some(eq) = after.find('=') {
@@ -31,7 +31,7 @@ pub(crate) fn try_root_app_main(body: &str, debug: bool) -> Option<String> {
 }
 
 /// Strategy B: find literal `"QuoteSummaryStore" : { ... }` and wrap it.
-pub(crate) fn try_quote_summary_store_literal(body: &str, debug: bool) -> Option<String> {
+pub fn try_quote_summary_store_literal(body: &str, debug: bool) -> Option<String> {
     let key = "\"QuoteSummaryStore\"";
     if let Some(pos) = body.find(key) {
         let after = &body[pos + key.len()..];
@@ -60,8 +60,9 @@ pub(crate) fn try_quote_summary_store_literal(body: &str, debug: bool) -> Option
     None
 }
 
-/// Strategy C: scan SvelteKit `data-sveltekit-fetched` JSON blobs.
-pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
+/// Strategy C: scan `SvelteKit` `data-sveltekit-fetched` JSON blobs.
+#[allow(clippy::too_many_lines)]
+pub fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
     let scripts = iter_json_scripts(body);
 
     if debug {
@@ -110,7 +111,7 @@ pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
                         if let Some(data) = node.get("data")
                             && let Some(store_like) =
                                 extract_store_like_from_quote_summary_value(data)
-                            && let Ok(wrapped) = wrap_store_like(store_like)
+                            && let Ok(wrapped) = wrap_store_like(&store_like)
                         {
                             if debug {
                                 eprintln!(
@@ -135,8 +136,7 @@ pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
             Err(e) => {
                 if debug {
                     eprintln!(
-                        "YF_DEBUG [extract_bootstrap_json]: C[{}] parse-as-OBJECT failed: {}",
-                        i, e
+                        "YF_DEBUG [extract_bootstrap_json]: C[{i}] parse-as-OBJECT failed: {e}"
                     );
                 }
                 None
@@ -144,7 +144,7 @@ pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
         };
 
         if let Some(mut outer_obj) = parsed_obj {
-            let body_val_opt = { outer_obj.get_mut("body").map(|b| b.take()) };
+            let body_val_opt = { outer_obj.get_mut("body").map(serde_json::Value::take) };
 
             if let Some(body_val) = body_val_opt {
                 let payload_opt = match body_val {
@@ -156,7 +156,7 @@ pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
                 if let Some(payload) = payload_opt {
                     if let Some(qss) = find_quote_summary_store_in_value(&payload) {
                         let store_like = normalize_store_like(qss.clone());
-                        if let Ok(wrapped) = wrap_store_like(store_like) {
+                        if let Ok(wrapped) = wrap_store_like(&store_like) {
                             if debug {
                                 eprintln!(
                                     "YF_DEBUG [extract_bootstrap_json]: C[{}] SUCCESS via QuoteSummaryStore path; wrapped.len={}",
@@ -171,7 +171,7 @@ pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
                     if let Some(qs_val) = find_quote_summary_value_in_value(&payload)
                         && let Some(store_like) =
                             extract_store_like_from_quote_summary_value(qs_val)
-                        && let Ok(wrapped) = wrap_store_like(store_like)
+                        && let Ok(wrapped) = wrap_store_like(&store_like)
                     {
                         if debug {
                             eprintln!(
@@ -191,7 +191,7 @@ pub(crate) fn try_sveltekit_json(body: &str, debug: bool) -> Option<String> {
 }
 
 /// Strategy D: generic scan of *all* application/json scripts with multiple fallbacks.
-pub(crate) fn try_generic_json_scripts(body: &str, debug: bool) -> Option<String> {
+pub fn try_generic_json_scripts(body: &str, debug: bool) -> Option<String> {
     let scripts = iter_json_scripts(body);
 
     for (i, (_attrs, inner_json)) in scripts.iter().enumerate() {
@@ -217,7 +217,7 @@ pub(crate) fn try_generic_json_scripts(body: &str, debug: bool) -> Option<String
         // D1: direct QuoteSummaryStore object
         if let Some(qss) = find_quote_summary_store_in_value(&val) {
             let store_like = normalize_store_like(qss.clone());
-            if let Ok(wrapped) = wrap_store_like(store_like) {
+            if let Ok(wrapped) = wrap_store_like(&store_like) {
                 if debug {
                     eprintln!(
                         "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via QuoteSummaryStore; wrapped.len={}",
@@ -232,7 +232,7 @@ pub(crate) fn try_generic_json_scripts(body: &str, debug: bool) -> Option<String
         // D2: quoteSummary -> result[0]
         if let Some(qs_val) = find_quote_summary_value_in_value(&val)
             && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val)
-            && let Ok(wrapped) = wrap_store_like(store_like)
+            && let Ok(wrapped) = wrap_store_like(&store_like)
         {
             if debug {
                 eprintln!(
@@ -255,7 +255,7 @@ pub(crate) fn try_generic_json_scripts(body: &str, debug: bool) -> Option<String
             if let Some(payload) = payload_opt {
                 if let Some(qss) = find_quote_summary_store_in_value(&payload) {
                     let store_like = normalize_store_like(qss.clone());
-                    if let Ok(wrapped) = wrap_store_like(store_like) {
+                    if let Ok(wrapped) = wrap_store_like(&store_like) {
                         if debug {
                             eprintln!(
                                 "YF_DEBUG [extract_bootstrap_json]: D[{}] SUCCESS via body->QuoteSummaryStore; wrapped.len={}",
@@ -269,7 +269,7 @@ pub(crate) fn try_generic_json_scripts(body: &str, debug: bool) -> Option<String
 
                 if let Some(qs_val) = find_quote_summary_value_in_value(&payload)
                     && let Some(store_like) = extract_store_like_from_quote_summary_value(qs_val)
-                    && let Ok(wrapped) = wrap_store_like(store_like)
+                    && let Ok(wrapped) = wrap_store_like(&store_like)
                 {
                     if debug {
                         eprintln!(

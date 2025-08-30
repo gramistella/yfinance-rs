@@ -12,20 +12,20 @@ use crate::{
 
 // Centralized wire model for the v7 quote API
 #[derive(Deserialize)]
-pub(crate) struct V7Envelope {
+pub struct V7Envelope {
     #[serde(rename = "quoteResponse")]
     pub(crate) quote_response: Option<V7QuoteResponse>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct V7QuoteResponse {
+pub struct V7QuoteResponse {
     pub(crate) result: Option<Vec<V7QuoteNode>>,
     #[allow(dead_code)]
     pub(crate) error: Option<serde_json::Value>,
 }
 
 #[derive(Deserialize, Clone)]
-pub(crate) struct V7QuoteNode {
+pub struct V7QuoteNode {
     #[serde(default)]
     pub(crate) symbol: Option<String>,
     #[serde(rename = "shortName")]
@@ -47,7 +47,7 @@ pub(crate) struct V7QuoteNode {
 
 /// Centralized function to fetch one or more quotes from the v7 API.
 /// It handles caching, retries, and authentication (crumb).
-pub(crate) async fn fetch_v7_quotes(
+pub async fn fetch_v7_quotes(
     client: &YfClient,
     symbols: &[&str],
     cache_mode: CacheMode,
@@ -143,7 +143,7 @@ pub(crate) async fn fetch_v7_quotes(
 
 impl From<V7QuoteNode> for Quote {
     fn from(n: V7QuoteNode) -> Self {
-        Quote {
+        Self {
             symbol: n.symbol.unwrap_or_default(),
             shortname: n.short_name,
             regular_market_price: n.regular_market_price,

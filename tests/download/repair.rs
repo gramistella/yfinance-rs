@@ -32,7 +32,7 @@ async fn download_repair_simple_100x_fix() {
     let sym = "FIX";
 
     let mock = server.mock(|when, then| {
-        when.method(GET).path(format!("/v8/finance/chart/{}", sym));
+        when.method(GET).path(format!("/v8/finance/chart/{sym}"));
         then.status(200)
             .header("content-type", "application/json")
             .body(body);

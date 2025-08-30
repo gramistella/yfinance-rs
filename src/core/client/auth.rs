@@ -47,8 +47,7 @@ impl super::YfClient {
             .map_err(|_| YfError::Data("Invalid cookie header format".into()))?
             .to_string();
 
-        let mut state = self.state.write().await;
-        state.cookie = Some(cookie);
+        self.state.write().await.cookie = Some(cookie);
         Ok(())
     }
 
@@ -65,11 +64,10 @@ impl super::YfClient {
         let crumb = resp.text().await?;
 
         if crumb.is_empty() || crumb.contains('{') || crumb.contains('<') {
-            return Err(YfError::Data(format!("Received invalid crumb: {}", crumb)));
+            return Err(YfError::Data(format!("Received invalid crumb: {crumb}")));
         }
 
-        let mut state = self.state.write().await;
-        state.crumb = Some(crumb);
+        self.state.write().await.crumb = Some(crumb);
         Ok(())
     }
 }

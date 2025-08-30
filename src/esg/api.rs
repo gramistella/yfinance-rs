@@ -1,6 +1,9 @@
 use crate::{
     core::{
-        client::{CacheMode, RetryConfig}, quotesummary, wire::from_raw, YfClient, YfError
+        YfClient, YfError,
+        client::{CacheMode, RetryConfig},
+        quotesummary,
+        wire::from_raw,
     },
     esg::{
         model::{EsgInvolvement, EsgScores},
@@ -36,7 +39,16 @@ pub(super) async fn fetch_esg_scores(
         social_score: from_raw(esg.social_score),
         governance_score: from_raw(esg.governance_score),
         esg_percentile: esg.percentile,
-        highest_controversy: esg.highest_controversy.map(|v| v.round() as u32),
+        highest_controversy: esg.highest_controversy.and_then(|v| {
+            let rounded = v.round();
+            if rounded >= 0.0 && rounded <= f64::from(u32::MAX) {
+                // This cast is safe as we check the bounds of rounded.
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                Some(rounded as u32)
+            } else {
+                None
+            }
+        }),
         involvement: EsgInvolvement {
             adult: b(esg.adult),
             alcoholic: b(esg.alcoholic),

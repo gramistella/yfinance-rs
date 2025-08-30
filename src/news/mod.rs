@@ -22,11 +22,11 @@ pub enum NewsTab {
 }
 
 impl NewsTab {
-    pub(crate) fn as_str(&self) -> &'static str {
+    pub(crate) const fn as_str(self) -> &'static str {
         match self {
-            NewsTab::News => "latestNews",
-            NewsTab::All => "newsAll",
-            NewsTab::PressReleases => "pressRelease",
+            Self::News => "latestNews",
+            Self::All => "newsAll",
+            Self::PressReleases => "pressRelease",
         }
     }
 }
@@ -56,30 +56,39 @@ impl NewsBuilder {
 
     /// Sets the cache mode for this specific API call.
     /// Note: Caching is not currently implemented for news requests.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// Sets the maximum number of news articles to return.
-    pub fn count(mut self, count: u32) -> Self {
+    #[must_use]
+    pub const fn count(mut self, count: u32) -> Self {
         self.count = count;
         self
     }
 
     /// Sets the category of news to fetch.
-    pub fn tab(mut self, tab: NewsTab) -> Self {
+    #[must_use]
+    pub const fn tab(mut self, tab: NewsTab) -> Self {
         self.tab = tab;
         self
     }
 
     /// Executes the request and fetches the news articles.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the request to the Yahoo Finance API fails,
+    /// if the response cannot be parsed, or if there's a network issue.
     pub async fn fetch(self) -> Result<Vec<NewsArticle>, YfError> {
         api::fetch_news(
             &self.client,

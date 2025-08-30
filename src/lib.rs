@@ -10,7 +10,7 @@
 //!
 //! * **Historical Data**: Fetch daily, weekly, or monthly OHLCV data.
 //! * **Multi-Symbol Downloads**: Concurrently download historical data for many symbols at once.
-//! * **Real-time Streaming**: Get live quote updates using WebSockets (with an HTTP polling fallback).
+//! * **Real-time Streaming**: Get live quote updates using `WebSockets` (with an HTTP polling fallback).
 //! * **Company Profiles**: Retrieve detailed information about companies, ETFs, and funds.
 //! * **Options Chains**: Fetch expiration dates and full option chains (calls and puts).
 //! * **Financials**: Access income statements, balance sheets, and cash flow statements (annual & quarterly).
@@ -89,7 +89,7 @@ pub mod profile;
 pub mod quote;
 /// Search for tickers by name or keyword.
 pub mod search;
-/// Stream real-time quote updates via WebSockets or polling.
+/// Stream real-time quote updates via `WebSockets` or polling.
 pub mod stream;
 /// A high-level interface for a single ticker, providing access to all data types.
 pub mod ticker;

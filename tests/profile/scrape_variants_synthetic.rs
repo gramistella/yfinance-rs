@@ -6,9 +6,8 @@ fn svelte_html(payload: &str) -> String {
     format!(
         r#"<!doctype html>
 <html><body>
-<script type="application/json" data-sveltekit-fetched="1">{}</script>
-</body></html>"#,
-        payload
+<script type="application/json" data-sveltekit-fetched="1">{payload}</script>
+</body></html>"#
     )
 }
 
@@ -25,7 +24,7 @@ async fn scrape_sveltekit_equity() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/quote/{}", sym))
+            .path(format!("/quote/{sym}"))
             .query_param("p", sym);
         then.status(200)
             .header("content-type", "text/html")
@@ -62,7 +61,7 @@ async fn scrape_infers_equity_when_quote_type_missing() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/quote/{}", sym))
+            .path(format!("/quote/{sym}"))
             .query_param("p", sym);
         then.status(200)
             .header("content-type", "text/html")

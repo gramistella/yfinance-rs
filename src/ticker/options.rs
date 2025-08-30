@@ -13,7 +13,7 @@ use super::model::{OptionChain, OptionContract};
 
 /* ---------------- Public: expirations + chain ---------------- */
 
-pub(crate) async fn expiration_dates(
+pub async fn expiration_dates(
     client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
@@ -33,7 +33,7 @@ pub(crate) async fn expiration_dates(
     Ok(first.expiration_dates.unwrap_or_default())
 }
 
-pub(crate) async fn option_chain(
+pub async fn option_chain(
     client: &YfClient,
     symbol: &str,
     date: Option<i64>,
@@ -51,14 +51,11 @@ pub(crate) async fn option_chain(
         .and_then(|mut v| v.pop())
         .ok_or_else(|| YfError::Data("empty options result".into()))?;
 
-    let od = match first.options.and_then(|mut v| v.pop()) {
-        Some(x) => x,
-        None => {
-            return Ok(OptionChain {
-                calls: vec![],
-                puts: vec![],
-            });
-        }
+    let Some(od) = first.options.and_then(|mut v| v.pop()) else {
+        return Ok(OptionChain {
+            calls: vec![],
+            puts: vec![],
+        });
     };
 
     let expiration = od.expiration_date.unwrap_or_else(|| {
@@ -128,10 +125,7 @@ async fn fetch_options_raw(
     let mut resp = client.send_with_retry(req, retry_override).await?;
 
     if resp.status().is_success() {
-        let fixture_key = match date {
-            Some(d) => format!("{}_{}", symbol, d),
-            None => symbol.to_string(),
-        };
+        let fixture_key = date.map_or_else(|| symbol.to_string(), |d| format!("{symbol}_{d}"));
         let body = net::get_text(resp, "options_v7", &fixture_key, "json").await?;
         if cache_mode != CacheMode::Bypass {
             client.cache_put(&url, &body, None).await;
@@ -172,10 +166,7 @@ async fn fetch_options_raw(
         });
     }
 
-    let fixture_key = match date {
-        Some(d) => format!("{}_{}", symbol, d),
-        None => symbol.to_string(),
-    };
+    let fixture_key = date.map_or_else(|| symbol.to_string(), |d| format!("{symbol}_{d}"));
     let body = net::get_text(resp, "options_v7", &fixture_key, "json").await?;
     if cache_mode != CacheMode::Bypass {
         client.cache_put(&url2, &body, None).await;

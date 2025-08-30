@@ -1,10 +1,10 @@
-use serde::{Deserialize};
 use crate::core::wire::{RawDate, RawNum, RawNumU64};
+use serde::Deserialize;
 
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
 #[derive(Deserialize)]
-pub(crate) struct V10Result {
+pub struct V10Result {
     /* income */
     #[serde(rename = "incomeStatementHistory")]
     pub(crate) income_statement_history: Option<IncomeHistoryNode>,
@@ -31,13 +31,13 @@ pub(crate) struct V10Result {
 
 /* --- income --- */
 #[derive(Deserialize)]
-pub(crate) struct IncomeHistoryNode {
+pub struct IncomeHistoryNode {
     #[serde(rename = "incomeStatementHistory")]
     pub(crate) income_statement_history: Option<Vec<IncomeRowNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct IncomeRowNode {
+pub struct IncomeRowNode {
     #[serde(rename = "endDate")]
     pub(crate) end_date: Option<RawDate>,
     #[serde(rename = "totalRevenue")]
@@ -51,13 +51,13 @@ pub(crate) struct IncomeRowNode {
 }
 /* --- balance --- */
 #[derive(Deserialize)]
-pub(crate) struct BalanceHistoryNode {
+pub struct BalanceHistoryNode {
     #[serde(rename = "balanceSheetStatements")]
     pub(crate) balance_sheet_statements: Option<Vec<BalanceRowNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct BalanceRowNode {
+pub struct BalanceRowNode {
     #[serde(rename = "endDate")]
     pub(crate) end_date: Option<RawDate>,
 
@@ -78,13 +78,13 @@ pub(crate) struct BalanceRowNode {
 
 /* --- cashflow --- */
 #[derive(Deserialize)]
-pub(crate) struct CashflowHistoryNode {
+pub struct CashflowHistoryNode {
     #[serde(rename = "cashflowStatements")]
     pub(crate) cashflow_statements: Option<Vec<CashflowRowNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct CashflowRowNode {
+pub struct CashflowRowNode {
     #[serde(rename = "endDate")]
     pub(crate) end_date: Option<RawDate>,
 
@@ -103,7 +103,7 @@ pub(crate) struct CashflowRowNode {
 
 /* --- earnings --- */
 #[derive(Deserialize)]
-pub(crate) struct EarningsNode {
+pub struct EarningsNode {
     #[serde(rename = "financialsChart")]
     pub(crate) financials_chart: Option<FinancialsChartNode>,
     #[serde(rename = "earningsChart")]
@@ -111,32 +111,32 @@ pub(crate) struct EarningsNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct FinancialsChartNode {
+pub struct FinancialsChartNode {
     pub(crate) yearly: Option<Vec<FinancialYearNode>>,
     pub(crate) quarterly: Option<Vec<FinancialQuarterNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct FinancialYearNode {
+pub struct FinancialYearNode {
     pub(crate) date: Option<i64>,
     pub(crate) revenue: Option<RawNum<f64>>,
     pub(crate) earnings: Option<RawNum<f64>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct FinancialQuarterNode {
+pub struct FinancialQuarterNode {
     pub(crate) date: Option<String>,
     pub(crate) revenue: Option<RawNum<f64>>,
     pub(crate) earnings: Option<RawNum<f64>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EarningsChartNode {
+pub struct EarningsChartNode {
     pub(crate) quarterly: Option<Vec<EpsQuarterNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EpsQuarterNode {
+pub struct EpsQuarterNode {
     pub(crate) date: Option<String>,
     pub(crate) actual: Option<RawNum<f64>>,
     pub(crate) estimate: Option<RawNum<f64>>,
@@ -144,12 +144,13 @@ pub(crate) struct EpsQuarterNode {
 
 /* --- calendar --- */
 #[derive(Deserialize)]
-pub(crate) struct CalendarEventsNode {
+pub struct CalendarEventsNode {
     pub(crate) earnings: Option<CalendarEarningsNode>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct CalendarEarningsNode {
+#[allow(clippy::struct_field_names)]
+pub struct CalendarEarningsNode {
     #[serde(rename = "earningsDate")]
     pub(crate) earnings_date: Option<Vec<RawDate>>,
     #[serde(rename = "exDividendDate")]
@@ -160,17 +161,17 @@ pub(crate) struct CalendarEarningsNode {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct TimeseriesEnvelope {
+pub struct TimeseriesEnvelope {
     pub(crate) timeseries: Option<TimeseriesResult>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct TimeseriesResult {
+pub struct TimeseriesResult {
     pub(crate) result: Option<Vec<TimeseriesData>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct TimeseriesData {
+pub struct TimeseriesData {
     pub(crate) timestamp: Option<Vec<i64>>,
     #[allow(dead_code)]
     meta: serde_json::Value,
@@ -179,7 +180,7 @@ pub(crate) struct TimeseriesData {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct TimeseriesValue {
+pub struct TimeseriesValue {
     #[serde(rename = "reportedValue")]
     pub(crate) reported_value: Option<RawNumU64>,
 }

@@ -80,10 +80,7 @@ fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option
         Ok(data) => Some(data),
         Err(e) => {
             if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                eprintln!(
-                    "YF_DEBUG(info): failed to fetch '{}' for {}: {}",
-                    name, symbol, e
-                );
+                eprintln!("YF_DEBUG(info): failed to fetch '{name}' for {symbol}: {e}");
             }
             None
         }

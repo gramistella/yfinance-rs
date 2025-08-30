@@ -1,16 +1,16 @@
-use serde::Deserialize;
 use crate::core::wire::RawNum;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct V10Result {
+pub struct V10Result {
     #[serde(rename = "esgScores")]
     pub(crate) esg_scores: Option<EsgScoresNode>,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct EsgScoresNode {
+pub struct EsgScoresNode {
     // These are objects: { "raw": ... }
     pub(crate) total_esg: Option<RawNum<f64>>,
     pub(crate) environment_score: Option<RawNum<f64>>,

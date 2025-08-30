@@ -35,12 +35,14 @@ async fn load_with_fallback(client: &YfClient, symbol: &str) -> Result<Profile, 
 impl Profile {
     /// Loads the profile for a given symbol.
     ///
-    /// This method first attempts to fetch the profile from the `quoteSummary` API.
-    /// If that fails, it falls back to scraping the profile from the Yahoo Finance website.
+    /// This method will try to load the profile from the quote summary API first,
+    /// and fall back to scraping the quote page if the API fails.
     ///
-    /// The behavior can be controlled in `test-mode` builds using `ApiPreference`
-    /// on the `YfClientBuilder`.
-    pub async fn load(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
+    /// # Errors
+    ///
+    /// Returns `YfError` if the network request fails, the response cannot be parsed,
+    /// or the data for the symbol is not available.
+    pub async fn load(client: &YfClient, symbol: &str) -> Result<Self, YfError> {
         #[cfg(not(feature = "test-mode"))]
         {
             load_with_fallback(client, symbol).await

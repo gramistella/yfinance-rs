@@ -3,7 +3,7 @@
 use serde::Serialize;
 
 /// Represents a single row in the major holders breakdown table.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct MajorHolder {
     /// The category of the holder (e.g., "% of Shares Held by All Insider").
     pub category: String,
@@ -27,7 +27,7 @@ pub struct InstitutionalHolder {
 }
 
 /// Represents a single insider transaction.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct InsiderTransaction {
     /// The name of the insider who executed the transaction.
     pub insider: String,
@@ -46,7 +46,7 @@ pub struct InsiderTransaction {
 }
 
 /// Represents a single insider on the company's roster.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct InsiderRosterHolder {
     /// The name of the insider.
     pub name: String,

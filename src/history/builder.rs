@@ -18,6 +18,7 @@ use fetch::fetch_chart;
 /// This builder provides fine-grained control over the parameters for a historical
 /// data request, including the time range, interval, and data adjustments.
 #[derive(Clone)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct HistoryBuilder {
     #[doc(hidden)]
     pub(crate) client: YfClient,
@@ -62,12 +63,14 @@ impl HistoryBuilder {
     }
 
     /// Sets the cache mode for this specific API call.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
@@ -76,7 +79,8 @@ impl HistoryBuilder {
     /// Sets a relative time range for the request (e.g., `1y`, `6mo`).
     ///
     /// This will override any previously set period using `between()`.
-    pub fn range(mut self, range: Range) -> Self {
+    #[must_use]
+    pub const fn range(mut self, range: Range) -> Self {
         self.period = None;
         self.range = Some(range);
         self
@@ -85,7 +89,8 @@ impl HistoryBuilder {
     /// Sets an absolute time period for the request using start and end timestamps.
     ///
     /// This will override any previously set range using `range()`.
-    pub fn between(
+    #[must_use]
+    pub const fn between(
         mut self,
         start: chrono::DateTime<chrono::Utc>,
         end: chrono::DateTime<chrono::Utc>,
@@ -96,25 +101,29 @@ impl HistoryBuilder {
     }
 
     /// Sets the time interval for each data point (candle).
-    pub fn interval(mut self, interval: Interval) -> Self {
+    #[must_use]
+    pub const fn interval(mut self, interval: Interval) -> Self {
         self.interval = interval;
         self
     }
 
     /// Sets whether to automatically adjust prices for splits and dividends. (Default: `true`)
-    pub fn auto_adjust(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn auto_adjust(mut self, yes: bool) -> Self {
         self.auto_adjust = yes;
         self
     }
 
     /// Sets whether to include pre-market and post-market data for intraday intervals. (Default: `false`)
-    pub fn prepost(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn prepost(mut self, yes: bool) -> Self {
         self.include_prepost = yes;
         self
     }
 
     /// Sets whether to include corporate actions (dividends and splits) in the response. (Default: `true`)
-    pub fn actions(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn actions(mut self, yes: bool) -> Self {
         self.include_actions = yes;
         self
     }
@@ -123,18 +132,28 @@ impl HistoryBuilder {
     ///
     /// If `true`, missing values are represented as `f64::NAN`. If `false`, rows with any missing
     /// OHLC values are dropped.
-    pub fn keepna(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn keepna(mut self, yes: bool) -> Self {
         self.keepna = yes;
         self
     }
 
     /// Executes the request and returns only the price candles.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn fetch(self) -> Result<Vec<Candle>, YfError> {
         let resp = self.fetch_full().await?;
         Ok(resp.candles)
     }
 
     /// Executes the request and returns the full response, including candles, actions, and metadata.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails, the API returns an error,
+    /// or the response cannot be parsed.
     pub async fn fetch_full(self) -> Result<HistoryResponse, YfError> {
         // 1) Fetch and parse the /chart payload into owned blocks
         let fetched = fetch_chart(
@@ -151,7 +170,7 @@ impl HistoryBuilder {
         .await?;
 
         // 2) Corporate actions & split ratios
-        let (mut actions_out, split_events) = extract_actions(&fetched.events);
+        let (mut actions_out, split_events) = extract_actions(fetched.events.as_ref());
 
         // 3) Cumulative split factors after each bar
         let cum_split_after = cumulative_split_after(&fetched.ts, &split_events);
@@ -174,7 +193,7 @@ impl HistoryBuilder {
         });
 
         // 5) Map metadata
-        let meta_out = map_meta(&fetched.meta);
+        let meta_out = map_meta(fetched.meta.as_ref());
 
         Ok(HistoryResponse {
             candles,
@@ -188,7 +207,7 @@ impl HistoryBuilder {
 
 /* --- tiny private helper --- */
 
-fn map_meta(m: &Option<MetaNode>) -> Option<HistoryMeta> {
+fn map_meta(m: Option<&MetaNode>) -> Option<HistoryMeta> {
     m.as_ref().map(|mm| HistoryMeta {
         timezone: mm.timezone.clone(),
         gmtoffset: mm.gmtoffset,

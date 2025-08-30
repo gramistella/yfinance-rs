@@ -1,8 +1,8 @@
-use serde::Deserialize;
 use crate::core::wire::{RawDate, RawNum};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub(crate) struct V10Result {
+pub struct V10Result {
     #[serde(rename = "institutionOwnership")]
     pub(crate) institution_ownership: Option<OwnershipNode>,
     #[serde(rename = "fundOwnership")]
@@ -18,13 +18,13 @@ pub(crate) struct V10Result {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct OwnershipNode {
+pub struct OwnershipNode {
     #[serde(rename = "ownershipList")]
     pub(crate) ownership_list: Option<Vec<InstitutionalHolderNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct InstitutionalHolderNode {
+pub struct InstitutionalHolderNode {
     pub(crate) organization: Option<String>,
     #[serde(rename = "position")]
     pub(crate) shares: Option<RawNum<u64>>,
@@ -36,7 +36,7 @@ pub(crate) struct InstitutionalHolderNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct MajorHoldersBreakdownNode {
+pub struct MajorHoldersBreakdownNode {
     #[serde(rename = "insidersPercentHeld")]
     pub(crate) insiders_percent_held: Option<RawNum<f64>>,
     #[serde(rename = "institutionsPercentHeld")]
@@ -48,12 +48,12 @@ pub(crate) struct MajorHoldersBreakdownNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct InsiderTransactionsNode {
+pub struct InsiderTransactionsNode {
     pub(crate) transactions: Option<Vec<InsiderTransactionNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct InsiderTransactionNode {
+pub struct InsiderTransactionNode {
     #[serde(rename = "filerName")]
     pub(crate) insider: Option<String>,
     #[serde(rename = "filerRelation")]
@@ -69,12 +69,12 @@ pub(crate) struct InsiderTransactionNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct InsiderHoldersNode {
+pub struct InsiderHoldersNode {
     pub(crate) holders: Option<Vec<InsiderRosterHolderNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct InsiderRosterHolderNode {
+pub struct InsiderRosterHolderNode {
     pub(crate) name: Option<String>,
     pub(crate) relation: Option<String>,
     #[serde(rename = "transactionDescription")]
@@ -88,7 +88,7 @@ pub(crate) struct InsiderRosterHolderNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct NetSharePurchaseActivityNode {
+pub struct NetSharePurchaseActivityNode {
     pub(crate) period: Option<String>,
     #[serde(rename = "buyInfoShares")]
     pub(crate) buy_info_shares: Option<RawNum<u64>>,

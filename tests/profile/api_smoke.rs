@@ -11,7 +11,7 @@ async fn profile_api_company_happy() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "assetProfile,quoteType,fundProfile")
             .query_param("crumb", crumb);
         then.status(200)
@@ -54,7 +54,7 @@ async fn profile_api_fund_happy() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "assetProfile,quoteType,fundProfile")
             .query_param("crumb", crumb);
         then.status(200)

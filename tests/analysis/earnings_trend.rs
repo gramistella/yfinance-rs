@@ -13,7 +13,7 @@ async fn offline_earnings_trend_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "earningsTrend")
             .query_param("crumb", "crumb");
         then.status(200)

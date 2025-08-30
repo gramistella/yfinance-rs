@@ -1,9 +1,13 @@
 use chrono::{Duration, Utc};
 
 use crate::{
+    ShareCount,
     core::{
-        client::{CacheMode, RetryConfig}, wire::{from_raw, from_raw_date}, YfClient, YfError
-    }, fundamentals::wire::{TimeseriesData, TimeseriesEnvelope}, ShareCount
+        YfClient, YfError,
+        client::{CacheMode, RetryConfig},
+        wire::{from_raw, from_raw_date},
+    },
+    fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
 
 use super::fetch::fetch_modules;
@@ -35,7 +39,8 @@ pub(super) async fn income_statement(
     }
     .unwrap_or_default();
 
-    Ok(arr.into_iter()
+    Ok(arr
+        .into_iter()
         .map(|n| IncomeStatementRow {
             period_end: from_raw_date(n.end_date).unwrap_or(0),
             total_revenue: from_raw(n.total_revenue),
@@ -69,7 +74,8 @@ pub(super) async fn balance_sheet(
     }
     .unwrap_or_default();
 
-    Ok(arr.into_iter()
+    Ok(arr
+        .into_iter()
         .map(|n| BalanceSheetRow {
             period_end: from_raw_date(n.end_date).unwrap_or(0),
             total_assets: from_raw(n.total_assets),
@@ -77,7 +83,7 @@ pub(super) async fn balance_sheet(
             total_equity: from_raw(n.total_stockholder_equity),
             cash: from_raw(n.cash),
             long_term_debt: from_raw(n.long_term_debt),
-            shares_outstanding: from_raw(n.shares_outstanding).map(|v| v as u64),
+            shares_outstanding: from_raw(n.shares_outstanding).and_then(|v| u64::try_from(v).ok()),
         })
         .collect())
 }
@@ -105,7 +111,8 @@ pub(super) async fn cashflow(
     }
     .unwrap_or_default();
 
-    Ok(arr.into_iter()
+    Ok(arr
+        .into_iter()
         .map(|n| {
             let ocf = from_raw(n.total_cash_from_operating_activities);
             let capex = from_raw(n.capital_expenditures);
@@ -143,7 +150,7 @@ pub(super) async fn earnings(
         .map(|v| {
             v.iter()
                 .map(|y| EarningsYear {
-                    year: y.date.unwrap_or(0) as i32,
+                    year: i32::try_from(y.date.unwrap_or(0)).unwrap_or(0),
                     revenue: y.revenue.as_ref().and_then(|x| x.raw),
                     earnings: y.earnings.as_ref().and_then(|x| x.raw),
                 })
@@ -249,7 +256,7 @@ pub(super) async fn shares(
             let resp = client
                 .send_with_retry(client.http().get(url.clone()), retry_override)
                 .await?;
-            let endpoint = format!("timeseries_{}", type_key);
+            let endpoint = format!("timeseries_{type_key}");
             let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
             if cache_mode != CacheMode::Bypass {
                 client.cache_put(&url, &text, None).await;
@@ -260,7 +267,7 @@ pub(super) async fn shares(
         let resp = client
             .send_with_retry(client.http().get(url.clone()), retry_override)
             .await?;
-        let endpoint = format!("timeseries_{}", type_key);
+        let endpoint = format!("timeseries_{type_key}");
         let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
         if cache_mode != CacheMode::Bypass {
             client.cache_put(&url, &text, None).await;
@@ -276,18 +283,17 @@ pub(super) async fn shares(
         .and_then(|ts| ts.result)
         .and_then(|mut v| v.pop());
 
-    let (timestamps, mut values_map) = match result_data {
-        Some(TimeseriesData {
-            timestamp: Some(ts),
-            values,
-            ..
-        }) => (ts, values),
-        _ => return Ok(vec![]),
+    let Some(TimeseriesData {
+        timestamp: Some(timestamps),
+        values: mut values_map,
+        ..
+    }) = result_data
+    else {
+        return Ok(vec![]);
     };
 
-    let values = match values_map.remove(type_key) {
-        Some(v) => v,
-        None => return Ok(vec![]),
+    let Some(values) = values_map.remove(type_key) else {
+        return Ok(vec![]);
     };
 
     let counts = timestamps

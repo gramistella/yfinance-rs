@@ -29,18 +29,24 @@ impl EsgBuilder {
     }
 
     /// Sets the cache mode for this specific API call.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// Fetches the ESG scores and involvement data for the symbol.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn fetch(self) -> Result<EsgScores, YfError> {
         api::fetch_esg_scores(
             &self.client,

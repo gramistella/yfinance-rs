@@ -99,7 +99,7 @@ pub struct EarningsQuarterEps {
 }
 
 /// Corporate calendar events, like earnings and dividend dates.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Calendar {
     /// A list of upcoming earnings announcement dates as Unix timestamps.
     pub earnings_dates: Vec<i64>,
@@ -110,7 +110,7 @@ pub struct Calendar {
 }
 
 /// Represents a single data point in a time series of shares outstanding.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ShareCount {
     /// The timestamp for the data point.
     pub date: i64,

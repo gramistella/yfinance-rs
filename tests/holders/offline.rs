@@ -10,7 +10,7 @@ fn setup_holders_mock<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> {
     let modules = "institutionOwnership,fundOwnership,majorHoldersBreakdown,insiderTransactions,insiderHolders,netSharePurchaseActivity";
     server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", symbol))
+            .path(format!("/v10/finance/quoteSummary/{symbol}"))
             .query_param("modules", modules)
             .query_param("crumb", "crumb");
         then.status(200)

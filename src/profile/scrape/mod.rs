@@ -8,11 +8,12 @@ use super::{Address, Company, Fund, Profile};
 #[cfg(any(debug_assertions, feature = "debug-dumps"))]
 use crate::profile::debug::{debug_dump_extracted_json, debug_dump_html};
 
-pub(crate) mod extract;
-pub(crate) mod utils;
+pub mod extract;
+pub mod utils;
 use extract::extract_bootstrap_json;
 
-pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
+#[allow(clippy::too_many_lines)]
+pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
 
     let mut url = client.base_quote().join(symbol)?;
@@ -61,12 +62,12 @@ pub(crate) async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<
     let name = store
         .quote_type
         .as_ref()
-        .and_then(|qt| qt.long_name.clone().or(qt.short_name.clone()))
+        .and_then(|qt| qt.long_name.clone().or_else(|| qt.short_name.clone()))
         .or_else(|| {
             store
                 .price
                 .as_ref()
-                .and_then(|p| p.long_name.clone().or(p.short_name.clone()))
+                .and_then(|p| p.long_name.clone().or_else(|| p.short_name.clone()))
         })
         .unwrap_or_else(|| symbol.to_string());
 

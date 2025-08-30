@@ -33,18 +33,24 @@ impl AnalysisBuilder {
     }
 
     /// Sets the cache mode for this specific API call.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// Fetches the analyst recommendation trend over time.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails or the data is malformed.
     pub async fn recommendations(self) -> Result<Vec<RecommendationRow>, YfError> {
         api::recommendation_trend(
             &self.client,
@@ -56,6 +62,10 @@ impl AnalysisBuilder {
     }
 
     /// Fetches a summary of the latest analyst recommendations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails or the data is malformed.
     pub async fn recommendations_summary(self) -> Result<RecommendationSummary, YfError> {
         api::recommendation_summary(
             &self.client,
@@ -67,6 +77,10 @@ impl AnalysisBuilder {
     }
 
     /// Fetches the history of analyst upgrades and downgrades for the symbol.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails or the data is malformed.
     pub async fn upgrades_downgrades(self) -> Result<Vec<UpgradeDowngradeRow>, YfError> {
         api::upgrades_downgrades(
             &self.client,
@@ -78,6 +92,10 @@ impl AnalysisBuilder {
     }
 
     /// Fetches the analyst price target summary.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails or the data is malformed.
     pub async fn analyst_price_target(self) -> Result<PriceTarget, YfError> {
         api::analyst_price_target(
             &self.client,
@@ -91,6 +109,10 @@ impl AnalysisBuilder {
     /// Fetches earnings trend data.
     ///
     /// This includes earnings estimates, revenue estimates, EPS trends, and EPS revisions.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails or the data is malformed.
     pub async fn earnings_trend(self) -> Result<Vec<EarningsTrendRow>, YfError> {
         api::earnings_trend(
             &self.client,

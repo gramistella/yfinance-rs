@@ -6,7 +6,7 @@ use crate::{
     },
 };
 
-pub(crate) async fn fetch_quote(
+pub async fn fetch_quote(
     client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
@@ -17,7 +17,7 @@ pub(crate) async fn fetch_quote(
 
     let result = results
         .pop()
-        .ok_or_else(|| YfError::Data(format!("no quote result found for symbol {}", symbol)))?;
+        .ok_or_else(|| YfError::Data(format!("no quote result found for symbol {symbol}")))?;
 
     Ok(Quote {
         symbol: result.symbol.unwrap_or_else(|| symbol.to_string()),

@@ -9,23 +9,23 @@ use serde::Deserialize;
 use crate::profile::debug::debug_dump_api;
 
 #[derive(Deserialize)]
-pub(crate) struct V10Envelope {
+pub struct V10Envelope {
     #[serde(rename = "quoteSummary")]
     pub(crate) quote_summary: Option<V10QuoteSummary>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct V10QuoteSummary {
+pub struct V10QuoteSummary {
     pub(crate) result: Option<Vec<serde_json::Value>>,
     pub(crate) error: Option<V10Error>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct V10Error {
+pub struct V10Error {
     pub(crate) description: String,
 }
 
-pub(crate) async fn fetch(
+pub async fn fetch(
     client: &YfClient,
     symbol: &str,
     modules: &str,
@@ -93,10 +93,7 @@ pub(crate) async fn fetch(
             let desc = error.description.to_ascii_lowercase();
             if desc.contains("invalid crumb") && attempt == 0 {
                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                    eprintln!(
-                        "YF_DEBUG: Invalid crumb in {}; refreshing and retrying.",
-                        caller
-                    );
+                    eprintln!("YF_DEBUG: Invalid crumb in {caller}; refreshing and retrying.");
                 }
                 client.clear_crumb().await;
                 continue;
@@ -112,7 +109,7 @@ pub(crate) async fn fetch(
     )))
 }
 
-pub(crate) async fn fetch_module_result<T>(
+pub async fn fetch_module_result<T>(
     client: &YfClient,
     symbol: &str,
     modules: &str,

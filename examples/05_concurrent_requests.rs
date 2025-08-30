@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Searching for SPY and getting its ticker ---");
-    let search_results = SearchBuilder::new(client.clone(), "SPY")?.fetch().await?;
+    let search_results = SearchBuilder::new(client.clone(), "SPY").fetch().await?;
     if let Some(sp500_quote) = search_results.quotes.iter().find(|q| q.symbol == "SPY") {
         println!(
             "Found: {} ({})",

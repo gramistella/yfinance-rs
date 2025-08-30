@@ -34,12 +34,14 @@ impl FundamentalsBuilder {
     }
 
     /// Sets the cache mode for this specific API call.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
@@ -48,6 +50,10 @@ impl FundamentalsBuilder {
     /// Fetches the income statement.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn income_statement(
         &self,
         quarterly: bool,
@@ -65,6 +71,10 @@ impl FundamentalsBuilder {
     /// Fetches the balance sheet.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn balance_sheet(&self, quarterly: bool) -> Result<Vec<BalanceSheetRow>, YfError> {
         api::balance_sheet(
             &self.client,
@@ -79,6 +89,10 @@ impl FundamentalsBuilder {
     /// Fetches the cash flow statement.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn cashflow(&self, quarterly: bool) -> Result<Vec<CashflowRow>, YfError> {
         api::cashflow(
             &self.client,
@@ -91,6 +105,10 @@ impl FundamentalsBuilder {
     }
 
     /// Fetches earnings history and estimates.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn earnings(&self) -> Result<Earnings, YfError> {
         api::earnings(
             &self.client,
@@ -102,6 +120,10 @@ impl FundamentalsBuilder {
     }
 
     /// Fetches corporate calendar events like earnings dates.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn calendar(&self) -> Result<Calendar, YfError> {
         api::calendar(
             &self.client,
@@ -115,6 +137,10 @@ impl FundamentalsBuilder {
     /// Fetches the historical number of shares outstanding.
     ///
     /// If `quarterly` is true, fetches quarterly data, otherwise annual data is fetched.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn shares(&self, quarterly: bool) -> Result<Vec<ShareCount>, YfError> {
         api::shares(
             &self.client,

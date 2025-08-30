@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 /// Represents a single news article for a ticker.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct NewsArticle {
     /// A unique identifier for the article.
     pub uuid: String,

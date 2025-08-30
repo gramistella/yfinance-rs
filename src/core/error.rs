@@ -39,6 +39,6 @@ pub enum YfError {
 
 impl From<tokio_tungstenite::tungstenite::Error> for YfError {
     fn from(e: tokio_tungstenite::tungstenite::Error) -> Self {
-        YfError::Websocket(Box::new(e))
+        Self::Websocket(Box::new(e))
     }
 }

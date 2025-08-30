@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 /// Represents a physical address for a company.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Address {
     /// Street address line 1.
     pub street1: Option<String>,
@@ -18,7 +18,7 @@ pub struct Address {
 }
 
 /// Represents the profile of a publicly traded company.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Company {
     /// The full name of the company.
     pub name: String,
@@ -37,7 +37,7 @@ pub struct Company {
 }
 
 /// Represents the profile of a fund (e.g., an ETF).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fund {
     /// The full name of the fund.
     pub name: String,
@@ -50,7 +50,7 @@ pub struct Fund {
 }
 
 /// An enum representing either a `Company` or a `Fund` profile.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Profile {
     /// The profile for a company stock.
     Company(Company),
@@ -60,10 +60,11 @@ pub enum Profile {
 
 impl Profile {
     /// Returns the ISIN for the company or fund, if available.
+    #[must_use]
     pub fn isin(&self) -> Option<&str> {
         match self {
-            Profile::Company(c) => c.isin.as_deref(),
-            Profile::Fund(f) => f.isin.as_deref(),
+            Self::Company(c) => c.isin.as_deref(),
+            Self::Fund(f) => f.isin.as_deref(),
         }
     }
 }

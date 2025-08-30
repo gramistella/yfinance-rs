@@ -22,7 +22,6 @@ async fn stream_websocket_fallback_to_polling_offline() {
         .unwrap();
 
     let builder = yfinance_rs::StreamBuilder::new(&client)
-        .unwrap()
         .symbols(["AAPL"])
         .method(StreamMethod::WebsocketWithFallback)
         .interval(Duration::from_millis(40));
@@ -64,7 +63,6 @@ async fn stream_polling_explicitly_offline() {
         .unwrap();
 
     let builder = yfinance_rs::StreamBuilder::new(&client)
-        .unwrap()
         .symbols(["MSFT"])
         .method(StreamMethod::Polling)
         .interval(Duration::from_millis(50));

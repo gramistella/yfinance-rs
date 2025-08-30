@@ -5,7 +5,7 @@ use crate::core::wire::RawNum;
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
 #[derive(Deserialize)]
-pub(crate) struct V10Result {
+pub struct V10Result {
     #[serde(rename = "recommendationTrend")]
     pub(crate) recommendation_trend: Option<RecommendationTrendNode>,
 
@@ -25,12 +25,12 @@ pub(crate) struct V10Result {
 /* --- recommendation trend --- */
 
 #[derive(Deserialize)]
-pub(crate) struct RecommendationTrendNode {
+pub struct RecommendationTrendNode {
     pub(crate) trend: Option<Vec<RecommendationNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct RecommendationNode {
+pub struct RecommendationNode {
     pub(crate) period: Option<String>,
 
     #[serde(rename = "strongBuy")]
@@ -46,7 +46,7 @@ pub(crate) struct RecommendationNode {
 /* --- recommendation mean / key --- */
 
 #[derive(Deserialize)]
-pub(crate) struct RecommendationMeanNode {
+pub struct RecommendationMeanNode {
     #[serde(rename = "recommendationMean")]
     pub(crate) recommendation_mean: Option<RawNum<f64>>,
 
@@ -54,16 +54,15 @@ pub(crate) struct RecommendationMeanNode {
     pub(crate) recommendation_key: Option<String>,
 }
 
-
 /* --- upgrades / downgrades --- */
 
 #[derive(Deserialize)]
-pub(crate) struct UpgradeDowngradeHistoryNode {
+pub struct UpgradeDowngradeHistoryNode {
     pub(crate) history: Option<Vec<UpgradeNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct UpgradeNode {
+pub struct UpgradeNode {
     #[serde(rename = "epochGradeDate")]
     pub(crate) epoch_grade_date: Option<i64>,
 
@@ -83,7 +82,7 @@ pub(crate) struct UpgradeNode {
 /* --- financial data (price targets) --- */
 
 #[derive(Deserialize)]
-pub(crate) struct FinancialDataNode {
+pub struct FinancialDataNode {
     #[serde(rename = "targetMeanPrice")]
     pub(crate) target_mean_price: Option<RawNum<f64>>,
     #[serde(rename = "targetHighPrice")]
@@ -95,12 +94,12 @@ pub(crate) struct FinancialDataNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EarningsTrendNode {
+pub struct EarningsTrendNode {
     pub(crate) trend: Option<Vec<EarningsTrendItemNode>>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EarningsTrendItemNode {
+pub struct EarningsTrendItemNode {
     pub(crate) period: Option<String>,
     pub(crate) growth: Option<RawNum<f64>>,
     #[serde(rename = "earningsEstimate")]
@@ -113,9 +112,8 @@ pub(crate) struct EarningsTrendItemNode {
     pub(crate) eps_revisions: Option<EpsRevisionsNode>,
 }
 
-
 #[derive(Deserialize)]
-pub(crate) struct EarningsEstimateNode {
+pub struct EarningsEstimateNode {
     pub(crate) avg: Option<RawNum<f64>>,
     pub(crate) low: Option<RawNum<f64>>,
     pub(crate) high: Option<RawNum<f64>>,
@@ -126,9 +124,8 @@ pub(crate) struct EarningsEstimateNode {
     pub(crate) growth: Option<RawNum<f64>>,
 }
 
-
 #[derive(Deserialize)]
-pub(crate) struct RevenueEstimateNode {
+pub struct RevenueEstimateNode {
     pub(crate) avg: Option<RawNum<i64>>,
     pub(crate) low: Option<RawNum<i64>>,
     pub(crate) high: Option<RawNum<i64>>,
@@ -140,7 +137,7 @@ pub(crate) struct RevenueEstimateNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EpsTrendNode {
+pub struct EpsTrendNode {
     pub(crate) current: Option<RawNum<f64>>,
     #[serde(rename = "7daysAgo")]
     pub(crate) seven_days_ago: Option<RawNum<f64>>,
@@ -152,9 +149,9 @@ pub(crate) struct EpsTrendNode {
     pub(crate) ninety_days_ago: Option<RawNum<f64>>,
 }
 
-
 #[derive(Deserialize)]
-pub(crate) struct EpsRevisionsNode {
+#[allow(clippy::struct_field_names)]
+pub struct EpsRevisionsNode {
     #[serde(rename = "upLast7days")]
     pub(crate) up_last_7_days: Option<RawNum<f64>>,
     #[serde(rename = "upLast30days")]
@@ -164,4 +161,3 @@ pub(crate) struct EpsRevisionsNode {
     #[serde(rename = "downLast30days")]
     pub(crate) down_last_30_days: Option<RawNum<f64>>,
 }
-

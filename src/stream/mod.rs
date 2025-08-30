@@ -84,10 +84,10 @@ impl StreamHandle {
 /// Defines the transport method for streaming quote data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum StreamMethod {
-    /// Attempt to use WebSockets, and fall back to polling if the connection fails. (Default)
+    /// Attempt to use `WebSockets`, and fall back to polling if the connection fails. (Default)
     #[default]
     WebsocketWithFallback,
-    /// Use WebSockets only. This is the preferred method for real-time data. The stream will fail if a WebSocket connection cannot be established.
+    /// Use `WebSockets` only. This is the preferred method for real-time data. The stream will fail if a WebSocket connection cannot be established.
     Websocket,
     /// Use polling over HTTP. This is a less efficient fallback option.
     Polling,
@@ -105,64 +105,76 @@ pub struct StreamBuilder {
 
 impl StreamBuilder {
     /// Creates a new `StreamBuilder`.
-    pub fn new(client: &YfClient) -> Result<Self, YfError> {
-        Ok(Self {
+    #[must_use]
+    pub fn new(client: &YfClient) -> Self {
+        Self {
             client: client.clone(),
             symbols: Vec::new(),
             cfg: StreamConfig::default(),
             method: StreamMethod::default(),
             cache_mode: CacheMode::Use,
             retry_override: None,
-        })
+        }
     }
 
     /// Sets the cache mode for this specific API call (only affects polling mode).
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call (only affects polling mode).
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// Sets the symbols to stream.
+    #[must_use]
     pub fn symbols<I, S>(mut self, syms: I) -> Self
     where
         I: IntoIterator<Item = S>,
         S: Into<String>,
     {
-        self.symbols = syms.into_iter().map(|s| s.into()).collect();
+        self.symbols = syms.into_iter().map(std::convert::Into::into).collect();
         self
     }
 
     /// Adds a single symbol to the stream.
+    #[must_use]
     pub fn add_symbol(mut self, sym: impl Into<String>) -> Self {
         self.symbols.push(sym.into());
         self
     }
 
     /// Sets the streaming transport method.
-    pub fn method(mut self, method: StreamMethod) -> Self {
+    #[must_use]
+    pub const fn method(mut self, method: StreamMethod) -> Self {
         self.method = method;
         self
     }
 
     /// Sets the polling interval. (Only used for `Polling` and `WebsocketWithFallback` methods).
-    pub fn interval(mut self, dur: Duration) -> Self {
+    #[must_use]
+    pub const fn interval(mut self, dur: Duration) -> Self {
         self.cfg.interval = dur;
         self
     }
 
     /// If `true`, only emit updates when the price changes. (Only used for `Polling` method).
-    pub fn diff_only(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn diff_only(mut self, yes: bool) -> Self {
         self.cfg.diff_only = yes;
         self
     }
 
     /// Starts the stream, returning a handle to control it and a channel receiver for quote updates.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if no symbols have been added to the builder.
     pub fn start(
         self,
     ) -> Result<(StreamHandle, tokio::sync::mpsc::Receiver<QuoteUpdate>), crate::core::YfError>
@@ -198,13 +210,9 @@ impl StreamBuilder {
                         }
                     }
                     StreamMethod::WebsocketWithFallback => {
-                        if let Err(e) = run_websocket_stream(
-                            &client,
-                            symbols.clone(),
-                            tx.clone(),
-                            &mut stop_rx,
-                        )
-                        .await
+                        if let Err(e) =
+                            run_websocket_stream(&client, symbols.clone(), tx.clone(), &mut stop_rx)
+                                .await
                         {
                             if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
                                 eprintln!(
@@ -334,8 +342,8 @@ async fn run_websocket_stream(
                                 Ok(ticker) => {
                                     let update = QuoteUpdate {
                                         symbol: ticker.id,
-                                        last_price: Some(ticker.price as f64),
-                                        previous_close: Some(ticker.previous_close as f64),
+                                        last_price: Some(f64::from(ticker.price)),
+                                        previous_close: Some(f64::from(ticker.previous_close)),
                                         currency: Some(ticker.currency),
                                         ts: ticker.time,
                                     };
@@ -351,10 +359,7 @@ async fn run_websocket_stream(
                             }
                         }
                     }
-                    Some(Ok(WsMessage::Ping(_))) => { /* tungstenite handles pongs */ }
-                    Some(Ok(WsMessage::Pong(_))) => { /* ignore */ }
-                    Some(Ok(WsMessage::Close(_))) => { break; }
-                    Some(Ok(_)) => { /* catch-all for variants like Frame(_) */ }
+                    Some(Ok(WsMessage::Ping(_) | WsMessage::Pong(_) | _)) => { /* catch-all for variants like Frame(_) */ }
                     Some(Err(e)) => return Err(e.into()),
                     None => break,
                 }
@@ -397,8 +402,8 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
     let ticker = wire_ws::PricingData::decode(&*decoded)?;
     Ok(QuoteUpdate {
         symbol: ticker.id,
-        last_price: Some(ticker.price as f64),
-        previous_close: Some(ticker.previous_close as f64),
+        last_price: Some(f64::from(ticker.price)),
+        previous_close: Some(f64::from(ticker.previous_close)),
         currency: Some(ticker.currency),
         ts: ticker.time,
     })

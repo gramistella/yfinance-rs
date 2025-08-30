@@ -1,7 +1,9 @@
 use crate::{
     analysis::model::EarningsTrendRow,
     core::{
-        client::{CacheMode, RetryConfig}, wire::{from_raw, from_raw_u32_round}, YfClient, YfError
+        YfClient, YfError,
+        client::{CacheMode, RetryConfig},
+        wire::{from_raw, from_raw_u32_round},
     },
 };
 
@@ -67,27 +69,23 @@ pub(super) async fn recommendation_summary(
 
     let latest = trend.first();
 
-    let (latest_period, sb, b, h, s, ss) = match latest {
-        Some(t) => (
+    let (latest_period, sb, b, h, s, ss) = latest.map_or((None, 0, 0, 0, 0, 0), |t| {
+        (
             t.period.clone(),
             t.strong_buy.unwrap_or(0),
             t.buy.unwrap_or(0),
             t.hold.unwrap_or(0),
             t.sell.unwrap_or(0),
             t.strong_sell.unwrap_or(0),
-        ),
-        None => (None, 0, 0, 0, 0, 0),
-    };
+        )
+    });
 
-    let (mean, mean_key) = root
-        .recommendation_mean
-        .map(|m| {
-            (
-                m.recommendation_mean.and_then(|r| r.raw),
-                m.recommendation_key,
-            )
-        })
-        .unwrap_or((None, None));
+    let (mean, mean_key) = root.recommendation_mean.map_or((None, None), |m| {
+        (
+            m.recommendation_mean.and_then(|r| r.raw),
+            m.recommendation_key,
+        )
+    });
 
     Ok(RecommendationSummary {
         latest_period,
@@ -155,6 +153,7 @@ pub(super) async fn analyst_price_target(
     })
 }
 
+#[allow(clippy::too_many_lines)]
 pub(super) async fn earnings_trend(
     client: &YfClient,
     symbol: &str,
@@ -178,7 +177,8 @@ pub(super) async fn earnings_trend(
                 earnings_estimate_year_ago_eps,
                 earnings_estimate_num_analysts,
                 earnings_estimate_growth,
-            ) = n.earnings_estimate
+            ) = n
+                .earnings_estimate
                 .map(|e| {
                     (
                         from_raw(e.avg),
@@ -198,7 +198,8 @@ pub(super) async fn earnings_trend(
                 revenue_estimate_year_ago_revenue,
                 revenue_estimate_num_analysts,
                 revenue_estimate_growth,
-            ) = n.revenue_estimate
+            ) = n
+                .revenue_estimate
                 .map(|e| {
                     (
                         from_raw(e.avg),
@@ -217,7 +218,8 @@ pub(super) async fn earnings_trend(
                 eps_trend_30_days_ago,
                 eps_trend_60_days_ago,
                 eps_trend_90_days_ago,
-            ) = n.eps_trend
+            ) = n
+                .eps_trend
                 .map(|e| {
                     (
                         from_raw(e.current),
@@ -234,7 +236,8 @@ pub(super) async fn earnings_trend(
                 eps_revisions_up_last_30_days,
                 eps_revisions_down_last_7_days,
                 eps_revisions_down_last_30_days,
-            ) = n.eps_revisions
+            ) = n
+                .eps_revisions
                 .map(|e| {
                     (
                         from_raw_u32_round(e.up_last_7_days),

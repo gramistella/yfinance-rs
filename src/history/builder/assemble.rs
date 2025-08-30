@@ -3,7 +3,7 @@ use crate::history::wire::QuoteBlock;
 
 use super::adjust::price_factor_for_row;
 
-pub(crate) fn assemble_candles(
+pub fn assemble_candles(
     ts: &[i64],
     q: &QuoteBlock,
     adj: &[Option<f64>],
@@ -41,9 +41,11 @@ pub(crate) fn assemble_candles(
             }
 
             let volume_adj = volume0.map(|v| {
+                #[allow(clippy::cast_precision_loss)]
                 let v_adj = (v as f64) * cum_split_after[i];
-                if v_adj.is_finite() {
-                    v_adj.round() as u64
+                if v_adj.is_finite() && v_adj >= 0.0 {
+                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                    (v_adj.round() as u64)
                 } else {
                     v
                 }

@@ -10,7 +10,7 @@ fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
     let env: V1SearchEnvelope =
         serde_json::from_str(body).map_err(|e| YfError::Data(format!("search json parse: {e}")))?;
 
-    let count = env.count.map(|c| c as u32);
+    let count = env.count.and_then(|c| u32::try_from(c).ok());
     let quotes = env.quotes.unwrap_or_default();
 
     let out = quotes
@@ -31,9 +31,13 @@ fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
 
 /* ---------------- Public API ---------------- */
 
-/// A convenience function to search for tickers with default settings (quotes only).
+/// Searches for symbols matching a query.
+///
+/// # Errors
+///
+/// Returns `YfError` if the network request fails or the response cannot be parsed.
 pub async fn search(client: YfClient, query: &str) -> Result<SearchResponse, YfError> {
-    SearchBuilder::new(client, query)?.fetch().await
+    SearchBuilder::new(client, query).fetch().await
 }
 
 /// A builder for searching for tickers and other assets on Yahoo Finance.
@@ -53,10 +57,15 @@ pub struct SearchBuilder {
 
 impl SearchBuilder {
     /// Creates a new `SearchBuilder` for a given search query.
-    pub fn new(client: YfClient, query: impl Into<String>) -> Result<Self, YfError> {
-        Ok(Self {
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the hardcoded `DEFAULT_BASE_SEARCH_V1` constant
+    /// is not a valid URL. This indicates a bug within the crate itself.
+    pub fn new(client: YfClient, query: impl Into<String>) -> Self {
+        Self {
             client,
-            base: Url::parse(DEFAULT_BASE_SEARCH_V1)?,
+            base: Url::parse(DEFAULT_BASE_SEARCH_V1).unwrap(),
             query: query.into(),
             quotes_count: Some(10),
             news_count: Some(0),
@@ -65,58 +74,71 @@ impl SearchBuilder {
             region: None,
             cache_mode: CacheMode::Use,
             retry_override: None,
-        })
+        }
     }
 
     /// Sets the cache mode for this specific API call.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// (For testing) Overrides the base URL for the search API.
+    #[must_use]
     pub fn search_base(mut self, base: Url) -> Self {
         self.base = base;
         self
     }
 
     /// Sets the maximum number of quote results to return.
-    pub fn quotes_count(mut self, n: u32) -> Self {
+    #[must_use]
+    pub const fn quotes_count(mut self, n: u32) -> Self {
         self.quotes_count = Some(n);
         self
     }
 
     /// Sets the maximum number of news results to return.
-    pub fn news_count(mut self, n: u32) -> Self {
+    #[must_use]
+    pub const fn news_count(mut self, n: u32) -> Self {
         self.news_count = Some(n);
         self
     }
 
     /// Sets the maximum number of screener list results to return.
-    pub fn lists_count(mut self, n: u32) -> Self {
+    #[must_use]
+    pub const fn lists_count(mut self, n: u32) -> Self {
         self.lists_count = Some(n);
         self
     }
 
     /// Sets the language for the search results.
+    #[must_use]
     pub fn lang(mut self, s: impl Into<String>) -> Self {
         self.lang = Some(s.into());
         self
     }
 
     /// Sets the region for the search results.
+    #[must_use]
     pub fn region(mut self, s: impl Into<String>) -> Self {
         self.region = Some(s.into());
         self
     }
 
     /// Executes the search request.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if the network request fails, the API returns a
+    /// non-successful status code, or the response body cannot be parsed as a valid search result.
     pub async fn fetch(self) -> Result<SearchResponse, crate::core::YfError> {
         let mut url = self.base.clone();
         {
@@ -227,7 +249,7 @@ impl SearchBuilder {
 /* ---------------- Types returned by this module ---------------- */
 
 /// The response from a search query.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct SearchResponse {
     /// The total number of quote results found.
     pub count: Option<u32>,
@@ -236,7 +258,7 @@ pub struct SearchResponse {
 }
 
 /// A quote result from a search query.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct SearchQuote {
     /// The ticker symbol.
     pub symbol: String,

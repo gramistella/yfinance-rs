@@ -11,7 +11,7 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
     // first call with stale crumb -> Invalid Crumb
     let first = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "earnings")
             .query_param("crumb", "stale");
         then.status(200)
@@ -35,7 +35,7 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
     // second call with fresh crumb returns minimal earnings payload
     let ok = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "earnings")
             .query_param("crumb", "fresh");
         then.status(200)

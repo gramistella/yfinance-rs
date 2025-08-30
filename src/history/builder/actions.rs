@@ -1,17 +1,18 @@
 use crate::core::models::Action;
 use crate::history::wire::Events;
 
-pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64, f64)>) {
+#[allow(clippy::cast_possible_truncation)]
+pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>) {
     let mut out: Vec<Action> = Vec::new();
     let mut split_events: Vec<(i64, f64)> = Vec::new();
 
-    let Some(ev) = events.as_ref() else {
+    let Some(ev) = events else {
         return (out, split_events);
     };
 
     if let Some(divs) = ev.dividends.as_ref() {
         for (k, d) in divs {
-            let ts = k.parse::<i64>().unwrap_or(d.date.unwrap_or(0));
+            let ts = k.parse::<i64>().unwrap_or_else(|_| d.date.unwrap_or(0));
             if let Some(amount) = d.amount {
                 out.push(Action::Dividend { ts, amount });
             }
@@ -20,7 +21,7 @@ pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64
 
     if let Some(gains) = ev.capital_gains.as_ref() {
         for (k, g) in gains {
-            let ts = k.parse::<i64>().unwrap_or(g.date.unwrap_or(0));
+            let ts = k.parse::<i64>().unwrap_or_else(|_| g.date.unwrap_or(0));
             if let Some(gain) = g.amount {
                 out.push(Action::CapitalGain { ts, gain });
             }
@@ -29,7 +30,7 @@ pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64
 
     if let Some(splits) = ev.splits.as_ref() {
         for (k, s) in splits {
-            let ts = k.parse::<i64>().unwrap_or(s.date.unwrap_or(0));
+            let ts = k.parse::<i64>().unwrap_or_else(|_| s.date.unwrap_or(0));
             let (num, den) = if let (Some(n), Some(d)) = (s.numerator, s.denominator) {
                 (n as u32, d as u32)
             } else if let Some(r) = s.split_ratio.as_deref() {
@@ -50,7 +51,7 @@ pub(crate) fn extract_actions(events: &Option<Events>) -> (Vec<Action>, Vec<(i64
             let ratio = if den == 0 {
                 1.0
             } else {
-                (num as f64) / (den as f64)
+                f64::from(num) / f64::from(den)
             };
             split_events.push((ts, ratio));
         }

@@ -24,7 +24,7 @@ async fn upgrades_downgrades_are_sorted_by_ts() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "upgradeDowngradeHistory")
             .query_param("crumb", "crumb");
         then.status(200)

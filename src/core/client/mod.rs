@@ -91,13 +91,14 @@ impl Default for YfClient {
 
 impl YfClient {
     /// Creates a new builder for a `YfClient`.
+    #[must_use]
     pub fn builder() -> YfClientBuilder {
         YfClientBuilder::default()
     }
 
     /* -------- internal getters used by other modules -------- */
 
-    pub(crate) fn http(&self) -> &Client {
+    pub(crate) const fn http(&self) -> &Client {
         &self.http
     }
 
@@ -105,56 +106,56 @@ impl YfClient {
         &self.user_agent
     }
 
-    pub(crate) fn base_chart(&self) -> &Url {
+    pub(crate) const fn base_chart(&self) -> &Url {
         &self.base_chart
     }
 
-    pub(crate) fn base_quote(&self) -> &Url {
+    pub(crate) const fn base_quote(&self) -> &Url {
         &self.base_quote
     }
-    pub(crate) fn base_quote_api(&self) -> &Url {
+    pub(crate) const fn base_quote_api(&self) -> &Url {
         &self.base_quote_api
     }
 
-    pub(crate) fn base_quote_v7(&self) -> &Url {
+    pub(crate) const fn base_quote_v7(&self) -> &Url {
         &self.base_quote_v7
     }
 
-    pub(crate) fn base_options_v7(&self) -> &Url {
+    pub(crate) const fn base_options_v7(&self) -> &Url {
         &self.base_options_v7
     }
 
-    pub(crate) fn base_stream(&self) -> &Url {
+    pub(crate) const fn base_stream(&self) -> &Url {
         &self.base_stream
     }
 
-    pub(crate) fn base_news(&self) -> &Url {
+    pub(crate) const fn base_news(&self) -> &Url {
         &self.base_news
     }
 
-    pub(crate) fn base_insider_search(&self) -> &Url {
+    pub(crate) const fn base_insider_search(&self) -> &Url {
         &self.base_insider_search
     }
 
-    pub(crate) fn base_timeseries(&self) -> &Url {
+    pub(crate) const fn base_timeseries(&self) -> &Url {
         &self.base_timeseries
     }
 
     #[cfg(feature = "test-mode")]
-    pub(crate) fn api_preference(&self) -> ApiPreference {
+    pub(crate) const fn api_preference(&self) -> ApiPreference {
         self.api_preference
     }
 
     /// Returns `true` if in-memory caching is enabled for this client.
-    pub fn cache_enabled(&self) -> bool {
+    #[must_use]
+    pub const fn cache_enabled(&self) -> bool {
         self.cache.is_some()
     }
 
     pub(crate) async fn cache_get(&self, url: &Url) -> Option<String> {
         let store = self.cache.as_ref()?;
         let key = url.as_str().to_string();
-        let guard = store.map.read().await;
-        if let Some(entry) = guard.get(&key)
+        if let Some(entry) = store.map.read().await.get(&key)
             && Instant::now() <= entry.expires_at
         {
             return Some(entry.body.clone());
@@ -213,9 +214,9 @@ impl YfClient {
 
         let mut attempt = 0u32;
         loop {
-            let res = req.try_clone().expect("cloneable request").send().await;
+            let response = req.try_clone().expect("cloneable request").send().await;
 
-            match res {
+            match response {
                 Ok(resp) => {
                     let code = resp.status().as_u16();
                     if cfg.retry_on_status.contains(&code) && attempt < cfg.max_retries {
@@ -243,7 +244,8 @@ impl YfClient {
     /// Returns a reference to the default `RetryConfig` for this client.
     ///
     /// This config is used for all requests unless overridden on a per-call basis.
-    pub fn retry_config(&self) -> &RetryConfig {
+    #[must_use]
+    pub const fn retry_config(&self) -> &RetryConfig {
         &self.retry
     }
 }
@@ -283,6 +285,7 @@ impl YfClientBuilder {
     /// Overrides the `User-Agent` header for all HTTP requests.
     ///
     /// Defaults to a common desktop browser User-Agent to avoid being blocked
+    #[must_use]
     pub fn user_agent(mut self, ua: impl Into<String>) -> Self {
         self.user_agent = Some(ua.into());
         self
@@ -290,6 +293,7 @@ impl YfClientBuilder {
 
     /// Overrides the base URL for quote HTML pages (used for scraping).
     /// Default: `https://finance.yahoo.com/quote/`.
+    #[must_use]
     pub fn base_quote(mut self, url: Url) -> Self {
         self.base_quote = Some(url);
         self
@@ -297,6 +301,7 @@ impl YfClientBuilder {
 
     /// Overrides the base URL for the chart API (used for historical data).
     /// Default: `https://query1.finance.yahoo.com/v8/finance/chart/`.
+    #[must_use]
     pub fn base_chart(mut self, url: Url) -> Self {
         self.base_chart = Some(url);
         self
@@ -304,6 +309,7 @@ impl YfClientBuilder {
 
     /// Overrides the base URL for the `quoteSummary` API (used for profiles, financials, etc.).
     /// Default: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/`.
+    #[must_use]
     pub fn base_quote_api(mut self, url: Url) -> Self {
         self.base_quote_api = Some(url);
         self
@@ -313,6 +319,7 @@ impl YfClientBuilder {
     ///
     /// This is primarily used for testing or to target a different Yahoo Finance region.
     /// If not set, a default URL (`https://query1.finance.yahoo.com/v7/finance/quote`) is used.
+    #[must_use]
     pub fn base_quote_v7(mut self, url: Url) -> Self {
         self.base_quote_v7 = Some(url);
         self
@@ -322,12 +329,14 @@ impl YfClientBuilder {
     ///
     /// This is primarily used for testing or to target a different Yahoo Finance region.
     /// If not set, a default URL (`https://query1.finance.yahoo.com/v7/finance/options/`) is used.
+    #[must_use]
     pub fn base_options_v7(mut self, url: Url) -> Self {
         self.base_options_v7 = Some(url);
         self
     }
 
     /// Sets a custom base URL for the streaming API.
+    #[must_use]
     pub fn base_stream(mut self, url: Url) -> Self {
         self.base_stream = Some(url);
         self
@@ -335,30 +344,35 @@ impl YfClientBuilder {
 
     /// Sets a custom base URL for the news endpoint.
     /// Default: `https://finance.yahoo.com`.
+    #[must_use]
     pub fn base_news(mut self, url: Url) -> Self {
         self.base_news = Some(url);
         self
     }
 
     /// Sets a custom base URL for the Business Insider search (for ISIN lookup).
+    #[must_use]
     pub fn base_insider_search(mut self, url: Url) -> Self {
         self.base_insider_search = Some(url);
         self
     }
 
     /// Sets a custom base URL for the timeseries endpoint.
+    #[must_use]
     pub fn base_timeseries(mut self, url: Url) -> Self {
         self.base_timeseries = Some(url);
         self
     }
 
     /// Overrides the URL used to acquire an initial cookie.
+    #[must_use]
     pub fn cookie_url(mut self, url: Url) -> Self {
         self.cookie_url = Some(url);
         self
     }
 
     /// Overrides the URL used to acquire a crumb for authenticated requests.
+    #[must_use]
     pub fn crumb_url(mut self, url: Url) -> Self {
         self.crumb_url = Some(url);
         self
@@ -367,12 +381,14 @@ impl YfClientBuilder {
     /// Sets the entire retry configuration.
     ///
     /// Replaces the default retry settings.
+    #[must_use]
     pub fn retry_config(mut self, cfg: RetryConfig) -> Self {
         self.retry = Some(cfg);
         self
     }
 
     /// A convenience method to enable or disable the retry mechanism.
+    #[must_use]
     pub fn retry_enabled(mut self, yes: bool) -> Self {
         let mut cfg = self.retry.unwrap_or_default();
         cfg.enabled = yes;
@@ -381,20 +397,23 @@ impl YfClientBuilder {
     }
 
     /// Disables in-memory caching for this client.
-    pub fn no_cache(mut self) -> Self {
+    #[must_use]
+    pub const fn no_cache(mut self) -> Self {
         self.cache_ttl = None;
         self
     }
 
     #[cfg(feature = "test-mode")]
     /// (Test mode only) Chooses which data source path to use for profile lookups.
-    pub fn api_preference(mut self, pref: ApiPreference) -> Self {
+    #[must_use]
+    pub const fn api_preference(mut self, pref: ApiPreference) -> Self {
         self.api_preference = Some(pref);
         self
     }
 
     #[cfg(feature = "test-mode")]
     /// (Test mode only) Provides pre-authenticated credentials to bypass the cookie/crumb fetch.
+    #[must_use]
     pub fn preauth(mut self, cookie: impl Into<String>, crumb: impl Into<String>) -> Self {
         self.preauth_cookie = Some(cookie.into());
         self.preauth_crumb = Some(crumb.into());
@@ -404,7 +423,8 @@ impl YfClientBuilder {
     /// Sets a global timeout for the entire HTTP request.
     ///
     /// Default: none.
-    pub fn timeout(mut self, dur: Duration) -> Self {
+    #[must_use]
+    pub const fn timeout(mut self, dur: Duration) -> Self {
         self.timeout = Some(dur);
         self
     }
@@ -412,7 +432,8 @@ impl YfClientBuilder {
     /// Sets a timeout for the connection phase of an HTTP request.
     ///
     /// Default: none.
-    pub fn connect_timeout(mut self, dur: Duration) -> Self {
+    #[must_use]
+    pub const fn connect_timeout(mut self, dur: Duration) -> Self {
         self.connect_timeout = Some(dur);
         self
     }
@@ -420,11 +441,17 @@ impl YfClientBuilder {
     /// Enables in-memory caching with a default Time-To-Live (TTL) for all responses.
     ///
     /// If not set, caching is disabled by default.
-    pub fn cache_ttl(mut self, dur: Duration) -> Self {
+    #[must_use]
+    pub const fn cache_ttl(mut self, dur: Duration) -> Self {
         self.cache_ttl = Some(dur);
         self
     }
+
     /// Builds the `YfClient`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the base URLs are invalid or the HTTP client fails to build.
     pub fn build(self) -> Result<YfClient, YfError> {
         let base_chart = self.base_chart.unwrap_or(Url::parse(DEFAULT_BASE_CHART)?);
         let base_quote = self.base_quote.unwrap_or(Url::parse(DEFAULT_BASE_QUOTE)?);
@@ -529,7 +556,7 @@ async fn sleep_backoff(b: &Backoff, attempt: u32) {
             max,
             jitter,
         } => {
-            let pow = factor.powi(attempt as i32);
+            let pow = factor.powi(i32::try_from(attempt).unwrap());
             let mut d = Duration::from_secs_f64(base.as_secs_f64() * pow);
             if d > max {
                 d = max;
@@ -537,7 +564,9 @@ async fn sleep_backoff(b: &Backoff, attempt: u32) {
             if jitter {
                 // simple +/- 50% jitter without extra deps
                 let nanos = d.as_nanos();
-                let j = ((nanos / 2) as u64) * ((attempt as u64 % 5 + 1) * 13 % 100) / 100;
+                let j = u64::try_from(nanos / 2).unwrap_or(0)
+                    * ((u64::from(attempt) % 5 + 1) * 13 % 100)
+                    / 100;
                 let sign = attempt % 2 == 0;
                 d = if sign {
                     d.saturating_add(Duration::from_nanos(j))

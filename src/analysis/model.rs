@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 /// A row representing analyst recommendation counts for a specific period.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RecommendationRow {
     /// The period for the recommendation counts (e.g., "0m", "-1m").
     pub period: String,
@@ -39,7 +39,7 @@ pub struct RecommendationSummary {
 }
 
 /// A row representing a single analyst upgrade or downgrade action.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct UpgradeDowngradeRow {
     /// The Unix timestamp (in seconds) of the action.
     pub ts: i64,

@@ -3,24 +3,24 @@ use serde::Deserializer;
 use std::collections::BTreeMap;
 
 #[derive(Deserialize)]
-pub(crate) struct ChartEnvelope {
+pub struct ChartEnvelope {
     pub(crate) chart: Option<ChartNode>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct ChartNode {
+pub struct ChartNode {
     pub(crate) result: Option<Vec<ChartResult>>,
     pub(crate) error: Option<ChartError>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct ChartError {
+pub struct ChartError {
     pub(crate) code: String,
     pub(crate) description: String,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct ChartResult {
+pub struct ChartResult {
     #[serde(default)]
     pub(crate) meta: Option<MetaNode>,
     #[serde(default)]
@@ -31,7 +31,7 @@ pub(crate) struct ChartResult {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct MetaNode {
+pub struct MetaNode {
     #[serde(default)]
     pub(crate) timezone: Option<String>,
     #[serde(default)]
@@ -39,7 +39,7 @@ pub(crate) struct MetaNode {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct Indicators {
+pub struct Indicators {
     #[serde(default)]
     pub(crate) quote: Vec<QuoteBlock>,
     #[serde(default)]
@@ -47,7 +47,7 @@ pub(crate) struct Indicators {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct QuoteBlock {
+pub struct QuoteBlock {
     #[serde(default)]
     pub(crate) open: Vec<Option<f64>>,
     #[serde(default)]
@@ -61,13 +61,13 @@ pub(crate) struct QuoteBlock {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct AdjCloseBlock {
+pub struct AdjCloseBlock {
     #[serde(default)]
     pub(crate) adjclose: Vec<Option<f64>>,
 }
 
 #[derive(Deserialize, Default)]
-pub(crate) struct Events {
+pub struct Events {
     #[serde(default)]
     pub(crate) dividends: Option<BTreeMap<String, DividendEvent>>,
     #[serde(default)]
@@ -77,13 +77,13 @@ pub(crate) struct Events {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct DividendEvent {
+pub struct DividendEvent {
     pub(crate) amount: Option<f64>,
     pub(crate) date: Option<i64>,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct SplitEvent {
+pub struct SplitEvent {
     #[serde(default, deserialize_with = "de_opt_u64_from_mixed")]
     pub(crate) numerator: Option<u64>,
     #[serde(default, deserialize_with = "de_opt_u64_from_mixed")]
@@ -94,7 +94,7 @@ pub(crate) struct SplitEvent {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct CapitalGainEvent {
+pub struct CapitalGainEvent {
     pub(crate) amount: Option<f64>,
     pub(crate) date: Option<i64>,
 }
@@ -110,8 +110,7 @@ where
 
     let v = Option::<Value>::deserialize(deserializer)?;
     let some = match v {
-        None => return Ok(None),
-        Some(Value::Null) => return Ok(None),
+        None | Some(Value::Null) => return Ok(None),
         Some(Value::Number(n)) => {
             if let Some(u) = n.as_u64() {
                 Some(u)
@@ -122,6 +121,11 @@ where
                 let r = f.round();
                 // Require the float to be very close to an integer
                 if (f - r).abs() < 1e-9 && r >= 0.0 {
+                    #[allow(
+                        clippy::cast_possible_truncation,
+                        clippy::cast_sign_loss,
+                        clippy::cast_precision_loss
+                    )]
                     Some(r as u64)
                 } else {
                     return Err(D::Error::custom(format!(

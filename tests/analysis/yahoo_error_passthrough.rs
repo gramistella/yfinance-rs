@@ -11,7 +11,7 @@ async fn analysis_other_yahoo_errors_are_surfaced_without_retry() {
     // Simulate a non-crumb Yahoo error response
     let api_err = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "recommendationTrend")
             .query_param("crumb", "crumb");
         then.status(200)

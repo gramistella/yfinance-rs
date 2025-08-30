@@ -10,7 +10,6 @@ async fn live_stream_smoke() {
     let client = yfinance_rs::YfClient::builder().build().unwrap();
 
     let builder = yfinance_rs::StreamBuilder::new(&client)
-        .unwrap()
         .symbols(["BTC-USD"]) // Switched to a 24/7 symbol
         .method(StreamMethod::Websocket);
 

@@ -20,7 +20,8 @@ pub struct EsgScores {
 }
 
 /// Flags indicating a company's involvement in specific controversial business sectors.
-#[derive(Debug, Clone, PartialEq, Serialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct EsgInvolvement {
     /// Involvement in the adult entertainment industry.
     pub adult: bool,

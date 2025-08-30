@@ -1,4 +1,4 @@
-pub(crate) fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
+pub fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
     if debug {
         eprintln!(
@@ -45,8 +45,7 @@ pub(crate) fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
 
     if debug {
         eprintln!(
-            "YF_DEBUG [iter_json_scripts]: total_scripts={}, total_json_scripts={}, svelte_fetched={}",
-            total_scripts, total_json_scripts, total_svelte_fetched
+            "YF_DEBUG [iter_json_scripts]: total_scripts={total_scripts}, total_json_scripts={total_json_scripts}, svelte_fetched={total_svelte_fetched}"
         );
         if let Some((attrs, body)) = res.first() {
             let a = if attrs.len() > 180 {
@@ -56,8 +55,7 @@ pub(crate) fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
             };
             let b = if body.len() > 120 { &body[..120] } else { body };
             eprintln!(
-                "YF_DEBUG [iter_json_scripts]: first JSON script attrs[trunc]=`{}` body[trunc]=`{}`",
-                a, b
+                "YF_DEBUG [iter_json_scripts]: first JSON script attrs[trunc]=`{a}` body[trunc]=`{b}`"
             );
         }
     }
@@ -65,7 +63,7 @@ pub(crate) fn iter_json_scripts(html: &str) -> Vec<(&str, &str)> {
 }
 
 /// Exposed for debug helpers as well.
-pub(crate) fn find_matching_brace(s: &str, start: usize) -> Option<usize> {
+pub fn find_matching_brace(s: &str, start: usize) -> Option<usize> {
     let bytes = s.as_bytes();
     let i = start;
     if bytes.get(i).copied()? != b'{' {
@@ -111,7 +109,7 @@ pub(crate) fn find_matching_brace(s: &str, start: usize) -> Option<usize> {
 }
 
 /// Exposed for debug helpers as well.
-pub(crate) fn parse_jsonish_string(s: &str) -> Option<serde_json::Value> {
+pub fn parse_jsonish_string(s: &str) -> Option<serde_json::Value> {
     let t = s.trim();
     if t.starts_with('{') || t.starts_with('[') {
         serde_json::from_str::<serde_json::Value>(t).ok()

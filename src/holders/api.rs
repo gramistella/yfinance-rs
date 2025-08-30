@@ -2,7 +2,7 @@ use super::model::{
     InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
     NetSharePurchaseActivity,
 };
-use super::wire::{V10Result};
+use super::wire::V10Result;
 use crate::core::wire::{from_raw, from_raw_date};
 use crate::core::{
     YfClient, YfError,
@@ -163,8 +163,9 @@ pub(super) async fn net_share_purchase_activity(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Option<NetSharePurchaseActivity>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
-    Ok(root.net_share_purchase_activity.map(|n| {
-        NetSharePurchaseActivity {
+    Ok(root
+        .net_share_purchase_activity
+        .map(|n| NetSharePurchaseActivity {
             period: n.period.unwrap_or_default(),
             buy_info_shares: from_raw(n.buy_info_shares).unwrap_or(0),
             buy_info_count: from_raw(n.buy_info_count).unwrap_or(0),
@@ -174,6 +175,5 @@ pub(super) async fn net_share_purchase_activity(
             net_info_count: from_raw(n.net_info_count).unwrap_or(0),
             total_insider_shares: from_raw(n.total_insider_shares).unwrap_or(0),
             net_percent_insider_shares: from_raw(n.net_percent_insider_shares).unwrap_or(0.0),
-        }
-    }))
+        }))
 }

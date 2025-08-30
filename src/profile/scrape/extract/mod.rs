@@ -7,7 +7,7 @@ use strategies::{
     try_sveltekit_json,
 };
 
-pub(crate) fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfError> {
+pub fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfError> {
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
 
     if debug {

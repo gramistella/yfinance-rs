@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-pub(crate) fn truncate(s: &str, n: usize) -> String {
+pub fn truncate(s: &str, n: usize) -> String {
     if s.len() <= n {
         s.to_string()
     } else {
@@ -11,7 +11,7 @@ pub(crate) fn truncate(s: &str, n: usize) -> String {
     }
 }
 
-pub(crate) fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> {
+pub fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Option<Value> {
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
 
     // Accept either {..., quoteSummary: {...}} or a quoteSummary node directly.
@@ -42,8 +42,7 @@ pub(crate) fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Opt
 
     if debug {
         eprintln!(
-            "YF_DEBUG [extract_store_like]: has_quoteType={}, has_profile={}, has_fund={}",
-            has_quote_type, has_profile, has_fund
+            "YF_DEBUG [extract_store_like]: has_quoteType={has_quote_type}, has_profile={has_profile}, has_fund={has_fund}"
         );
     }
     if !(has_quote_type || has_profile || has_fund) {
@@ -63,15 +62,12 @@ pub(crate) fn extract_store_like_from_quote_summary_value(qs_val: &Value) -> Opt
                 v.join(",")
             })
             .unwrap_or_default();
-        eprintln!(
-            "YF_DEBUG [extract_store_like]: SUCCESS; normalized keys={}",
-            keys
-        );
+        eprintln!("YF_DEBUG [extract_store_like]: SUCCESS; normalized keys={keys}");
     }
     Some(norm)
 }
 
-pub(crate) fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
+pub fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
     match v {
         Value::Object(map) => {
             if let Some(qss) = map.get("QuoteSummaryStore")
@@ -104,7 +100,7 @@ pub(crate) fn find_quote_summary_store_in_value(v: &Value) -> Option<&Value> {
     }
 }
 
-pub(crate) fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
+pub fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
     match v {
         Value::Object(map) => {
             if let Some(qs) = map.get("quoteSummary") {
@@ -129,7 +125,7 @@ pub(crate) fn find_quote_summary_value_in_value(v: &Value) -> Option<&Value> {
     }
 }
 
-pub(crate) fn normalize_store_like(mut store_like: Value) -> Value {
+pub fn normalize_store_like(mut store_like: Value) -> Value {
     if let Some(obj) = store_like.as_object_mut()
         && let Some(ap) = obj.remove("assetProfile")
     {
@@ -139,7 +135,7 @@ pub(crate) fn normalize_store_like(mut store_like: Value) -> Value {
     store_like
 }
 
-pub(crate) fn wrap_store_like(store_like: Value) -> Result<String, crate::YfError> {
+pub fn wrap_store_like(store_like: &Value) -> Result<String, crate::YfError> {
     let store_json = serde_json::to_string(&store_like)
         .map_err(|e| crate::YfError::Data(format!("re-serialize: {e}")))?;
     Ok(format!(

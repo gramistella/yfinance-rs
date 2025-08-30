@@ -1,6 +1,6 @@
-/// Live recorder to create tests/fixtures/quote_v7_MULTI.json via internal::net::get_text.
+/// Live recorder to create `tests/fixtures/quote_v7_MULTI.json` via `internal::net::get_text`.
 /// Run it explicitly with recording turned on:
-///   YF_RECORD=1 cargo test --test quotes -- --ignored record_multi_quotes_live
+///   `YF_RECORD=1` cargo test --test quotes -- --ignored `record_multi_quotes_live`
 use url::Url;
 
 #[tokio::test]

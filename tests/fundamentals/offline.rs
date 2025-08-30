@@ -17,7 +17,7 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "incomeStatementHistoryQuarterly")
             .query_param("crumb", "crumb");
         then.status(200)
@@ -54,7 +54,7 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "balanceSheetHistory")
             .query_param("crumb", "crumb");
         then.status(200)
@@ -88,7 +88,7 @@ async fn offline_cashflow_annual_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "cashflowStatementHistory")
             .query_param("crumb", "crumb");
         then.status(200)
@@ -122,7 +122,7 @@ async fn offline_earnings_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "earnings")
             .query_param("crumb", "crumb");
         then.status(200)
@@ -159,7 +159,7 @@ async fn offline_calendar_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "calendarEvents")
             .query_param("crumb", "crumb");
         then.status(200)

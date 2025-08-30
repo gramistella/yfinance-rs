@@ -13,7 +13,7 @@ async fn api_fetches_cookie_and_crumb_first() {
     let sym = "AAPL";
     let api = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "assetProfile,quoteType,fundProfile")
             .query_param("crumb", "crumb-value");
         then.status(200)
@@ -66,7 +66,7 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
     let sym = "AAPL";
     let invalid = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "assetProfile,quoteType,fundProfile")
             .query_param("crumb", "stale-crumb");
         then.status(200)
@@ -80,7 +80,7 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
     // second API call with fresh crumb
     let ok = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "assetProfile,quoteType,fundProfile")
             .query_param("crumb", "crumb-value");
         then.status(200)

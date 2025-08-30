@@ -22,7 +22,7 @@ async fn missing_set_cookie_header_is_an_error() {
     // Any API body (won't be reached if ensure_credentials fails early)
     let api = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym));
+            .path(format!("/v10/finance/quoteSummary/{sym}"));
         then.status(200)
             .header("content-type", "application/json")
             .body(r#"{"quoteSummary":{"result":[],"error":null}}"#);

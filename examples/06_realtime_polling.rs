@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("(Polling for 20 seconds or until stopped...)");
 
     // Create a StreamBuilder explicitly configured for polling.
-    let (handle, mut receiver) = StreamBuilder::new(&client)?
+    let (handle, mut receiver) = StreamBuilder::new(&client)
         .symbols(symbols)
         .method(StreamMethod::Polling) // Explicitly use the polling method
         .interval(Duration::seconds(5).to_std().unwrap()) // Set a custom polling interval

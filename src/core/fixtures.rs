@@ -6,13 +6,14 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-pub(crate) fn get_fixture_dir() -> PathBuf {
-    env::var("YF_FIXDIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures"))
+pub fn get_fixture_dir() -> PathBuf {
+    env::var("YF_FIXDIR").map_or_else(
+        |_| Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures"),
+        PathBuf::from,
+    )
 }
 
-pub(crate) fn record_fixture(
+pub fn record_fixture(
     endpoint: &str,
     symbol: &str,
     ext: &str,
@@ -22,7 +23,7 @@ pub(crate) fn record_fixture(
     if !dir.exists() {
         fs::create_dir_all(&dir)?;
     }
-    let filename = format!("{}_{}.{}", endpoint, symbol, ext);
+    let filename = format!("{endpoint}_{symbol}.{ext}");
     let path = dir.join(filename);
 
     let mut file = fs::File::create(&path)?;

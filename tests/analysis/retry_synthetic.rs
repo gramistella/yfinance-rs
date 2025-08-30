@@ -11,7 +11,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
     // First call: invalid crumb
     let first = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "recommendationTrend,recommendationMean")
             .query_param("crumb", "stale");
         then.status(200)
@@ -35,7 +35,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
     // Second call: minimal OK body
     let ok = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "recommendationTrend,recommendationMean")
             .query_param("crumb", "fresh");
         then.status(200)

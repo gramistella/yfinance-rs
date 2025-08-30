@@ -28,6 +28,7 @@ pub struct DownloadResult {
 /// parameters in parallel, similar to `yfinance.download` in Python.
 ///
 /// Many of the configuration methods mirror those on [`HistoryBuilder`].
+#[allow(clippy::struct_excessive_bools)]
 pub struct DownloadBuilder {
     client: YfClient,
     symbols: Vec<String>,
@@ -52,6 +53,7 @@ pub struct DownloadBuilder {
 
 impl DownloadBuilder {
     /// Creates a new `DownloadBuilder`.
+    #[must_use]
     pub fn new(client: &YfClient) -> Self {
         Self {
             client: client.clone(),
@@ -72,42 +74,48 @@ impl DownloadBuilder {
     }
 
     /// Sets the cache mode for all API calls made by this builder.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for all API calls made by this builder.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// Replaces the current list of symbols with a new list.
+    #[must_use]
     pub fn symbols<I, S>(mut self, syms: I) -> Self
     where
         I: IntoIterator<Item = S>,
         S: Into<String>,
     {
-        self.symbols = syms.into_iter().map(|s| s.into()).collect();
+        self.symbols = syms.into_iter().map(std::convert::Into::into).collect();
         self
     }
 
     /// Adds a single symbol to the list of symbols to download.
+    #[must_use]
     pub fn add_symbol(mut self, sym: impl Into<String>) -> Self {
         self.symbols.push(sym.into());
         self
     }
 
     /// Sets a relative time range for the request (e.g., `1y`, `6mo`).
-    pub fn range(mut self, range: Range) -> Self {
+    #[must_use]
+    pub const fn range(mut self, range: Range) -> Self {
         self.period = None;
         self.range = Some(range);
         self
     }
 
     /// Sets an absolute time period for the request using start and end timestamps.
-    pub fn between(
+    #[must_use]
+    pub const fn between(
         mut self,
         start: chrono::DateTime<chrono::Utc>,
         end: chrono::DateTime<chrono::Utc>,
@@ -118,13 +126,15 @@ impl DownloadBuilder {
     }
 
     /// Sets the time interval for each data point (candle).
-    pub fn interval(mut self, interval: Interval) -> Self {
+    #[must_use]
+    pub const fn interval(mut self, interval: Interval) -> Self {
         self.interval = interval;
         self
     }
 
     /// Sets whether to automatically adjust prices for splits and dividends. (Default: `true`)
-    pub fn auto_adjust(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn auto_adjust(mut self, yes: bool) -> Self {
         self.auto_adjust = yes;
         self
     }
@@ -133,42 +143,52 @@ impl DownloadBuilder {
     ///
     /// Back-adjustment adjusts the Open, High, and Low prices, but keeps the Close price as the
     /// raw, unadjusted close. This forces an internal adjustment even if `auto_adjust` is false.
-    pub fn back_adjust(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn back_adjust(mut self, yes: bool) -> Self {
         self.back_adjust = yes;
         self
     }
 
     /// Sets whether to include pre-market and post-market data for intraday intervals. (Default: `false`)
-    pub fn prepost(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn prepost(mut self, yes: bool) -> Self {
         self.include_prepost = yes;
         self
     }
 
     /// Sets whether to include corporate actions (dividends and splits) in the result. (Default: `true`)
-    pub fn actions(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn actions(mut self, yes: bool) -> Self {
         self.include_actions = yes;
         self
     }
 
     /// Sets whether to keep data rows that have missing OHLC values. (Default: `false`)
-    pub fn keepna(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn keepna(mut self, yes: bool) -> Self {
         self.keepna = yes;
         self
     }
 
     /// Sets whether to round prices to 2 decimal places. (Default: `false`)
-    pub fn rounding(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn rounding(mut self, yes: bool) -> Self {
         self.rounding = yes;
         self
     }
 
     /// Sets whether to attempt to repair obvious price outliers (e.g., 100x errors). (Default: `false`)
-    pub fn repair(mut self, yes: bool) -> Self {
+    #[must_use]
+    pub const fn repair(mut self, yes: bool) -> Self {
         self.repair = yes;
         self
     }
 
     /// Executes the download by fetching data for all specified symbols concurrently.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any of the underlying history requests fail.
     pub async fn run(self) -> Result<DownloadResult, YfError> {
         if self.symbols.is_empty() {
             return Err(YfError::Data("no symbols specified".into()));
@@ -313,7 +333,7 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
             continue;
         }
 
-        let baseline = (p + n) / 2.0;
+        let baseline = f64::midpoint(p, n);
         if baseline <= 0.0 {
             continue;
         }
@@ -339,7 +359,6 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
                 1.0 / ratio
             };
             scale_row_prices(cur, scale);
-            continue;
         }
     }
 }

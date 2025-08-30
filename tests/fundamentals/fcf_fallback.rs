@@ -27,7 +27,7 @@ async fn cashflow_computes_fcf_when_missing() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "cashflowStatementHistory")
             .query_param("crumb", "crumb");
         then.status(200)

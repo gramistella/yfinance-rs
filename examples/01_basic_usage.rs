@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let aapl = Ticker::new(client.clone(), "AAPL");
     let expirations = aapl.options().await?;
     if let Some(first_expiry) = expirations.first() {
-        println!("--- Options Chain for AAPL ({}) ---", first_expiry);
+        println!("--- Options Chain for AAPL ({first_expiry}) ---");
         let chain = aapl.option_chain(Some(*first_expiry)).await?;
         println!(
             "  Found {} calls and {} puts.",
@@ -68,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 5. Stream real-time quotes using a WebSocket (with a fallback to polling if it fails).
     println!("--- Streaming Real-time Quotes for MSFT and GOOG ---");
     println!("(Streaming for 10 seconds or until stopped...)");
-    let (handle, mut receiver) = StreamBuilder::new(&client)?
+    let (handle, mut receiver) = StreamBuilder::new(&client)
         .symbols(vec!["MSFT", "GOOG"])
         .method(StreamMethod::WebsocketWithFallback)
         .start()?;
@@ -88,12 +88,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 break;
             }
         }
-        println!("Finished streaming after {} updates.", count);
+        println!("Finished streaming after {count} updates.");
     });
 
     // Stop the stream after 10 seconds, regardless of how many updates were received.
     tokio::select! {
-        _ = tokio::time::sleep(Duration::seconds(10).to_std()?) => {
+        () = tokio::time::sleep(Duration::seconds(10).to_std()?) => {
             println!("Stopping stream due to timeout.");
             handle.stop().await;
         }

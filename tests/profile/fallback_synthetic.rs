@@ -11,7 +11,7 @@ async fn api_then_scrape_fallback_on_other_error() {
     // API returns a generic error (not "Invalid Crumb")
     let api_err = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym));
+            .path(format!("/v10/finance/quoteSummary/{sym}"));
         then.status(200)
             .header("content-type", "application/json")
             .body(r#"{"quoteSummary":{"result":null,"error":{"description":"Something broke"}}}"#);

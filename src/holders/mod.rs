@@ -32,18 +32,24 @@ impl HoldersBuilder {
     }
 
     /// Sets the cache mode for this specific API call.
-    pub fn cache_mode(mut self, mode: CacheMode) -> Self {
+    #[must_use]
+    pub const fn cache_mode(mut self, mode: CacheMode) -> Self {
         self.cache_mode = mode;
         self
     }
 
     /// Overrides the default retry policy for this specific API call.
+    #[must_use]
     pub fn retry_policy(mut self, cfg: Option<RetryConfig>) -> Self {
         self.retry_override = cfg;
         self
     }
 
     /// Fetches the major holders breakdown (e.g., % insiders, % institutions).
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn major_holders(&self) -> Result<Vec<MajorHolder>, YfError> {
         api::major_holders(
             &self.client,
@@ -55,6 +61,10 @@ impl HoldersBuilder {
     }
 
     /// Fetches a list of the top institutional holders.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn institutional_holders(&self) -> Result<Vec<InstitutionalHolder>, YfError> {
         api::institutional_holders(
             &self.client,
@@ -66,6 +76,10 @@ impl HoldersBuilder {
     }
 
     /// Fetches a list of the top mutual fund holders.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn mutual_fund_holders(&self) -> Result<Vec<InstitutionalHolder>, YfError> {
         api::mutual_fund_holders(
             &self.client,
@@ -77,6 +91,10 @@ impl HoldersBuilder {
     }
 
     /// Fetches a list of recent insider transactions.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn insider_transactions(&self) -> Result<Vec<InsiderTransaction>, YfError> {
         api::insider_transactions(
             &self.client,
@@ -88,6 +106,10 @@ impl HoldersBuilder {
     }
 
     /// Fetches a roster of company insiders and their holdings.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn insider_roster_holders(&self) -> Result<Vec<InsiderRosterHolder>, YfError> {
         api::insider_roster_holders(
             &self.client,
@@ -99,6 +121,10 @@ impl HoldersBuilder {
     }
 
     /// Fetches a summary of net insider purchase and sale activity.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
     pub async fn net_share_purchase_activity(
         &self,
     ) -> Result<Option<NetSharePurchaseActivity>, YfError> {

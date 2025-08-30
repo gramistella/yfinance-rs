@@ -1,7 +1,7 @@
 use crate::core::client::{CacheMode, RetryConfig};
 use crate::history::wire::{Events, MetaNode, QuoteBlock};
 
-pub(crate) struct Fetched {
+pub struct Fetched {
     pub ts: Vec<i64>,
     pub quote: QuoteBlock,
     pub adjclose: Vec<Option<f64>>,
@@ -10,7 +10,7 @@ pub(crate) struct Fetched {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn fetch_chart(
+pub async fn fetch_chart(
     client: &crate::core::YfClient,
     symbol: &str,
     range: Option<crate::core::Range>,
