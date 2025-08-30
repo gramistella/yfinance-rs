@@ -1,16 +1,12 @@
 use chrono::{Duration, Utc};
 
 use crate::{
-    ShareCount,
     core::{
-        YfClient, YfError,
-        client::{CacheMode, RetryConfig},
-    },
-    fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
+        client::{CacheMode, RetryConfig}, wire::{from_raw, from_raw_date}, YfClient, YfError
+    }, fundamentals::wire::{TimeseriesData, TimeseriesEnvelope}, ShareCount
 };
 
 use super::fetch::fetch_modules;
-use super::wire::raw_num;
 use super::{
     BalanceSheetRow, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps, EarningsYear,
     IncomeStatementRow,
@@ -39,14 +35,13 @@ pub(super) async fn income_statement(
     }
     .unwrap_or_default();
 
-    Ok(arr
-        .into_iter()
+    Ok(arr.into_iter()
         .map(|n| IncomeStatementRow {
-            period_end: n.end_date.and_then(|d| d.raw).unwrap_or(0),
-            total_revenue: n.total_revenue.and_then(raw_num),
-            gross_profit: n.gross_profit.and_then(raw_num),
-            operating_income: n.operating_income.and_then(raw_num),
-            net_income: n.net_income.and_then(raw_num),
+            period_end: from_raw_date(n.end_date).unwrap_or(0),
+            total_revenue: from_raw(n.total_revenue),
+            gross_profit: from_raw(n.gross_profit),
+            operating_income: from_raw(n.operating_income),
+            net_income: from_raw(n.net_income),
         })
         .collect())
 }
@@ -74,16 +69,15 @@ pub(super) async fn balance_sheet(
     }
     .unwrap_or_default();
 
-    Ok(arr
-        .into_iter()
+    Ok(arr.into_iter()
         .map(|n| BalanceSheetRow {
-            period_end: n.end_date.and_then(|d| d.raw).unwrap_or(0),
-            total_assets: n.total_assets.and_then(raw_num),
-            total_liabilities: n.total_liab.and_then(raw_num),
-            total_equity: n.total_stockholder_equity.and_then(raw_num),
-            cash: n.cash.and_then(raw_num),
-            long_term_debt: n.long_term_debt.and_then(raw_num),
-            shares_outstanding: n.shares_outstanding.and_then(|s| s.raw).map(|v| v as u64),
+            period_end: from_raw_date(n.end_date).unwrap_or(0),
+            total_assets: from_raw(n.total_assets),
+            total_liabilities: from_raw(n.total_liab),
+            total_equity: from_raw(n.total_stockholder_equity),
+            cash: from_raw(n.cash),
+            long_term_debt: from_raw(n.long_term_debt),
+            shares_outstanding: from_raw(n.shares_outstanding).map(|v| v as u64),
         })
         .collect())
 }
@@ -111,22 +105,21 @@ pub(super) async fn cashflow(
     }
     .unwrap_or_default();
 
-    Ok(arr
-        .into_iter()
+    Ok(arr.into_iter()
         .map(|n| {
-            let ocf = n.total_cash_from_operating_activities.and_then(raw_num);
-            let capex = n.capital_expenditures.and_then(raw_num);
-            let fcf = match (n.free_cashflow.and_then(raw_num), ocf, capex) {
+            let ocf = from_raw(n.total_cash_from_operating_activities);
+            let capex = from_raw(n.capital_expenditures);
+            let fcf = match (from_raw(n.free_cashflow), ocf, capex) {
                 (Some(x), _, _) => Some(x),
                 (None, Some(a), Some(b)) => Some(a - b),
                 _ => None,
             };
             CashflowRow {
-                period_end: n.end_date.and_then(|d| d.raw).unwrap_or(0),
+                period_end: from_raw_date(n.end_date).unwrap_or(0),
                 operating_cashflow: ocf,
                 capital_expenditures: capex,
                 free_cash_flow: fcf,
-                net_income: n.net_income.and_then(raw_num),
+                net_income: from_raw(n.net_income),
             }
         })
         .collect())

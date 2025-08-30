@@ -1,18 +1,5 @@
 use serde::Deserialize;
-
-// Wrapper for numbers that come in { "raw": ..., "fmt": ... } format
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNum<T> {
-    pub(crate) raw: Option<T>,
-    // fmt: Option<String>,
-}
-
-// Wrapper for dates that come in { "raw": ..., "fmt": ... } format
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawDate {
-    pub(crate) raw: Option<i64>,
-    // pub(crate) fmt: Option<String>,
-}
+use crate::core::wire::{RawDate, RawNum};
 
 #[derive(Deserialize)]
 pub(crate) struct V10Result {

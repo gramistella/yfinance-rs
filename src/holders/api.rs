@@ -2,7 +2,8 @@ use super::model::{
     InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
     NetSharePurchaseActivity,
 };
-use super::wire::{RawNum, V10Result};
+use super::wire::{V10Result};
+use crate::core::wire::{from_raw, from_raw_date};
 use crate::core::{
     YfClient, YfError,
     client::{CacheMode, RetryConfig},
@@ -28,10 +29,6 @@ async fn fetch_holders_modules(
     .await
 }
 
-fn f<T: Copy>(r: Option<RawNum<T>>) -> Option<T> {
-    r.and_then(|n| n.raw)
-}
-
 pub(super) async fn major_holders(
     client: &YfClient,
     symbol: &str,
@@ -46,25 +43,25 @@ pub(super) async fn major_holders(
     let mut result = Vec::new();
     let percent_fmt = |v: Option<f64>| v.map(|p| format!("{:.2}%", p * 100.0)).unwrap_or_default();
 
-    if let Some(v) = f(breakdown.insiders_percent_held) {
+    if let Some(v) = from_raw(breakdown.insiders_percent_held) {
         result.push(MajorHolder {
             category: "% of Shares Held by All Insiders".into(),
             value: percent_fmt(Some(v)),
         });
     }
-    if let Some(v) = f(breakdown.institutions_percent_held) {
+    if let Some(v) = from_raw(breakdown.institutions_percent_held) {
         result.push(MajorHolder {
             category: "% of Shares Held by Institutions".into(),
             value: percent_fmt(Some(v)),
         });
     }
-    if let Some(v) = f(breakdown.institutions_float_percent_held) {
+    if let Some(v) = from_raw(breakdown.institutions_float_percent_held) {
         result.push(MajorHolder {
             category: "% of Float Held by Institutions".into(),
             value: percent_fmt(Some(v)),
         });
     }
-    if let Some(v) = f(breakdown.institutions_count) {
+    if let Some(v) = from_raw(breakdown.institutions_count) {
         result.push(MajorHolder {
             category: "Number of Institutions Holding Shares".into(),
             value: v.to_string(),
@@ -80,10 +77,10 @@ fn map_ownership_list(node: Option<super::wire::OwnershipNode>) -> Vec<Instituti
         .into_iter()
         .map(|h| InstitutionalHolder {
             holder: h.organization.unwrap_or_default(),
-            shares: f(h.shares).unwrap_or(0),
-            date_reported: h.date_reported.and_then(|d| d.raw).unwrap_or(0),
-            pct_held: f(h.pct_held).unwrap_or(0.0),
-            value: f(h.value).unwrap_or(0),
+            shares: from_raw(h.shares).unwrap_or(0),
+            date_reported: from_raw_date(h.date_reported).unwrap_or(0),
+            pct_held: from_raw(h.pct_held).unwrap_or(0.0),
+            value: from_raw(h.value).unwrap_or(0),
         })
         .collect()
 }
@@ -126,9 +123,9 @@ pub(super) async fn insider_transactions(
             insider: t.insider.unwrap_or_default(),
             position: t.position.unwrap_or_default(),
             transaction: t.transaction.unwrap_or_default(),
-            shares: f(t.shares).unwrap_or(0),
-            value: f(t.value).unwrap_or(0),
-            start_date: t.start_date.and_then(|d| d.raw).unwrap_or(0),
+            shares: from_raw(t.shares).unwrap_or(0),
+            value: from_raw(t.value).unwrap_or(0),
+            start_date: from_raw_date(t.start_date).unwrap_or(0),
             url: t.url.unwrap_or_default(),
         })
         .collect())
@@ -152,9 +149,9 @@ pub(super) async fn insider_roster_holders(
             name: h.name.unwrap_or_default(),
             position: h.relation.unwrap_or_default(),
             most_recent_transaction: h.most_recent_transaction.unwrap_or_default(),
-            latest_transaction_date: h.latest_transaction_date.and_then(|d| d.raw).unwrap_or(0),
-            shares_owned_directly: f(h.shares_owned_directly).unwrap_or(0),
-            position_direct_date: h.position_direct_date.and_then(|d| d.raw).unwrap_or(0),
+            latest_transaction_date: from_raw_date(h.latest_transaction_date).unwrap_or(0),
+            shares_owned_directly: from_raw(h.shares_owned_directly).unwrap_or(0),
+            position_direct_date: from_raw_date(h.position_direct_date).unwrap_or(0),
         })
         .collect())
 }
@@ -166,17 +163,17 @@ pub(super) async fn net_share_purchase_activity(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Option<NetSharePurchaseActivity>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
-    Ok(root
-        .net_share_purchase_activity
-        .map(|n| NetSharePurchaseActivity {
+    Ok(root.net_share_purchase_activity.map(|n| {
+        NetSharePurchaseActivity {
             period: n.period.unwrap_or_default(),
-            buy_info_shares: f(n.buy_info_shares).unwrap_or(0),
-            buy_info_count: f(n.buy_info_count).unwrap_or(0),
-            sell_info_shares: f(n.sell_info_shares).unwrap_or(0),
-            sell_info_count: f(n.sell_info_count).unwrap_or(0),
-            net_info_shares: f(n.net_info_shares).unwrap_or(0),
-            net_info_count: f(n.net_info_count).unwrap_or(0),
-            total_insider_shares: f(n.total_insider_shares).unwrap_or(0),
-            net_percent_insider_shares: f(n.net_percent_insider_shares).unwrap_or(0.0),
-        }))
+            buy_info_shares: from_raw(n.buy_info_shares).unwrap_or(0),
+            buy_info_count: from_raw(n.buy_info_count).unwrap_or(0),
+            sell_info_shares: from_raw(n.sell_info_shares).unwrap_or(0),
+            sell_info_count: from_raw(n.sell_info_count).unwrap_or(0),
+            net_info_shares: from_raw(n.net_info_shares).unwrap_or(0),
+            net_info_count: from_raw(n.net_info_count).unwrap_or(0),
+            total_insider_shares: from_raw(n.total_insider_shares).unwrap_or(0),
+            net_percent_insider_shares: from_raw(n.net_percent_insider_shares).unwrap_or(0.0),
+        }
+    }))
 }

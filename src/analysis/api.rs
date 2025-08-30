@@ -1,15 +1,12 @@
 use crate::{
     analysis::model::EarningsTrendRow,
     core::{
-        YfClient, YfError,
-        client::{CacheMode, RetryConfig},
-        wire::RawNumI64,
+        client::{CacheMode, RetryConfig}, wire::{from_raw, from_raw_u32_round}, YfClient, YfError
     },
 };
 
 use super::fetch::fetch_modules;
 use super::model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
-use super::wire::RawNum;
 
 /* ---------- Public entry points (mapping wire → public models) ---------- */
 
@@ -150,14 +147,11 @@ pub(super) async fn analyst_price_target(
         .financial_data
         .ok_or_else(|| YfError::Data("financialData missing".into()))?;
 
-    let f = |x: Option<RawNum>| x.and_then(|n| n.raw);
-    let n = |x: Option<RawNum>| x.and_then(|n| n.raw).map(|v| v.round() as u32);
-
     Ok(PriceTarget {
-        mean: f(fd.target_mean_price),
-        high: f(fd.target_high_price),
-        low: f(fd.target_low_price),
-        number_of_analysts: n(fd.number_of_analyst_opinions),
+        mean: from_raw(fd.target_mean_price),
+        high: from_raw(fd.target_high_price),
+        low: from_raw(fd.target_low_price),
+        number_of_analysts: from_raw_u32_round(fd.number_of_analyst_opinions),
     })
 }
 
@@ -177,10 +171,6 @@ pub(super) async fn earnings_trend(
     let rows = trend
         .into_iter()
         .map(|n| {
-            let f = |x: Option<RawNum>| x.and_then(|n| n.raw);
-            let fi64 = |x: Option<RawNumI64>| x.and_then(|n| n.raw);
-            let u = |x: Option<RawNum>| x.and_then(|n| n.raw).map(|v| v.round() as u32);
-
             let (
                 earnings_estimate_avg,
                 earnings_estimate_low,
@@ -188,16 +178,15 @@ pub(super) async fn earnings_trend(
                 earnings_estimate_year_ago_eps,
                 earnings_estimate_num_analysts,
                 earnings_estimate_growth,
-            ) = n
-                .earnings_estimate
+            ) = n.earnings_estimate
                 .map(|e| {
                     (
-                        f(e.avg),
-                        f(e.low),
-                        f(e.high),
-                        f(e.year_ago_eps),
-                        u(e.num_analysts),
-                        f(e.growth),
+                        from_raw(e.avg),
+                        from_raw(e.low),
+                        from_raw(e.high),
+                        from_raw(e.year_ago_eps),
+                        from_raw_u32_round(e.num_analysts),
+                        from_raw(e.growth),
                     )
                 })
                 .unwrap_or_default();
@@ -209,16 +198,15 @@ pub(super) async fn earnings_trend(
                 revenue_estimate_year_ago_revenue,
                 revenue_estimate_num_analysts,
                 revenue_estimate_growth,
-            ) = n
-                .revenue_estimate
+            ) = n.revenue_estimate
                 .map(|e| {
                     (
-                        fi64(e.avg),
-                        fi64(e.low),
-                        fi64(e.high),
-                        fi64(e.year_ago_revenue),
-                        u(e.num_analysts),
-                        f(e.growth),
+                        from_raw(e.avg),
+                        from_raw(e.low),
+                        from_raw(e.high),
+                        from_raw(e.year_ago_revenue),
+                        from_raw_u32_round(e.num_analysts),
+                        from_raw(e.growth),
                     )
                 })
                 .unwrap_or_default();
@@ -229,15 +217,14 @@ pub(super) async fn earnings_trend(
                 eps_trend_30_days_ago,
                 eps_trend_60_days_ago,
                 eps_trend_90_days_ago,
-            ) = n
-                .eps_trend
+            ) = n.eps_trend
                 .map(|e| {
                     (
-                        f(e.current),
-                        f(e.seven_days_ago),
-                        f(e.thirty_days_ago),
-                        f(e.sixty_days_ago),
-                        f(e.ninety_days_ago),
+                        from_raw(e.current),
+                        from_raw(e.seven_days_ago),
+                        from_raw(e.thirty_days_ago),
+                        from_raw(e.sixty_days_ago),
+                        from_raw(e.ninety_days_ago),
                     )
                 })
                 .unwrap_or_default();
@@ -247,21 +234,20 @@ pub(super) async fn earnings_trend(
                 eps_revisions_up_last_30_days,
                 eps_revisions_down_last_7_days,
                 eps_revisions_down_last_30_days,
-            ) = n
-                .eps_revisions
+            ) = n.eps_revisions
                 .map(|e| {
                     (
-                        u(e.up_last_7_days),
-                        u(e.up_last_30_days),
-                        u(e.down_last_7_days),
-                        u(e.down_last_30_days),
+                        from_raw_u32_round(e.up_last_7_days),
+                        from_raw_u32_round(e.up_last_30_days),
+                        from_raw_u32_round(e.down_last_7_days),
+                        from_raw_u32_round(e.down_last_30_days),
                     )
                 })
                 .unwrap_or_default();
 
             EarningsTrendRow {
                 period: n.period.unwrap_or_default(),
-                growth: f(n.growth),
+                growth: from_raw(n.growth),
                 earnings_estimate_avg,
                 earnings_estimate_low,
                 earnings_estimate_high,

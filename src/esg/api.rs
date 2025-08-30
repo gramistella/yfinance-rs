@@ -1,12 +1,10 @@
 use crate::{
     core::{
-        YfClient, YfError,
-        client::{CacheMode, RetryConfig},
-        quotesummary,
+        client::{CacheMode, RetryConfig}, quotesummary, wire::from_raw, YfClient, YfError
     },
     esg::{
         model::{EsgInvolvement, EsgScores},
-        wire::{RawNum, V10Result},
+        wire::V10Result,
     },
 };
 
@@ -30,16 +28,13 @@ pub(super) async fn fetch_esg_scores(
         .esg_scores
         .ok_or_else(|| YfError::Data("esgScores module missing from response".into()))?;
 
-    // Helper for unpacking { "raw": ... } objects
-    let f = |x: Option<RawNum<f64>>| x.and_then(|n| n.raw);
-    // Helper for boolean flags
     let b = |x: Option<bool>| x.unwrap_or(false);
 
     Ok(EsgScores {
-        total_esg: f(esg.total_esg),
-        environment_score: f(esg.environment_score),
-        social_score: f(esg.social_score),
-        governance_score: f(esg.governance_score),
+        total_esg: from_raw(esg.total_esg),
+        environment_score: from_raw(esg.environment_score),
+        social_score: from_raw(esg.social_score),
+        governance_score: from_raw(esg.governance_score),
         esg_percentile: esg.percentile,
         highest_controversy: esg.highest_controversy.map(|v| v.round() as u32),
         involvement: EsgInvolvement {

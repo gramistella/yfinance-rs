@@ -1,9 +1,5 @@
 use serde::Deserialize;
-
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNum<T> {
-    pub(crate) raw: Option<T>,
-}
+use crate::core::wire::RawNum;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]

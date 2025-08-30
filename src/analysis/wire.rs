@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::core::wire::RawNumI64;
+use crate::core::wire::RawNum;
 
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
@@ -48,11 +48,12 @@ pub(crate) struct RecommendationNode {
 #[derive(Deserialize)]
 pub(crate) struct RecommendationMeanNode {
     #[serde(rename = "recommendationMean")]
-    pub(crate) recommendation_mean: Option<RawNum>,
+    pub(crate) recommendation_mean: Option<RawNum<f64>>,
 
     #[serde(rename = "recommendationKey")]
     pub(crate) recommendation_key: Option<String>,
 }
+
 
 /* --- upgrades / downgrades --- */
 
@@ -84,13 +85,13 @@ pub(crate) struct UpgradeNode {
 #[derive(Deserialize)]
 pub(crate) struct FinancialDataNode {
     #[serde(rename = "targetMeanPrice")]
-    pub(crate) target_mean_price: Option<RawNum>,
+    pub(crate) target_mean_price: Option<RawNum<f64>>,
     #[serde(rename = "targetHighPrice")]
-    pub(crate) target_high_price: Option<RawNum>,
+    pub(crate) target_high_price: Option<RawNum<f64>>,
     #[serde(rename = "targetLowPrice")]
-    pub(crate) target_low_price: Option<RawNum>,
+    pub(crate) target_low_price: Option<RawNum<f64>>,
     #[serde(rename = "numberOfAnalystOpinions")]
-    pub(crate) number_of_analyst_opinions: Option<RawNum>,
+    pub(crate) number_of_analyst_opinions: Option<RawNum<f64>>,
 }
 
 #[derive(Deserialize)]
@@ -101,7 +102,7 @@ pub(crate) struct EarningsTrendNode {
 #[derive(Deserialize)]
 pub(crate) struct EarningsTrendItemNode {
     pub(crate) period: Option<String>,
-    pub(crate) growth: Option<RawNum>,
+    pub(crate) growth: Option<RawNum<f64>>,
     #[serde(rename = "earningsEstimate")]
     pub(crate) earnings_estimate: Option<EarningsEstimateNode>,
     #[serde(rename = "revenueEstimate")]
@@ -112,58 +113,55 @@ pub(crate) struct EarningsTrendItemNode {
     pub(crate) eps_revisions: Option<EpsRevisionsNode>,
 }
 
+
 #[derive(Deserialize)]
 pub(crate) struct EarningsEstimateNode {
-    pub(crate) avg: Option<RawNum>,
-    pub(crate) low: Option<RawNum>,
-    pub(crate) high: Option<RawNum>,
+    pub(crate) avg: Option<RawNum<f64>>,
+    pub(crate) low: Option<RawNum<f64>>,
+    pub(crate) high: Option<RawNum<f64>>,
     #[serde(rename = "yearAgoEps")]
-    pub(crate) year_ago_eps: Option<RawNum>,
+    pub(crate) year_ago_eps: Option<RawNum<f64>>,
     #[serde(rename = "numberOfAnalysts")]
-    pub(crate) num_analysts: Option<RawNum>,
-    pub(crate) growth: Option<RawNum>,
+    pub(crate) num_analysts: Option<RawNum<f64>>,
+    pub(crate) growth: Option<RawNum<f64>>,
 }
+
 
 #[derive(Deserialize)]
 pub(crate) struct RevenueEstimateNode {
-    pub(crate) avg: Option<RawNumI64>,
-    pub(crate) low: Option<RawNumI64>,
-    pub(crate) high: Option<RawNumI64>,
+    pub(crate) avg: Option<RawNum<i64>>,
+    pub(crate) low: Option<RawNum<i64>>,
+    pub(crate) high: Option<RawNum<i64>>,
     #[serde(rename = "yearAgoRevenue")]
-    pub(crate) year_ago_revenue: Option<RawNumI64>,
+    pub(crate) year_ago_revenue: Option<RawNum<i64>>,
     #[serde(rename = "numberOfAnalysts")]
-    pub(crate) num_analysts: Option<RawNum>,
-    pub(crate) growth: Option<RawNum>,
+    pub(crate) num_analysts: Option<RawNum<f64>>,
+    pub(crate) growth: Option<RawNum<f64>>,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct EpsTrendNode {
-    pub(crate) current: Option<RawNum>,
+    pub(crate) current: Option<RawNum<f64>>,
     #[serde(rename = "7daysAgo")]
-    pub(crate) seven_days_ago: Option<RawNum>,
+    pub(crate) seven_days_ago: Option<RawNum<f64>>,
     #[serde(rename = "30daysAgo")]
-    pub(crate) thirty_days_ago: Option<RawNum>,
+    pub(crate) thirty_days_ago: Option<RawNum<f64>>,
     #[serde(rename = "60daysAgo")]
-    pub(crate) sixty_days_ago: Option<RawNum>,
+    pub(crate) sixty_days_ago: Option<RawNum<f64>>,
     #[serde(rename = "90daysAgo")]
-    pub(crate) ninety_days_ago: Option<RawNum>,
+    pub(crate) ninety_days_ago: Option<RawNum<f64>>,
 }
+
 
 #[derive(Deserialize)]
 pub(crate) struct EpsRevisionsNode {
     #[serde(rename = "upLast7days")]
-    pub(crate) up_last_7_days: Option<RawNum>,
+    pub(crate) up_last_7_days: Option<RawNum<f64>>,
     #[serde(rename = "upLast30days")]
-    pub(crate) up_last_30_days: Option<RawNum>,
+    pub(crate) up_last_30_days: Option<RawNum<f64>>,
     #[serde(rename = "downLast7days")]
-    pub(crate) down_last_7_days: Option<RawNum>,
+    pub(crate) down_last_7_days: Option<RawNum<f64>>,
     #[serde(rename = "downLast30days")]
-    pub(crate) down_last_30_days: Option<RawNum>,
+    pub(crate) down_last_30_days: Option<RawNum<f64>>,
 }
 
-/* --- shared small wrappers --- */
-
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNum {
-    pub(crate) raw: Option<f64>,
-}

@@ -1,6 +1,5 @@
-use serde::{Deserialize, Deserializer};
-
-use crate::core::wire::RawNumI64;
+use serde::{Deserialize};
+use crate::core::wire::{RawDate, RawNum, RawNumU64};
 
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
@@ -42,15 +41,14 @@ pub(crate) struct IncomeRowNode {
     #[serde(rename = "endDate")]
     pub(crate) end_date: Option<RawDate>,
     #[serde(rename = "totalRevenue")]
-    pub(crate) total_revenue: Option<RawNum>,
+    pub(crate) total_revenue: Option<RawNum<f64>>,
     #[serde(rename = "grossProfit")]
-    pub(crate) gross_profit: Option<RawNum>,
+    pub(crate) gross_profit: Option<RawNum<f64>>,
     #[serde(rename = "operatingIncome")]
-    pub(crate) operating_income: Option<RawNum>,
+    pub(crate) operating_income: Option<RawNum<f64>>,
     #[serde(rename = "netIncome")]
-    pub(crate) net_income: Option<RawNum>,
+    pub(crate) net_income: Option<RawNum<f64>>,
 }
-
 /* --- balance --- */
 #[derive(Deserialize)]
 pub(crate) struct BalanceHistoryNode {
@@ -64,18 +62,18 @@ pub(crate) struct BalanceRowNode {
     pub(crate) end_date: Option<RawDate>,
 
     #[serde(rename = "totalAssets")]
-    pub(crate) total_assets: Option<RawNum>,
+    pub(crate) total_assets: Option<RawNum<f64>>,
     #[serde(rename = "totalLiab")]
-    pub(crate) total_liab: Option<RawNum>,
+    pub(crate) total_liab: Option<RawNum<f64>>,
     #[serde(rename = "totalStockholderEquity")]
-    pub(crate) total_stockholder_equity: Option<RawNum>,
+    pub(crate) total_stockholder_equity: Option<RawNum<f64>>,
 
-    pub(crate) cash: Option<RawNum>,
+    pub(crate) cash: Option<RawNum<f64>>,
 
     #[serde(rename = "longTermDebt")]
-    pub(crate) long_term_debt: Option<RawNum>,
+    pub(crate) long_term_debt: Option<RawNum<f64>>,
     #[serde(rename = "commonStockSharesIssued")]
-    pub(crate) shares_outstanding: Option<RawNumI64>,
+    pub(crate) shares_outstanding: Option<RawNum<i64>>,
 }
 
 /* --- cashflow --- */
@@ -91,16 +89,16 @@ pub(crate) struct CashflowRowNode {
     pub(crate) end_date: Option<RawDate>,
 
     #[serde(rename = "totalCashFromOperatingActivities")]
-    pub(crate) total_cash_from_operating_activities: Option<RawNum>,
+    pub(crate) total_cash_from_operating_activities: Option<RawNum<f64>>,
 
     #[serde(rename = "capitalExpenditures")]
-    pub(crate) capital_expenditures: Option<RawNum>,
+    pub(crate) capital_expenditures: Option<RawNum<f64>>,
 
     #[serde(rename = "freeCashflow")]
-    pub(crate) free_cashflow: Option<RawNum>,
+    pub(crate) free_cashflow: Option<RawNum<f64>>,
 
     #[serde(rename = "netIncome")]
-    pub(crate) net_income: Option<RawNum>,
+    pub(crate) net_income: Option<RawNum<f64>>,
 }
 
 /* --- earnings --- */
@@ -121,15 +119,15 @@ pub(crate) struct FinancialsChartNode {
 #[derive(Deserialize)]
 pub(crate) struct FinancialYearNode {
     pub(crate) date: Option<i64>,
-    pub(crate) revenue: Option<RawNum>,
-    pub(crate) earnings: Option<RawNum>,
+    pub(crate) revenue: Option<RawNum<f64>>,
+    pub(crate) earnings: Option<RawNum<f64>>,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct FinancialQuarterNode {
     pub(crate) date: Option<String>,
-    pub(crate) revenue: Option<RawNum>,
-    pub(crate) earnings: Option<RawNum>,
+    pub(crate) revenue: Option<RawNum<f64>>,
+    pub(crate) earnings: Option<RawNum<f64>>,
 }
 
 #[derive(Deserialize)]
@@ -140,8 +138,8 @@ pub(crate) struct EarningsChartNode {
 #[derive(Deserialize)]
 pub(crate) struct EpsQuarterNode {
     pub(crate) date: Option<String>,
-    pub(crate) actual: Option<RawNum>,
-    pub(crate) estimate: Option<RawNum>,
+    pub(crate) actual: Option<RawNum<f64>>,
+    pub(crate) estimate: Option<RawNum<f64>>,
 }
 
 /* --- calendar --- */
@@ -184,53 +182,4 @@ pub(crate) struct TimeseriesData {
 pub(crate) struct TimeseriesValue {
     #[serde(rename = "reportedValue")]
     pub(crate) reported_value: Option<RawNumU64>,
-}
-
-fn de_u64_from_any_number<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum AnyNumber {
-        U64(u64),
-        F64(f64),
-    }
-
-    match Option::<AnyNumber>::deserialize(deserializer)? {
-        Some(AnyNumber::U64(u)) => Ok(Some(u)),
-        Some(AnyNumber::F64(f)) => {
-            if f.fract() == 0.0 && f >= 0.0 {
-                Ok(Some(f as u64))
-            } else {
-                Err(serde::de::Error::custom(format!(
-                    "cannot convert float {} to u64",
-                    f
-                )))
-            }
-        }
-        None => Ok(None),
-    }
-}
-
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNumU64 {
-    #[serde(deserialize_with = "de_u64_from_any_number")]
-    pub(crate) raw: Option<u64>,
-}
-
-/* --- shared small wrappers + helpers --- */
-
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawDate {
-    pub(crate) raw: Option<i64>,
-}
-
-#[derive(Deserialize, Clone, Copy)]
-pub(crate) struct RawNum {
-    pub(crate) raw: Option<f64>,
-}
-
-pub(crate) fn raw_num(n: RawNum) -> Option<f64> {
-    n.raw
 }

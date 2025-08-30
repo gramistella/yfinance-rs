@@ -177,7 +177,7 @@ impl StreamBuilder {
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
 
         let join = tokio::spawn({
-            let mut client = self.client.clone();
+            let client = self.client;
             let symbols = self.symbols.clone();
             let cfg = self.cfg.clone();
 
@@ -191,7 +191,7 @@ impl StreamBuilder {
                 match self.method {
                     StreamMethod::Websocket => {
                         if let Err(e) =
-                            run_websocket_stream(&mut client, symbols, tx, &mut stop_rx).await
+                            run_websocket_stream(&client, symbols, tx, &mut stop_rx).await
                             && std::env::var("YF_DEBUG").ok().as_deref() == Some("1")
                         {
                             eprintln!("YF_DEBUG(stream): websocket stream failed: {e}");
@@ -199,7 +199,7 @@ impl StreamBuilder {
                     }
                     StreamMethod::WebsocketWithFallback => {
                         if let Err(e) = run_websocket_stream(
-                            &mut client,
+                            &client,
                             symbols.clone(),
                             tx.clone(),
                             &mut stop_rx,
@@ -255,7 +255,7 @@ struct WsSubscribe<'a> {
 }
 
 async fn run_websocket_stream(
-    client: &mut YfClient,
+    client: &YfClient,
     symbols: Vec<String>,
     tx: mpsc::Sender<QuoteUpdate>,
     stop_rx: &mut oneshot::Receiver<()>,

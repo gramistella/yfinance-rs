@@ -466,6 +466,17 @@ async fn fetch_and_parse_isin(
     query: &str,
     retry_override: Option<&RetryConfig>,
 ) -> Result<Option<String>, YfError> {
+    
+    #[derive(serde::Deserialize)]
+    struct FlatSuggest {
+        #[serde(alias = "Value", alias = "value")]
+        value: Option<String>,
+        #[serde(alias = "Symbol", alias = "symbol")]
+        symbol: Option<String>,
+        #[serde(alias = "Isin", alias = "isin", alias = "ISIN")]
+        isin: Option<String>,
+    }
+    
     let mut url = client.base_insider_search().clone();
     url.query_pairs_mut()
         .append_pair("max_results", "5")
@@ -480,16 +491,6 @@ async fn fetch_and_parse_isin(
 
     let body = crate::core::net::get_text(resp, "isin_search", symbol, "json").await?;
     let debug = std::env::var("YF_DEBUG").ok().as_deref() == Some("1");
-
-    #[derive(serde::Deserialize)]
-    struct FlatSuggest {
-        #[serde(alias = "Value", alias = "value")]
-        value: Option<String>,
-        #[serde(alias = "Symbol", alias = "symbol")]
-        symbol: Option<String>,
-        #[serde(alias = "Isin", alias = "isin", alias = "ISIN")]
-        isin: Option<String>,
-    }
 
     // ---- Helpers ----
     let normalize_sym = |s: &str| {
@@ -525,7 +526,7 @@ async fn fetch_and_parse_isin(
             // NOTE: parts.iter() yields &String; find gets &&String; deref once.
             if let Some(isin) = parts
                 .iter()
-                .map(|s| s.as_str())
+                .map(std::string::String::as_str)
                 .find(|s| looks_like_isin(s))
             {
                 return Some(isin.to_uppercase());
@@ -637,16 +638,14 @@ async fn fetch_and_parse_isin(
         if let Some(hit) = extract_from_json_value(&val, &input_norm) {
             if debug {
                 eprintln!(
-                    "YF_DEBUG(isin): ISIN extracted from JSON structures: {}",
-                    hit
+                    "YF_DEBUG(isin): ISIN extracted from JSON structures: {hit}",
                 );
             }
             return Ok(Some(hit));
         }
     } else if debug {
         eprintln!(
-            "YF_DEBUG(isin): failed to parse JSON response for query '{}'",
-            query
+            "YF_DEBUG(isin): failed to parse JSON response for query '{query}'",
         );
     }
 
@@ -679,7 +678,7 @@ async fn fetch_and_parse_isin(
             if let Some(value) = r.value.as_deref()
                 && let Some(tok) = value
                     .split('|')
-                    .map(|p| p.trim())
+                    .map(str::trim)
                     .find(|tok| looks_like_isin(tok))
             {
                 return Ok(Some((*tok).to_uppercase()));
@@ -697,7 +696,7 @@ async fn fetch_and_parse_isin(
             }
             if token.len() == 12 && looks_like_isin(&token) {
                 if debug {
-                    eprintln!("YF_DEBUG(isin): Fallback raw scan found ISIN: {}", token);
+                    eprintln!("YF_DEBUG(isin): Fallback raw scan found ISIN: {token}");
                 }
                 return Ok(Some(token.to_uppercase()));
             }

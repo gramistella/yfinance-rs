@@ -180,3 +180,16 @@ test-full-debug +args='':
         echo "  just test-record {{args}}"; \
         exit $status; \
     fi
+
+lint:
+  cargo clippy --workspace --lib --bins --tests --benches --examples --all-features -- -D warnings
+
+# just lint-fix [optional flags...]
+# Example: just lint-fix --allow-dirty
+#          just lint-fix --allow-dirty --allow-staged
+lint-fix *FLAGS:
+  cargo clippy --workspace --lib --bins --tests --benches --examples --all-features --fix {{FLAGS}} -- -D warnings
+
+lint-strict:
+  cargo clippy --workspace --lib --bins --tests --benches --examples --all-features -- \
+    -W clippy::all -W clippy::cargo -W clippy::pedantic -W clippy::nursery -D warnings

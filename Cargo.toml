@@ -1,6 +1,6 @@
 [package]
 name = "yfinance-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "Ergonomic Rust client for Yahoo Finance, supporting historical prices, real-time streaming, options, fundamentals, and more."
 license = "MIT"
