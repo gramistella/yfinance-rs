@@ -11,18 +11,6 @@ pub struct V10Result {
     #[serde(rename = "incomeStatementHistoryQuarterly")]
     pub(crate) income_statement_history_quarterly: Option<IncomeHistoryNode>,
 
-    /* balance */
-    #[serde(rename = "balanceSheetHistory")]
-    pub(crate) balance_sheet_history: Option<BalanceHistoryNode>,
-    #[serde(rename = "balanceSheetHistoryQuarterly")]
-    pub(crate) balance_sheet_history_quarterly: Option<BalanceHistoryNode>,
-
-    /* cashflow */
-    #[serde(rename = "cashflowStatementHistory")]
-    pub(crate) cashflow_statement_history: Option<CashflowHistoryNode>,
-    #[serde(rename = "cashflowStatementHistoryQuarterly")]
-    pub(crate) cashflow_statement_history_quarterly: Option<CashflowHistoryNode>,
-
     /* earnings + calendar */
     pub(crate) earnings: Option<EarningsNode>,
     #[serde(rename = "calendarEvents")]
@@ -46,57 +34,6 @@ pub struct IncomeRowNode {
     pub(crate) gross_profit: Option<RawNum<f64>>,
     #[serde(rename = "operatingIncome")]
     pub(crate) operating_income: Option<RawNum<f64>>,
-    #[serde(rename = "netIncome")]
-    pub(crate) net_income: Option<RawNum<f64>>,
-}
-/* --- balance --- */
-#[derive(Deserialize)]
-pub struct BalanceHistoryNode {
-    #[serde(rename = "balanceSheetStatements")]
-    pub(crate) balance_sheet_statements: Option<Vec<BalanceRowNode>>,
-}
-
-#[derive(Deserialize)]
-pub struct BalanceRowNode {
-    #[serde(rename = "endDate")]
-    pub(crate) end_date: Option<RawDate>,
-
-    #[serde(rename = "totalAssets")]
-    pub(crate) total_assets: Option<RawNum<f64>>,
-    #[serde(rename = "totalLiab")]
-    pub(crate) total_liab: Option<RawNum<f64>>,
-    #[serde(rename = "totalStockholderEquity")]
-    pub(crate) total_stockholder_equity: Option<RawNum<f64>>,
-
-    pub(crate) cash: Option<RawNum<f64>>,
-
-    #[serde(rename = "longTermDebt")]
-    pub(crate) long_term_debt: Option<RawNum<f64>>,
-    #[serde(rename = "commonStockSharesIssued")]
-    pub(crate) shares_outstanding: Option<RawNum<i64>>,
-}
-
-/* --- cashflow --- */
-#[derive(Deserialize)]
-pub struct CashflowHistoryNode {
-    #[serde(rename = "cashflowStatements")]
-    pub(crate) cashflow_statements: Option<Vec<CashflowRowNode>>,
-}
-
-#[derive(Deserialize)]
-pub struct CashflowRowNode {
-    #[serde(rename = "endDate")]
-    pub(crate) end_date: Option<RawDate>,
-
-    #[serde(rename = "totalCashFromOperatingActivities")]
-    pub(crate) total_cash_from_operating_activities: Option<RawNum<f64>>,
-
-    #[serde(rename = "capitalExpenditures")]
-    pub(crate) capital_expenditures: Option<RawNum<f64>>,
-
-    #[serde(rename = "freeCashflow")]
-    pub(crate) free_cashflow: Option<RawNum<f64>>,
-
     #[serde(rename = "netIncome")]
     pub(crate) net_income: Option<RawNum<f64>>,
 }
@@ -176,7 +113,7 @@ pub struct TimeseriesData {
     #[allow(dead_code)]
     meta: serde_json::Value,
     #[serde(flatten)]
-    pub(crate) values: std::collections::HashMap<String, Vec<TimeseriesValue>>,
+    pub(crate) values: std::collections::HashMap<String, serde_json::Value>,
 }
 
 #[derive(Deserialize)]

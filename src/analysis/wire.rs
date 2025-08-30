@@ -9,9 +9,6 @@ pub struct V10Result {
     #[serde(rename = "recommendationTrend")]
     pub(crate) recommendation_trend: Option<RecommendationTrendNode>,
 
-    #[serde(rename = "recommendationMean")]
-    pub(crate) recommendation_mean: Option<RecommendationMeanNode>,
-
     #[serde(rename = "upgradeDowngradeHistory")]
     pub(crate) upgrade_downgrade_history: Option<UpgradeDowngradeHistoryNode>,
 
@@ -41,17 +38,6 @@ pub struct RecommendationNode {
 
     #[serde(rename = "strongSell")]
     pub(crate) strong_sell: Option<i64>,
-}
-
-/* --- recommendation mean / key --- */
-
-#[derive(Deserialize)]
-pub struct RecommendationMeanNode {
-    #[serde(rename = "recommendationMean")]
-    pub(crate) recommendation_mean: Option<RawNum<f64>>,
-
-    #[serde(rename = "recommendationKey")]
-    pub(crate) recommendation_key: Option<String>,
 }
 
 /* --- upgrades / downgrades --- */
@@ -91,6 +77,10 @@ pub struct FinancialDataNode {
     pub(crate) target_low_price: Option<RawNum<f64>>,
     #[serde(rename = "numberOfAnalystOpinions")]
     pub(crate) number_of_analyst_opinions: Option<RawNum<f64>>,
+    #[serde(rename = "recommendationMean")]
+    pub(crate) recommendation_mean: Option<RawNum<f64>>,
+    #[serde(rename = "recommendationKey")]
+    pub(crate) recommendation_key: Option<String>,
 }
 
 #[derive(Deserialize)]

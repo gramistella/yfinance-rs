@@ -8,18 +8,16 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
     let server = MockServer::start();
     let sym = "AAPL";
 
-    // First call: invalid crumb
     let first = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "recommendationTrend,recommendationMean")
+            .query_param("modules", "recommendationTrend,financialData")
             .query_param("crumb", "stale");
         then.status(200)
             .header("content-type", "application/json")
             .body(r#"{"quoteSummary":{"result":null,"error":{"description":"Invalid Crumb"}}}"#);
     });
 
-    // Credential refresh
     let cookie = server.mock(|when, then| {
         when.method(GET).path("/consent");
         then.status(200).header(
@@ -32,11 +30,10 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
         then.status(200).body("fresh");
     });
 
-    // Second call: minimal OK body
     let ok = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "recommendationTrend,recommendationMean")
+            .query_param("modules", "recommendationTrend,financialData")
             .query_param("crumb", "fresh");
         then.status(200)
             .header("content-type","application/json")
@@ -44,7 +41,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
               "quoteSummary": {
                 "result": [{
                   "recommendationTrend": { "trend": [] },
-                  "recommendationMean": { "recommendationMean": { "raw": 2.5 }, "recommendationKey": "buy" }
+                  "financialData": { "recommendationMean": { "raw": 2.5 }, "recommendationKey": "buy" }
                 }],
                 "error": null
               }

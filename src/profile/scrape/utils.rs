@@ -109,6 +109,7 @@ pub fn find_matching_brace(s: &str, start: usize) -> Option<usize> {
 }
 
 /// Exposed for debug helpers as well.
+#[cfg(feature = "debug-dumps")]
 pub fn parse_jsonish_string(s: &str) -> Option<serde_json::Value> {
     let t = s.trim();
     if t.starts_with('{') || t.starts_with('[') {
@@ -118,6 +119,7 @@ pub fn parse_jsonish_string(s: &str) -> Option<serde_json::Value> {
     }
 }
 
+#[cfg(feature = "debug-dumps")]
 pub fn escape_html(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for ch in s.chars() {

@@ -56,7 +56,7 @@ pub(super) async fn recommendation_summary(
     let root = fetch_modules(
         client,
         symbol,
-        "recommendationTrend,recommendationMean",
+        "recommendationTrend,financialData",
         cache_mode,
         retry_override,
     )
@@ -80,11 +80,8 @@ pub(super) async fn recommendation_summary(
         )
     });
 
-    let (mean, mean_key) = root.recommendation_mean.map_or((None, None), |m| {
-        (
-            m.recommendation_mean.and_then(|r| r.raw),
-            m.recommendation_key,
-        )
+    let (mean, mean_key) = root.financial_data.map_or((None, None), |fd| {
+        (from_raw(fd.recommendation_mean), fd.recommendation_key)
     });
 
     Ok(RecommendationSummary {

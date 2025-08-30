@@ -48,25 +48,29 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
 
 #[tokio::test]
 async fn offline_balance_sheet_annual_uses_recorded_fixture() {
-    // Use MSFT for balanceSheetHistory (record first)
     let sym = "MSFT";
     let server = MockServer::start();
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "balanceSheetHistory")
+            .path(format!(
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
+            ))
+            .query_param_exists("type")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api_balanceSheetHistory", sym));
+            .body(fixture("timeseries_balance_sheet_annual", sym));
     });
 
     let client = YfClient::builder()
-        .base_quote_api(
-            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        .base_timeseries(
+            Url::parse(&format!(
+                "{}/ws/fundamentals-timeseries/v1/finance/timeseries/",
+                server.base_url()
+            ))
+            .unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
         .unwrap();
@@ -82,25 +86,29 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
 
 #[tokio::test]
 async fn offline_cashflow_annual_uses_recorded_fixture() {
-    // Use GOOGL for cashflowStatementHistory (record first)
     let sym = "GOOGL";
     let server = MockServer::start();
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "cashflowStatementHistory")
+            .path(format!(
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
+            ))
+            .query_param_exists("type")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api_cashflowStatementHistory", sym));
+            .body(fixture("timeseries_cash_flow_annual", sym));
     });
 
     let client = YfClient::builder()
-        .base_quote_api(
-            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        .base_timeseries(
+            Url::parse(&format!(
+                "{}/ws/fundamentals-timeseries/v1/finance/timeseries/",
+                server.base_url()
+            ))
+            .unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
         .unwrap();

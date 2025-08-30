@@ -46,15 +46,15 @@ async fn offline_info_uses_recorded_fixtures() {
             ));
     });
 
-    // 4. Mock for recommendation_summary -> uses `analysis_api_recommendationTrend-recommendationMean_MSFT.json`
+    // 4. Mock for recommendations_summary -> uses `analysis_api_recommendationTrend-financialData_MSFT.json`
     let rec_summary_mock = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v10/finance/quoteSummary/{}", sym))
-            .query_param("modules", "recommendationTrend,recommendationMean");
+            .query_param("modules", "recommendationTrend,financialData");
         then.status(200)
             .header("content-type", "application/json")
             .body(crate::common::fixture(
-                "analysis_api_recommendationTrend-recommendationMean",
+                "analysis_api_recommendationTrend-financialData",
                 sym,
                 "json",
             ));

@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{ApiPreference, Ticker, YfClient};
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
 async fn cashflow_computes_fcf_when_missing() {
@@ -9,26 +9,34 @@ async fn cashflow_computes_fcf_when_missing() {
     let sym = "GOOGL";
 
     let body = r#"{
-      "quoteSummary": {
-        "result": [{
-          "cashflowStatementHistory": {
-            "cashflowStatements": [{
-              "endDate": { "raw": 1234567890 },
-              "totalCashFromOperatingActivities": { "raw": 100.0 },
-              "capitalExpenditures": { "raw": 30.0 },
-              "freeCashflow": null,
-              "netIncome": { "raw": 65.0 }
-            }]
+      "timeseries": {
+        "result": [
+          {
+            "meta": { "type": ["annualOperatingCashFlow"] },
+            "timestamp": [1234567890],
+            "annualOperatingCashFlow": [{ "asOfDate": "2009-02-13", "periodType": "12M", "currencyCode": "USD", "reportedValue": {"raw": 100.0} }]
+          },
+          {
+            "meta": { "type": ["annualCapitalExpenditure"] },
+            "timestamp": [1234567890],
+            "annualCapitalExpenditure": [{ "asOfDate": "2009-02-13", "periodType": "12M", "currencyCode": "USD", "reportedValue": {"raw": -30.0} }]
+          },
+          {
+            "meta": { "type": ["annualNetIncome"] },
+            "timestamp": [1234567890],
+            "annualNetIncome": [{ "asOfDate": "2009-02-13", "periodType": "12M", "currencyCode": "USD", "reportedValue": {"raw": 65.0} }]
           }
-        }],
+        ],
         "error": null
       }
     }"#;
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "cashflowStatementHistory")
+            .path(format!(
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
+            ))
+            .query_param_exists("type")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
@@ -36,10 +44,13 @@ async fn cashflow_computes_fcf_when_missing() {
     });
 
     let client = YfClient::builder()
-        .base_quote_api(
-            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        .base_timeseries(
+            Url::parse(&format!(
+                "{}/ws/fundamentals-timeseries/v1/finance/timeseries/",
+                server.base_url()
+            ))
+            .unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "crumb")
         .build()
         .unwrap();
@@ -51,6 +62,11 @@ async fn cashflow_computes_fcf_when_missing() {
 
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0].operating_cashflow, Some(100.0));
-    assert_eq!(rows[0].capital_expenditures, Some(30.0));
-    assert_eq!(rows[0].free_cash_flow, Some(70.0), "fcf = ocf - capex");
+    assert_eq!(rows[0].capital_expenditures, Some(-30.0));
+    assert_eq!(
+        rows[0].free_cash_flow,
+        Some(70.0),
+        "fcf = ocf + capex (where capex is negative)"
+    );
+    assert_eq!(rows[0].net_income, Some(65.0));
 }

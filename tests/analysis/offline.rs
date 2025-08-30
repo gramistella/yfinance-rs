@@ -46,12 +46,12 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "recommendationTrend,recommendationMean")
+            .query_param("modules", "recommendationTrend,financialData")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
             .body(fixture(
-                "analysis_api_recommendationTrend-recommendationMean",
+                "analysis_api_recommendationTrend-financialData",
                 sym,
             ));
     });
