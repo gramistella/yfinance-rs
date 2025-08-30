@@ -14,14 +14,17 @@ pub fn debug_dump_extracted_json(symbol: &str, json: &str) -> std::io::Result<()
     {
         let _ = f.write_all(pretty.as_bytes());
         eprintln!(
-            "YF_DEBUG: wrote pretty-printed extracted JSON to {}",
+            "yfinance-rs(debug-dumps): wrote pretty-printed extracted JSON to {}",
             path.display()
         );
         return Ok(());
     }
 
     let _ = f.write_all(json.as_bytes());
-    eprintln!("YF_DEBUG: wrote raw extracted JSON to {}", path.display());
+    eprintln!(
+        "yfinance-rs(debug-dumps): wrote raw extracted JSON to {}",
+        path.display()
+    );
     Ok(())
 }
 
@@ -111,7 +114,6 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
 
     let mut min_html = String::new();
     min_html.push_str("<!doctype html><meta charset=\"utf-8\">\n<style>pre{white-space:pre-wrap;font:12px/1.3 ui-monospace,monospace}</style>\n");
-    let _ = writeln!(min_html, "<!-- compact debug for {symbol} -->");
     if let Some(t) = extract_title(html) {
         let _ = writeln!(min_html, "<h1>title</h1><pre>{}</pre>", escape_html(&t));
     }
@@ -163,7 +165,7 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
         let mut f = fs::File::create(&next_path)?;
         let s = serde_json::to_string_pretty(&v).unwrap_or_else(|_| inner.to_string());
         f.write_all(s.as_bytes())?;
-        eprintln!("YF_DEBUG: wrote {}", next_path.display());
+        eprintln!("yfinance-rs(debug-dumps): wrote {}", next_path.display());
     }
 
     if let Some(js_obj) = extract_js_object_after("root.App.main =", html) {
@@ -171,7 +173,7 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
             let mut f = fs::File::create(&rootapp_path)?;
             let s = serde_json::to_string_pretty(&v).unwrap_or_else(|_| js_obj.clone());
             f.write_all(s.as_bytes())?;
-            eprintln!("YF_DEBUG: wrote {}", rootapp_path.display());
+            eprintln!("yfinance-rs(debug-dumps): wrote {}", rootapp_path.display());
         }
         if let Ok(v) = serde_json::from_str::<Value>(&js_obj) {
             min_html.push_str("<h2>root.App.main (snippet)</h2>\n");
@@ -182,7 +184,7 @@ pub fn debug_dump_html(symbol: &str, html: &str) -> std::io::Result<()> {
 
     let mut f = std::fs::File::create(&min_path)?;
     f.write_all(min_html.as_bytes())?;
-    eprintln!("YF_DEBUG: wrote {}", min_path.display());
+    eprintln!("yfinance-rs(debug-dumps): wrote {}", min_path.display());
 
     Ok(())
 }
@@ -192,6 +194,6 @@ pub fn debug_dump_api(symbol: &str, body: &str) -> std::io::Result<()> {
     let path = std::env::temp_dir().join(format!("yfinance_rs-quoteSummary-{symbol}.json"));
     let mut f = std::fs::File::create(&path)?;
     let _ = f.write_all(body.as_bytes());
-    eprintln!("YF_DEBUG=1: wrote {}", path.display());
+    eprintln!("yfinance-rs(debug-dumps): wrote {}", path.display());
     Ok(())
 }

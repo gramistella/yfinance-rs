@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};
 
-#[cfg(any(debug_assertions, feature = "debug-dumps"))]
+#[cfg(feature = "debug-dumps")]
 use crate::profile::debug::{debug_dump_extracted_json, debug_dump_html};
 
 pub mod extract;
@@ -39,19 +39,15 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
         body
     };
 
-    #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+    #[cfg(feature = "debug-dumps")]
     {
-        if debug {
-            let _ = debug_dump_html(symbol, &body);
-        }
+        let _ = debug_dump_html(symbol, &body);
     }
 
     let json_str = extract_bootstrap_json(&body)?;
-    #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+    #[cfg(feature = "debug-dumps")]
     {
-        if debug {
-            let _ = debug_dump_extracted_json(symbol, &json_str);
-        }
+        let _ = debug_dump_extracted_json(symbol, &json_str);
     }
 
     let boot: Bootstrap = serde_json::from_str(&json_str)

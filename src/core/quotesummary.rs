@@ -5,7 +5,7 @@ use crate::core::{
 };
 use serde::Deserialize;
 
-#[cfg(any(debug_assertions, feature = "debug-dumps"))]
+#[cfg(feature = "debug-dumps")]
 use crate::profile::debug::debug_dump_api;
 
 #[derive(Deserialize)]
@@ -58,7 +58,7 @@ pub async fn fetch(
         if cache_mode == CacheMode::Use
             && let Some(text) = client.cache_get(&url).await
         {
-            #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+            #[cfg(feature = "debug-dumps")]
             let _ = debug_dump_api(symbol, &text);
             return serde_json::from_str(&text)
                 .map_err(|e| YfError::Data(format!("quoteSummary json parse (cache): {e}")));
@@ -74,7 +74,7 @@ pub async fn fetch(
         let fixture_endpoint = format!("{caller}_api_{module_key}");
         let text = net::get_text(resp, &fixture_endpoint, symbol, "json").await?;
 
-        #[cfg(any(debug_assertions, feature = "debug-dumps"))]
+        #[cfg(feature = "debug-dumps")]
         let _ = debug_dump_api(symbol, &text);
 
         if cache_mode != CacheMode::Bypass {

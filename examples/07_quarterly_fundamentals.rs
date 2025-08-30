@@ -1,3 +1,4 @@
+use chrono::TimeZone;
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
@@ -40,6 +41,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     } else {
         println!("No quarterly cash flow statement found.");
+    }
+
+    println!("\nFetching latest quarterly shares outstanding...");
+    let shares = ticker.quarterly_shares().await?;
+    if let Some(latest) = shares.first() {
+        println!(
+            "Latest quarterly shares outstanding: {} (from {})",
+            latest.shares,
+            chrono::Utc
+                .timestamp_opt(latest.date, 0)
+                .unwrap()
+                .date_naive()
+        );
+    } else {
+        println!("No quarterly shares outstanding found.");
     }
 
     Ok(())

@@ -33,8 +33,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let results = DownloadBuilder::new(&client)
         .symbols(symbols)
         .between(thirty_days_ago, now)
-        .interval(Interval::W1) // Weekly interval
-        .auto_adjust(true) // Adjust prices for splits/dividends
+        .interval(Interval::W1)
+        .auto_adjust(true) // default, but explicit here
+        .back_adjust(true) // show back-adjustment
+        .repair(true) // show outlier repair
+        .rounding(true) // show rounding
         .run()
         .await?;
 
@@ -46,6 +49,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(last_candle) = candles.last() {
             println!("  Last Close: ${:.2}", last_candle.close);
         }
+    }
+    println!("--------------------------------------");
+
+    let meta = aapl_ticker.get_history_metadata(Some(Range::Y1)).await?;
+    println!("\n--- History Metadata for AAPL ---");
+    if let Some(m) = meta {
+        println!("  Timezone: {}", m.timezone.unwrap_or_default());
+        println!("  GMT Offset: {}", m.gmtoffset.unwrap_or_default());
     }
     println!("--------------------------------------");
 

@@ -12,8 +12,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a StreamBuilder explicitly configured for polling.
     let (handle, mut receiver) = StreamBuilder::new(&client)
         .symbols(symbols)
-        .method(StreamMethod::Polling) // Explicitly use the polling method
-        .interval(Duration::seconds(5).to_std().unwrap()) // Set a custom polling interval
+        .method(StreamMethod::Polling)
+        .interval(Duration::seconds(5).to_std().unwrap())
+        .diff_only(false) // Get updates even if price hasn't changed
         .start()?;
 
     let stream_task = tokio::spawn(async move {

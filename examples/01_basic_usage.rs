@@ -25,6 +25,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("ESG Score: {:.2}", info.total_esg_score.unwrap_or_default());
     println!();
 
+    println!("--- Fast Info for NVDA ---");
+    let nvda = Ticker::new(client.clone(), "NVDA");
+    let fast_info = nvda.fast_info().await?;
+    println!(
+        "{} is trading at ${:.2} in {}",
+        fast_info.symbol,
+        fast_info.last_price,
+        fast_info.exchange.unwrap_or_default()
+    );
+    println!();
+
+    println!("--- Batch Quotes for Multiple Symbols ---");
+    let quotes = yfinance_rs::quotes(&client, vec!["AMD", "INTC", "QCOM"]).await?;
+    for quote in quotes {
+        println!(
+            "  {}: ${:.2}",
+            quote.symbol,
+            quote.regular_market_price.unwrap_or_default()
+        );
+    }
+    println!();
+
     // 3. Download historical data for multiple tickers at once.
     let symbols = vec!["AAPL", "GOOG", "TSLA"];
     let today = Utc::now();
