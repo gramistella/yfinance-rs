@@ -1,5 +1,5 @@
 use chrono::Duration;
-use yfinance_rs::{SearchBuilder, Ticker, core::client::YfClientBuilder};
+use yfinance_rs::{SearchBuilder, Ticker, YfClientBuilder};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

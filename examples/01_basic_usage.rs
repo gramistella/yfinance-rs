@@ -1,7 +1,6 @@
 use chrono::{Duration, Utc};
 use yfinance_rs::{
-    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker,
-    core::client::YfClientBuilder,
+    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClientBuilder,
 };
 
 #[tokio::main]
