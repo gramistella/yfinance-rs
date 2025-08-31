@@ -6,7 +6,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
 
     // --- Part 1: Fetching Historical Dividends and Splits ---
-    let aapl_ticker = Ticker::new(client.clone(), "AAPL");
+    let aapl_ticker = Ticker::new(&client, "AAPL");
 
     println!("--- Fetching Historical Actions for AAPL (last 5 years) ---");
     let dividends = aapl_ticker.dividends(Some(Range::Y5)).await?;

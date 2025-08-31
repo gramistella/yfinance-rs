@@ -52,7 +52,7 @@ async fn offline_shares_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
 
     let annual = t.shares().await.unwrap();
     mock_annual.assert();

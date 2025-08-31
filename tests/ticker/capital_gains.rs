@@ -23,7 +23,7 @@ async fn offline_capital_gains_from_history() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
     let gains = t.capital_gains(Some(Range::Max)).await.unwrap();
 
     mock.assert();

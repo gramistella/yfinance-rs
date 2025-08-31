@@ -41,7 +41,7 @@ async fn upgrades_downgrades_are_sorted_by_ts() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
     let rows = t.upgrades_downgrades().await.unwrap();
 
     mock.assert();

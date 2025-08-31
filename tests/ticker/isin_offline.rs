@@ -28,7 +28,7 @@ async fn offline_isin_happy_path() {
         .build()
         .unwrap();
 
-    let ticker = Ticker::new(client, sym);
+    let ticker = Ticker::new(&client, sym);
     let isin = ticker.isin().await.unwrap();
 
     isin_mock.assert();

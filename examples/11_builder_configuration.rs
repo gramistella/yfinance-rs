@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Per-Request Configuration: No Cache ---");
-    let aapl = Ticker::new(client.clone(), "AAPL").cache_mode(CacheMode::Bypass);
+    let aapl = Ticker::new(&client, "AAPL").cache_mode(CacheMode::Bypass);
     let quote_no_cache = aapl.quote().await?;
     println!(
         "  Fetched {} quote, bypassing the client's cache.",
@@ -74,7 +74,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         backoff: Backoff::Fixed(time::Duration::from_millis(100)),
         ..Default::default()
     };
-    let goog = Ticker::new(client.clone(), "GOOG").retry_policy(Some(custom_retry));
+    let goog = Ticker::new(&client, "GOOG").retry_policy(Some(custom_retry));
     // This call will now use the custom retry policy instead of the client's default
     let goog_info = goog.fast_info().await?;
     println!(

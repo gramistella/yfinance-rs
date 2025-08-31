@@ -29,7 +29,7 @@ async fn offline_esg_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let ticker = Ticker::new(client, sym);
+    let ticker = Ticker::new(&client, sym);
     let esg = ticker.sustainability().await.unwrap();
 
     mock.assert();

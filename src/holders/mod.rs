@@ -22,9 +22,9 @@ pub struct HoldersBuilder {
 
 impl HoldersBuilder {
     /// Creates a new `HoldersBuilder` for a given symbol.
-    pub fn new(client: YfClient, symbol: impl Into<String>) -> Self {
+    pub fn new(client: &YfClient, symbol: impl Into<String>) -> Self {
         Self {
-            client,
+            client: client.clone(),
             symbol: symbol.into(),
             cache_mode: CacheMode::Use,
             retry_override: None,

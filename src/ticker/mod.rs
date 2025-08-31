@@ -31,7 +31,7 @@ use crate::{
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let client = YfClient::default();
-/// let ticker = Ticker::new(client, "TSLA");
+/// let ticker = Ticker::new(&client, "TSLA");
 ///
 /// // Get the latest quote
 /// let quote = ticker.quote().await?;
@@ -57,9 +57,9 @@ impl Ticker {
     /// Creates a new `Ticker` for a given symbol.
     ///
     /// This is the standard way to create a ticker instance with default API endpoints.
-    pub fn new(client: YfClient, symbol: impl Into<String>) -> Self {
+    pub fn new(client: &YfClient, symbol: impl Into<String>) -> Self {
         Self {
-            client,
+            client: client.clone(),
             symbol: symbol.into(),
             cache_mode: CacheMode::Use,
             retry_override: None,
@@ -369,7 +369,7 @@ impl Ticker {
     /* ---------------- Holders convenience ---------------- */
 
     fn holders_builder(&self) -> HoldersBuilder {
-        HoldersBuilder::new(self.client.clone(), &self.symbol)
+        HoldersBuilder::new(&self.client, &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
     }
@@ -433,7 +433,7 @@ impl Ticker {
     /* ---------------- Analysis convenience ---------------- */
 
     fn analysis_builder(&self) -> AnalysisBuilder {
-        AnalysisBuilder::new(self.client.clone(), &self.symbol)
+        AnalysisBuilder::new(&self.client, &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
     }
@@ -504,7 +504,7 @@ impl Ticker {
     /* ---------------- Fundamentals convenience ---------------- */
 
     fn fundamentals_builder(&self) -> FundamentalsBuilder {
-        FundamentalsBuilder::new(self.client.clone(), &self.symbol)
+        FundamentalsBuilder::new(&self.client, &self.symbol)
             .cache_mode(self.cache_mode)
             .retry_policy(self.retry_override.clone())
     }

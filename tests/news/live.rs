@@ -8,7 +8,7 @@ async fn live_news_smoke_and_or_record() {
     }
 
     let client = YfClient::builder().build().unwrap();
-    let ticker = Ticker::new(client, "AAPL");
+    let ticker = Ticker::new(&client, "AAPL");
 
     // This call will record `tests/fixtures/news_AAPL.json` if YF_RECORD=1
     let news = ticker.news().await.unwrap();
@@ -34,7 +34,7 @@ async fn live_news_press_releases_for_record() {
     }
 
     let client = YfClient::builder().build().unwrap();
-    let ticker = Ticker::new(client, "AAPL");
+    let ticker = Ticker::new(&client, "AAPL");
 
     // This will record the fixture `news_pressReleases_AAPL.json`
     let _ = ticker

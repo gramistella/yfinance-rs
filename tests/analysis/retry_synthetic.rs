@@ -59,7 +59,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
     let s = t.recommendations_summary().await.unwrap();
 
     first.assert();

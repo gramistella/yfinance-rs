@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     // 2. Fetch a comprehensive summary for a ticker.
-    let msft = Ticker::new(client.clone(), "MSFT");
+    let msft = Ticker::new(&client, "MSFT");
     let info = msft.info().await?;
     println!("--- Ticker Info for {} ---", info.symbol);
     println!("Name: {}", info.short_name.unwrap_or_default());
@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Fast Info for NVDA ---");
-    let nvda = Ticker::new(client.clone(), "NVDA");
+    let nvda = Ticker::new(&client, "NVDA");
     let fast_info = nvda.fast_info().await?;
     println!(
         "{} is trading at ${:.2} in {}",
@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     // 4. Fetch a specific options chain.
-    let aapl = Ticker::new(client.clone(), "AAPL");
+    let aapl = Ticker::new(&client, "AAPL");
     let expirations = aapl.options().await?;
     if let Some(first_expiry) = expirations.first() {
         println!("--- Options Chain for AAPL ({first_expiry}) ---");
@@ -124,7 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // 6. Fetching news articles for a ticker
-    let tesla_news = Ticker::new(client, "TSLA");
+    let tesla_news = Ticker::new(&client, "TSLA");
     let articles = tesla_news
         .news_builder()
         .tab(NewsTab::PressReleases)

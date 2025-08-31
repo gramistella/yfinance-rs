@@ -36,7 +36,7 @@ async fn offline_news_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let ticker = Ticker::new(client, sym);
+    let ticker = Ticker::new(&client, sym);
     let articles = ticker.news().await.unwrap();
 
     mock.assert();
@@ -82,7 +82,7 @@ async fn offline_news_builder_configures_request() {
         .base_news(Url::parse(&server.base_url()).unwrap())
         .build()
         .unwrap();
-    let ticker = Ticker::new(client, sym);
+    let ticker = Ticker::new(&client, sym);
 
     let _articles = ticker
         .news_builder()

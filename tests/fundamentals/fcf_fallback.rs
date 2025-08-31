@@ -55,7 +55,7 @@ async fn cashflow_computes_fcf_when_missing() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
     let rows = t.cashflow().await.unwrap();
 
     mock.assert();

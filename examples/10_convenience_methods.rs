@@ -4,7 +4,7 @@ use yfinance_rs::{Interval, Range, Ticker, YfClient};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
-    let ticker = Ticker::new(client, "AAPL");
+    let ticker = Ticker::new(&client, "AAPL");
 
     println!("--- Ticker Quote (Convenience) ---");
     let quote = ticker.quote().await?;

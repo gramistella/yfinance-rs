@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fetch_info_tasks: Vec<_> = symbols
         .iter()
         .map(|&s| {
-            let ticker = Ticker::new(client.clone(), s);
+            let ticker = Ticker::new(&client, s);
             async move {
                 let info = ticker.info().await?;
                 println!(
@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Fetching annual fundamentals for a single ticker (AAPL) ---");
-    let aapl_fundamentals = FundamentalsBuilder::new(client.clone(), "AAPL");
+    let aapl_fundamentals = FundamentalsBuilder::new(&client, "AAPL");
     let annual_income_stmt = aapl_fundamentals.income_statement(false).await?;
     if let Some(stmt) = annual_income_stmt.first() {
         println!(
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Fetching ESG and holder data for MSFT ---");
-    let msft_ticker = Ticker::new(client.clone(), "MSFT");
+    let msft_ticker = Ticker::new(&client, "MSFT");
     let esg_scores = msft_ticker.sustainability().await?;
     println!(
         "MSFT Total ESG Score: {:.2}",

@@ -11,7 +11,7 @@ async fn live_holders_smoke_and_or_record() {
 
     let client = YfClient::builder().build().unwrap();
     // Use a major stock that is guaranteed to have all types of holder data.
-    let t = Ticker::new(client, "AAPL");
+    let t = Ticker::new(&client, "AAPL");
 
     // Call all methods to ensure a complete fixture is recorded if YF_RECORD=1
     let major = t.major_holders().await.unwrap();

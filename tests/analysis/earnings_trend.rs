@@ -30,7 +30,7 @@ async fn offline_earnings_trend_uses_recorded_fixture() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
     let rows = t.earnings_trend().await.unwrap();
 
     mock.assert();

@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     // --- Part 1: Fetching ESG Scores ---
-    let msft_ticker = Ticker::new(client.clone(), "MSFT");
+    let msft_ticker = Ticker::new(&client, "MSFT");
     let esg_scores = msft_ticker.sustainability().await;
 
     println!("--- ESG Scores for MSFT ---");
@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--------------------------------------\n");
 
     // --- Part 2: Fetching Analyst Ratings ---
-    let tsla_ticker = Ticker::new(client.clone(), "TSLA");
+    let tsla_ticker = Ticker::new(&client, "TSLA");
     let recommendations = tsla_ticker.recommendations().await;
 
     println!("--- Analyst Recommendations for TSLA ---");

@@ -29,7 +29,7 @@ async fn analysis_other_yahoo_errors_are_surfaced_without_retry() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, sym);
+    let t = Ticker::new(&client, sym);
     let err = t.recommendations().await.unwrap_err();
 
     api_err.assert();

@@ -8,7 +8,7 @@ async fn live_info_smoke_and_or_record() {
     }
 
     let client = YfClient::builder().build().unwrap();
-    let ticker = Ticker::new(client, "MSFT");
+    let ticker = Ticker::new(&client, "MSFT");
 
     // This will trigger all the API calls needed for .info()
     // and record fixtures if YF_RECORD=1 is set.

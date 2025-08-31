@@ -6,7 +6,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
 
     println!("--- Fetching Advanced Analysis for AAPL ---");
-    let ticker_aapl = Ticker::new(client.clone(), "AAPL");
+    let ticker_aapl = Ticker::new(&client, "AAPL");
 
     let earnings_trend = ticker_aapl.earnings_trend().await?;
     println!("Earnings Trend ({} periods):", earnings_trend.len());
@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Fetching Capital Gains for VFINX (Vanguard 500 Index Fund) ---");
-    let ticker_vfinx = Ticker::new(client, "VFINX");
+    let ticker_vfinx = Ticker::new(&client, "VFINX");
     let capital_gains = ticker_vfinx.capital_gains(None).await?;
     println!(
         "Capital Gains Distributions ({} periods):",

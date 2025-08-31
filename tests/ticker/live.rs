@@ -8,7 +8,7 @@ async fn live_ticker_quote_for_record() {
     let client = yfinance_rs::YfClient::builder().build().unwrap();
 
     for sym in ["AAPL", "MSFT"] {
-        let t = yfinance_rs::Ticker::new(client.clone(), sym);
+        let t = yfinance_rs::Ticker::new(&client, sym);
         let q = t.quote().await.unwrap();
 
         if !crate::common::is_recording() {
@@ -26,7 +26,7 @@ async fn live_ticker_options_for_record() {
     }
 
     let client = yfinance_rs::YfClient::builder().build().unwrap();
-    let t = yfinance_rs::Ticker::new(client, "AAPL");
+    let t = yfinance_rs::Ticker::new(&client, "AAPL");
 
     let expiries = t.options().await.unwrap();
 
@@ -60,7 +60,7 @@ async fn live_ticker_shares_for_record() {
         return;
     }
     let client = yfinance_rs::YfClient::builder().build().unwrap();
-    let t = yfinance_rs::Ticker::new(client.clone(), "MSFT");
+    let t = yfinance_rs::Ticker::new(&client, "MSFT");
     let _ = t.shares().await;
     let _ = t.quarterly_shares().await;
 }
@@ -73,6 +73,6 @@ async fn live_ticker_capital_gains_for_record() {
     }
 
     let client = yfinance_rs::YfClient::builder().build().unwrap();
-    let t = yfinance_rs::Ticker::new(client, "VFINX");
+    let t = yfinance_rs::Ticker::new(&client, "VFINX");
     let _ = t.capital_gains(None).await.unwrap();
 }

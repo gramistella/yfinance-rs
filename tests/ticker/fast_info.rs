@@ -33,7 +33,7 @@ async fn fast_info_uses_previous_close_when_price_missing() {
         .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
         .build()
         .unwrap();
-    let t = Ticker::new(client, "AAPL");
+    let t = Ticker::new(&client, "AAPL");
 
     let fi = t.fast_info().await.unwrap();
     mock.assert();

@@ -34,7 +34,7 @@ async fn offline_all_holders_from_fixture() {
         .unwrap();
 
     // Test each method; each will make an independent API call which the mock will serve.
-    let t = Ticker::new(client.clone(), sym);
+    let t = Ticker::new(&client, sym);
 
     // Major Holders
     let major = t.major_holders().await.unwrap();

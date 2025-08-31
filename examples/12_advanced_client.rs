@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     // 2. --- Using the custom client ---
-    let aapl = Ticker::new(client.clone(), "AAPL");
+    let aapl = Ticker::new(&client, "AAPL");
     let quote1 = aapl.quote().await?;
     println!(
         "First fetch for {}: ${:.2} (from network)",
@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 5. --- Error Handling Example ---
     println!("--- Handling a non-existent ticker ---");
-    let bad_ticker = Ticker::new(client, "THIS-TICKER-DOES-NOT-EXIST-XYZ");
+    let bad_ticker = Ticker::new(&client, "THIS-TICKER-DOES-NOT-EXIST-XYZ");
     match bad_ticker.info().await {
         Ok(_) => println!("Unexpected success fetching bad ticker."),
         Err(YfError::Data(msg)) => {

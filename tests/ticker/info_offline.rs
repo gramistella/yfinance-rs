@@ -80,7 +80,7 @@ async fn offline_info_uses_recorded_fixtures() {
         .build()
         .unwrap();
 
-    let ticker = Ticker::new(client, sym);
+    let ticker = Ticker::new(&client, sym);
     let info = ticker.info().await.unwrap();
 
     // Assert all mocks were hit

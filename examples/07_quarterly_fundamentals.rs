@@ -4,7 +4,7 @@ use yfinance_rs::{Ticker, YfClient};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
-    let ticker = Ticker::new(client, "MSFT");
+    let ticker = Ticker::new(&client, "MSFT");
 
     println!("--- Fetching Quarterly Financial Statements for MSFT ---");
     println!("Fetching latest quarterly income statement...");

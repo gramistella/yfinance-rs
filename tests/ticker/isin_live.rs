@@ -11,11 +11,11 @@ async fn live_isin_smoke_and_or_record() {
 
     // Test a company. This will trigger a Yahoo quote request and a Business Insider request.
     // Both responses will be recorded as fixtures if YF_RECORD=1.
-    let ticker_company = Ticker::new(client.clone(), "AAPL");
+    let ticker_company = Ticker::new(&client, "AAPL");
     let isin_company = ticker_company.isin().await.unwrap();
 
     // Test a fund.
-    let ticker_fund = Ticker::new(client.clone(), "QQQ");
+    let ticker_fund = Ticker::new(&client, "QQQ");
     let isin_fund = ticker_fund.isin().await.unwrap();
 
     if !crate::common::is_recording() {

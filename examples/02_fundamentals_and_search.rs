@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // --- Part 1: Fetching Fundamentals ---
     println!("--- Fetching Fundamentals for {} ---", symbol);
-    let fundamentals = FundamentalsBuilder::new(client.clone(), symbol);
+    let fundamentals = FundamentalsBuilder::new(&client, symbol);
 
     let annual_income_stmt = fundamentals.income_statement(false).await?;
     println!(
@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // --- Part 2: Fetching Holder Information ---
     println!("--- Fetching Holder Info for {} ---", symbol);
-    let holders_builder = HoldersBuilder::new(client.clone(), symbol);
+    let holders_builder = HoldersBuilder::new(&client, symbol);
 
     let major_holders = holders_builder.major_holders().await?;
     println!("Major Holders Breakdown:");

@@ -95,7 +95,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let client = YfClient::default();
-//!     let ticker = Ticker::new(client, "AAPL".to_string());
+//!     let ticker = Ticker::new(&client, "AAPL".to_string());
 //!
 //!     // Get the latest quote
 //!     let quote = ticker.quote().await?;

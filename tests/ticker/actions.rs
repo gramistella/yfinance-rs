@@ -55,7 +55,7 @@ async fn ticker_actions_dividends_splits() {
         .build()
         .unwrap();
 
-    let t = Ticker::new(client, "TEST");
+    let t = Ticker::new(&client, "TEST");
 
     let acts = t.actions(None).await.unwrap();
     mock.assert();
