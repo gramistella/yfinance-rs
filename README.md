@@ -103,30 +103,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
     let ticker = Ticker::new(client, "AAPL".to_string());
 
-    // Get the latest quote
     let quote = ticker.quote().await?;
     println!("Latest price for AAPL: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
 
-    // Get historical data for the last 6 months
     let history = ticker.history(Some(Range::M6), Some(Interval::D1), false).await?;
     if let Some(last_bar) = history.last() {
         println!("Last closing price: ${:.2} on timestamp {}", last_bar.close, last_bar.ts);
     }
 
-    // Get analyst recommendations
     let recs = ticker.recommendations().await?;
     if let Some(latest_rec) = recs.first() {
         println!("Latest recommendation period: {}", latest_rec.period);
     }
 
-    // Get dividend history
     let dividends = ticker.dividends(Some(Range::Y1)).await?;
     println!("Found {} dividend payments in the last year", dividends.len());
 
-    // Get earnings trends
     let trends = ticker.earnings_trend().await?;
     if let Some(latest_trend) = trends.first() {
-        println!("Latest earnings estimate: ${:.2}", latest_trend.eps_estimate.unwrap_or(0.0));
+        println!("Latest earnings estimate: ${:.2}", latest_trend.earnings_estimate_avg.unwrap_or(0.0));
     }
 
     Ok(())
@@ -138,163 +133,219 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Multi-Symbol Data Download
 
 ```rust
-use yfinance_rs::{DownloadBuilder, Interval};
+use yfinance_rs::{DownloadBuilder, Interval, Range, YfClient};
 use chrono::{Duration, Utc};
 
-let client = YfClient::default();
-let symbols = vec!["AAPL", "GOOGL", "MSFT", "TSLA"];
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let symbols = vec!["AAPL", "GOOGL", "MSFT", "TSLA"];
 
-let results = DownloadBuilder::new(&client)
-    .symbols(symbols)
-    .range(Range::M6)
-    .interval(Interval::D1)
-    .auto_adjust(true)
-    .actions(true)
-    .repair(true)  // Fix price outliers
-    .rounding(true)  // Round to 2 decimal places
-    .run()
-    .await?;
+    let results = DownloadBuilder::new(&client)
+        .symbols(symbols)
+        .range(Range::M6)
+        .interval(Interval::D1)
+        .auto_adjust(true)
+        .actions(true)
+        .repair(true)
+        .rounding(true)
+        .run()
+        .await?;
 
-for (symbol, candles) in &results.series {
-    println!("{}: {} data points", symbol, candles.len());
+    for (symbol, candles) in &results.series {
+        println!("{}: {} data points", symbol, candles.len());
+    }
+    Ok(())
 }
 ```
 
 ### Real-time Streaming
 
 ```rust
-use yfinance_rs::{StreamBuilder, StreamMethod, StreamConfig};
+use yfinance_rs::{StreamBuilder, StreamMethod, YfClient};
 use std::time::Duration;
 
-let config = StreamConfig {
-    interval: Duration::from_secs(1),
-    diff_only: true,  // Only emit updates when price changes
-};
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let (handle, mut receiver) = StreamBuilder::new(&client)
+        .symbols(vec!["AAPL", "GOOGL"])
+        .method(StreamMethod::WebsocketWithFallback)
+        .interval(Duration::from_secs(1))
+        .diff_only(true)
+        .start()?;
 
-let (handle, mut receiver) = StreamBuilder::new(&client)
-    .symbols(vec!["AAPL", "GOOGL"])
-    .method(StreamMethod::WebsocketWithFallback)
-    .config(config)
-    .start()?;
+    // This loop will run indefinitely. In a real application,
+    // you'd want to handle stopping it gracefully.
+    while let Some(update) = receiver.recv().await {
+        println!("{}: ${:.2}", update.symbol, update.last_price.unwrap_or(0.0));
+    }
+    
+    // To stop the stream, you can call handle.stop().await;
+    // For this example, we'll let it run for a bit then stop it.
+    // In a real app, this would be based on user input or another event.
+    // tokio::time::sleep(Duration::from_secs(10)).await;
+    // handle.stop().await;
 
-// Process updates
-while let Some(update) = receiver.recv().await {
-    println!("{}: ${:.2}", update.symbol, update.last_price.unwrap_or(0.0));
+    Ok(())
 }
-
-// Stop the stream
-handle.stop().await;
 ```
 
 ### Financial Statements
 
 ```rust
-let ticker = Ticker::new(client, "AAPL");
+use yfinance_rs::{Ticker, YfClient};
 
-// Get quarterly financials
-let income_stmt = ticker.quarterly_income_stmt().await?;
-let balance_sheet = ticker.quarterly_balance_sheet().await?;
-let cashflow = ticker.quarterly_cashflow().await?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, "AAPL");
 
-// Get shares outstanding
-let shares = ticker.quarterly_shares().await?;
-if let Some(latest) = shares.first() {
-    println!("Latest shares outstanding: {}", latest.shares);
+    let income_stmt = ticker.quarterly_income_stmt().await?;
+    let balance_sheet = ticker.quarterly_balance_sheet().await?;
+    let cashflow = ticker.quarterly_cashflow().await?;
+
+    println!("Found {} quarterly income statements.", income_stmt.len());
+    println!("Found {} quarterly balance sheet statements.", balance_sheet.len());
+    println!("Found {} quarterly cashflow statements.", cashflow.len());
+
+    let shares = ticker.quarterly_shares().await?;
+    if let Some(latest) = shares.first() {
+        println!("Latest shares outstanding: {}", latest.shares);
+    }
+    Ok(())
 }
 ```
 
 ### Options Trading
 
 ```rust
-let ticker = Ticker::new(client, "AAPL");
+use yfinance_rs::{Ticker, YfClient};
 
-// Get available expiration dates
-let expirations = ticker.options().await?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, "AAPL");
 
-// Get option chain for nearest expiration
-if let Some(nearest) = expirations.first() {
-    let chain = ticker.option_chain(Some(*nearest)).await?;
+    let expirations = ticker.options().await?;
+
+    if let Some(nearest) = expirations.first() {
+        let chain = ticker.option_chain(Some(*nearest)).await?;
     
-    println!("Calls: {}", chain.calls.len());
-    println!("Puts: {}", chain.puts.len());
+        println!("Calls: {}", chain.calls.len());
+        println!("Puts: {}", chain.puts.len());
     
-    // Find ATM options
-    let current_price = ticker.fast_info().await?.last_price;
-    for call in &chain.calls {
-        if (call.strike - current_price).abs() < 5.0 {
-            println!("ATM Call: Strike ${:.2}, Bid ${:.2}, Ask ${:.2}", 
-                     call.strike, call.bid.unwrap_or(0.0), call.ask.unwrap_or(0.0));
+        let current_price = ticker.fast_info().await?.last_price;
+        for call in &chain.calls {
+            if (call.strike - current_price).abs() < 5.0 {
+                println!("ATM Call: Strike ${:.2}, Bid ${:.2}, Ask ${:.2}", 
+                        call.strike, call.bid.unwrap_or(0.0), call.ask.unwrap_or(0.0));
+            }
         }
     }
+    Ok(())
 }
 ```
 
 ### Advanced Analysis
 
 ```rust
-let ticker = Ticker::new(client, "AAPL");
+use yfinance_rs::{Ticker, YfClient};
 
-// Get comprehensive analyst data
-let price_target = ticker.analyst_price_target().await?;
-let recs_summary = ticker.recommendations_summary().await?;
-let upgrades = ticker.upgrades_downgrades().await?;
-let earnings_trends = ticker.earnings_trend().await?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, "AAPL");
 
-println!("Price Target: ${:.2}", price_target.target_mean_price.unwrap_or(0.0));
-println!("Recommendation: {}", recs_summary.recommendation_mean.unwrap_or_default());
+    let price_target = ticker.analyst_price_target().await?;
+    let recs_summary = ticker.recommendations_summary().await?;
+    let upgrades = ticker.upgrades_downgrades().await?;
+    let earnings_trends = ticker.earnings_trend().await?;
+
+    println!("Price Target: ${:.2}", price_target.mean.unwrap_or(0.0));
+    println!("Recommendation: {}", recs_summary.mean_key.as_deref().unwrap_or("N/A"));
+    Ok(())
+}
 ```
 
 ### Holder Information
 
 ```rust
-let ticker = Ticker::new(client, "AAPL");
+use yfinance_rs::{Ticker, YfClient};
 
-// Get ownership breakdown
-let major_holders = ticker.major_holders().await?;
-let institutional = ticker.institutional_holders().await?;
-let mutual_funds = ticker.mutual_fund_holders().await?;
-let insider_transactions = ticker.insider_transactions().await?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, "AAPL");
 
-for holder in &major_holders {
-    println!("{}: {:.1}%", holder.holder, holder.percent);
+    let major_holders = ticker.major_holders().await?;
+    let institutional = ticker.institutional_holders().await?;
+    let mutual_funds = ticker.mutual_fund_holders().await?;
+    let insider_transactions = ticker.insider_transactions().await?;
+
+    for holder in &major_holders {
+        println!("{}: {}", holder.category, holder.value);
+    }
+    Ok(())
 }
+
 ```
 
 ### ESG & Sustainability
 
 ```rust
-let ticker = Ticker::new(client, "AAPL");
+use yfinance_rs::{Ticker, YfClient};
 
-let esg = ticker.sustainability().await?;
-println!("Total ESG Score: {:.2}", esg.total_esg_score.unwrap_or(0.0));
-println!("Environmental Score: {:.2}", esg.environment_score.unwrap_or(0.0));
-println!("Social Score: {:.2}", esg.social_score.unwrap_or(0.0));
-println!("Governance Score: {:.2}", esg.governance_score.unwrap_or(0.0));
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, "AAPL");
+
+    let esg = ticker.sustainability().await?;
+    println!("Total ESG Score: {:.2}", esg.total_esg.unwrap_or(0.0));
+    println!("Environmental Score: {:.2}", esg.environment_score.unwrap_or(0.0));
+    println!("Social Score: {:.2}", esg.social_score.unwrap_or(0.0));
+    println!("Governance Score: {:.2}", esg.governance_score.unwrap_or(0.0));
+    Ok(())
+}
 ```
 
 ### Advanced Client Configuration
 
 ```rust
-use yfinance_rs::{YfClientBuilder, CacheMode, RetryConfig};
+use yfinance_rs::{YfClient, YfClientBuilder, Ticker, core::client::{Backoff, CacheMode, RetryConfig}};
 use std::time::Duration;
 
-let client = YfClientBuilder::default()
-    .timeout(Duration::from_secs(10))
-    .retry_config(RetryConfig {
-        max_retries: 3,
-        base_delay: Duration::from_millis(100),
-        max_delay: Duration::from_secs(5),
-        ..Default::default()
-    })
-    .build()?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClientBuilder::default()
+        .timeout(Duration::from_secs(10))
+        .retry_config(RetryConfig {
+            max_retries: 3,
+            backoff: Backoff::Exponential {
+                base: Duration::from_millis(100),
+                factor: 2.0,
+                max: Duration::from_secs(5),
+                jitter: true,
+            },
+            ..Default::default()
+        })
+        .build()?;
 
-// Use with custom cache settings
-let ticker = Ticker::new(client, "AAPL")
-    .cache_mode(CacheMode::Bypass)  // Skip caching for this ticker
-    .retry_policy(Some(RetryConfig {
-        max_retries: 5,
-        ..Default::default()
-    }));
+    let ticker = Ticker::new(client, "AAPL")
+        .cache_mode(CacheMode::Bypass)
+        .retry_policy(Some(RetryConfig {
+            max_retries: 5,
+            ..Default::default()
+        }));
+    
+    // Use the ticker with custom policies
+    let quote = ticker.quote().await?;
+    println!("Latest price for AAPL with custom client: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
+
+    Ok(())
+}
+
 ```
 
 ## License
