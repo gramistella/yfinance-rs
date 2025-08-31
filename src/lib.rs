@@ -152,8 +152,8 @@ pub use analysis::{
     EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow,
 };
 pub use core::{
-    Action, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, YfClient,
-    YfClientBuilder, YfError, CacheMode, RetryConfig
+    Action, CacheMode, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, RetryConfig,
+    YfClient, YfClientBuilder, YfError,
 };
 pub use download::{DownloadBuilder, DownloadResult};
 pub use esg::{EsgBuilder, EsgInvolvement, EsgScores};

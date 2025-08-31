@@ -24,7 +24,7 @@ pub(crate) mod fixtures;
 pub(crate) mod net;
 
 // convenient re-exports so most code can just `use crate::core::YfClient`
-pub use client::{YfClient, YfClientBuilder, CacheMode, RetryConfig};
+pub use client::{CacheMode, RetryConfig, YfClient, YfClientBuilder};
 pub use error::YfError;
 pub use models::{Action, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range};
 pub use services::{HistoryRequest, HistoryService};
