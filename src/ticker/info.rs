@@ -97,11 +97,11 @@ pub(super) async fn fetch_info(
     let (quote_res, profile_res, price_target_res, rec_summary_res, esg_res) = tokio::join!(
         crate::ticker::quote::fetch_quote(client, symbol, cache_mode, retry_override),
         Profile::load(client, symbol),
-        analysis::AnalysisBuilder::new(&client, symbol)
+        analysis::AnalysisBuilder::new(client, symbol)
             .cache_mode(cache_mode)
             .retry_policy(retry_override.cloned())
             .analyst_price_target(),
-        analysis::AnalysisBuilder::new(&client, symbol)
+        analysis::AnalysisBuilder::new(client, symbol)
             .cache_mode(cache_mode)
             .retry_policy(retry_override.cloned())
             .recommendations_summary(),
