@@ -81,9 +81,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--------------------------------------\n");
 
     // --- Part 3: Using the Search API ---
-    let client_for_search = client.clone();
     let query = "Apple Inc.";
-    let search_results = SearchBuilder::new(client_for_search, query).fetch().await;
+    let search_results = SearchBuilder::new(&client, query).fetch().await;
 
     println!("--- Searching for '{}' ---", query);
     match search_results {

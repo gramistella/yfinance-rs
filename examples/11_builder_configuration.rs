@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- SearchBuilder Customization ---");
-    let search_results = SearchBuilder::new(client.clone(), "Microsoft")
+    let search_results = SearchBuilder::new(&client, "Microsoft")
         .quotes_count(2)
         .region("US")
         .lang("en-US")

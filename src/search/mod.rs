@@ -36,7 +36,7 @@ fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
 /// # Errors
 ///
 /// Returns `YfError` if the network request fails or the response cannot be parsed.
-pub async fn search(client: YfClient, query: &str) -> Result<SearchResponse, YfError> {
+pub async fn search(client: &YfClient, query: &str) -> Result<SearchResponse, YfError> {
     SearchBuilder::new(client, query).fetch().await
 }
 
@@ -62,9 +62,9 @@ impl SearchBuilder {
     ///
     /// This function will panic if the hardcoded `DEFAULT_BASE_SEARCH_V1` constant
     /// is not a valid URL. This indicates a bug within the crate itself.
-    pub fn new(client: YfClient, query: impl Into<String>) -> Self {
+    pub fn new(client: &YfClient, query: impl Into<String>) -> Self {
         Self {
-            client,
+            client: client.clone(),
             base: Url::parse(DEFAULT_BASE_SEARCH_V1).unwrap(),
             query: query.into(),
             quotes_count: Some(10),

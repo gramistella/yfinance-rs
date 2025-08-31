@@ -169,7 +169,7 @@ pub use holders::{
 pub use news::{NewsArticle, NewsBuilder, NewsTab};
 pub use profile::{Address, Company, Fund, Profile};
 pub use quote::{QuotesBuilder, quotes};
-pub use search::{SearchBuilder, SearchQuote, SearchResponse};
+pub use search::{SearchBuilder, SearchQuote, SearchResponse, search};
 pub use stream::{QuoteUpdate, StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
 pub use ticker::{FastInfo, Info, OptionChain, OptionContract, Ticker};
 

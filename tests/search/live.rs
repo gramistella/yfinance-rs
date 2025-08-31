@@ -12,7 +12,7 @@ async fn live_search_smoke_and_or_record() {
     // Keep the query simple/stable so the recorded fixture is reusable.
     let query = "apple";
 
-    let resp = SearchBuilder::new(client, query).fetch().await.unwrap();
+    let resp = SearchBuilder::new(&client, query).fetch().await.unwrap();
 
     if !crate::common::is_recording() {
         assert!(!resp.quotes.is_empty());
