@@ -89,7 +89,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.1.2"
+yfinance-rs = "0.1.3"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -355,3 +355,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue.
+
+## Changelog
+
+See **[CHANGELOG.md](https://github.com/gramistella/yfinance-rs/blob/main/CHANGELOG.md)** for release notes and breaking changes.
