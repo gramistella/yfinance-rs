@@ -348,6 +348,75 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```
 
+#### Custom Reqwest Client
+
+For full control over HTTP configuration, you can provide your own reqwest client:
+
+```rust
+use yfinance_rs::{YfClient, YfClientBuilder, Ticker};
+use reqwest::Client;
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a custom reqwest client with advanced configuration
+    let custom_client = Client::builder()
+        .timeout(Duration::from_secs(30))
+        .connect_timeout(Duration::from_secs(10))
+        .pool_idle_timeout(Duration::from_secs(90))
+        .pool_max_idle_per_host(10)
+        .tcp_keepalive(Some(Duration::from_secs(60)))
+        .build()?;
+
+    let client = YfClient::builder()
+        .custom_client(custom_client)
+        .cache_ttl(Duration::from_secs(300)) // 5 minutes cache
+        .build()?;
+
+    let ticker = Ticker::new(&client, "AAPL");
+    let quote = ticker.quote().await?;
+    println!("Latest price for AAPL: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
+
+    Ok(())
+}
+```
+
+#### Proxy Configuration
+
+You can configure HTTP/HTTPS proxies through the builder:
+
+```rust
+use yfinance_rs::{YfClient, YfClientBuilder, Ticker};
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // HTTP proxy with error handling
+    let client = YfClient::builder()
+        .try_proxy("http://proxy.example.com:8080")?
+        .timeout(Duration::from_secs(30))
+        .build()?;
+
+    // Or HTTPS proxy
+    let client_https = YfClient::builder()
+        .try_https_proxy("https://proxy.example.com:8443")?
+        .timeout(Duration::from_secs(30))
+        .build()?;
+
+    // Simple proxy methods (panic on invalid URLs)
+    let client_simple = YfClient::builder()
+        .proxy("http://proxy.example.com:8080")
+        .timeout(Duration::from_secs(30))
+        .build()?;
+
+    let ticker = Ticker::new(&client, "AAPL");
+    let quote = ticker.quote().await?;
+    println!("Latest price for AAPL via proxy: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
+
+    Ok(())
+}
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

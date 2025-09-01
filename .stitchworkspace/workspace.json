@@ -2,8 +2,8 @@
   "version": 1,
   "ext_filter": "",
   "exclude_dirs": ".git, target, fixtures, .idea",
-  "exclude_files": "LICENSE, Cargo.lock, package-lock.json, yarn.lock, .DS_Store, .dockerignore, .gitignore, .npmignore, .pre-commit-config.yaml, .prettierignore, .prettierrc, eslint.config.js, .env, Thumbs.db",
-  "remove_prefix": "Cargo.lock",
+  "exclude_files": "Cargo.lock",
+  "remove_prefix": "",
   "remove_regex": "",
   "hierarchy_only": false,
   "dirs_only": false

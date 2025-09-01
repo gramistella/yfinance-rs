@@ -24,6 +24,10 @@
       "state": false
     },
     {
+      "path": "examples/13_custom_client_and_proxy.rs",
+      "state": false
+    },
+    {
       "path": "",
       "state": true
     }

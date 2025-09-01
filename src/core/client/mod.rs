@@ -279,6 +279,10 @@ pub struct YfClientBuilder {
     connect_timeout: Option<Duration>,
     retry: Option<RetryConfig>,
     cache_ttl: Option<Duration>,
+
+    // New fields for custom client and proxy configuration
+    custom_client: Option<Client>,
+    proxy: Option<reqwest::Proxy>,
 }
 
 impl YfClientBuilder {
@@ -447,6 +451,160 @@ impl YfClientBuilder {
         self
     }
 
+    /// Sets a custom reqwest client for full control over HTTP configuration.
+    ///
+    /// This allows you to configure advanced features like custom TLS settings,
+    /// connection pooling, or other reqwest-specific options. When this is set,
+    /// other HTTP-related builder methods (timeout, connect_timeout, proxy) are ignored.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use reqwest::Client;
+    /// use yfinance_rs::YfClient;
+    ///
+    /// let custom_client = Client::builder()
+    ///     .timeout(std::time::Duration::from_secs(30))
+    ///     .build()
+    ///     .unwrap();
+    ///
+    /// let client = YfClient::builder()
+    ///     .custom_client(custom_client)
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    #[must_use]
+    pub fn custom_client(mut self, client: Client) -> Self {
+        self.custom_client = Some(client);
+        self
+    }
+
+    /// Sets an HTTP proxy for all requests.
+    ///
+    /// This is a convenience method for setting up proxy configuration without
+    /// needing to create a full custom client. If you need more advanced proxy
+    /// configuration, use `custom_client()` instead.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use yfinance_rs::YfClient;
+    ///
+    /// let client = YfClient::builder()
+    ///     .proxy("http://proxy.example.com:8080")
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This method will panic if the proxy URL is invalid. For production code,
+    /// consider using `try_proxy()` instead.
+    #[must_use]
+    pub fn proxy(mut self, proxy_url: &str) -> Self {
+        // Validate URL format before creating proxy
+        if url::Url::parse(proxy_url).is_err() {
+            panic!("invalid proxy URL format: {}", proxy_url);
+        }
+        self.proxy = Some(
+            reqwest::Proxy::http(proxy_url)
+                .expect("invalid proxy URL")
+        );
+        self
+    }
+
+    /// Sets an HTTP proxy for all requests with error handling.
+    ///
+    /// This is a convenience method for setting up proxy configuration without
+    /// needing to create a full custom client. If you need more advanced proxy
+    /// configuration, use `custom_client()` instead.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use yfinance_rs::YfClient;
+    ///
+    /// let client = YfClient::builder()
+    ///     .try_proxy("http://proxy.example.com:8080")?
+    ///     .build()?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the proxy URL is invalid.
+    pub fn try_proxy(mut self, proxy_url: &str) -> Result<Self, YfError> {
+        // Validate URL format first
+        url::Url::parse(proxy_url)
+            .map_err(|e| YfError::InvalidParams(format!("invalid proxy URL format: {}", e)))?;
+        
+        let proxy = reqwest::Proxy::http(proxy_url)
+            .map_err(|e| YfError::InvalidParams(format!("invalid proxy URL: {}", e)))?;
+        self.proxy = Some(proxy);
+        Ok(self)
+    }
+
+    /// Sets an HTTPS proxy for all requests.
+    ///
+    /// This is a convenience method for setting up HTTPS proxy configuration.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use yfinance_rs::YfClient;
+    ///
+    /// let client = YfClient::builder()
+    ///     .https_proxy("https://proxy.example.com:8443")
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This method will panic if the proxy URL is invalid. For production code,
+    /// consider using `try_https_proxy()` instead.
+    #[must_use]
+    pub fn https_proxy(mut self, proxy_url: &str) -> Self {
+        // Validate URL format before creating proxy
+        if url::Url::parse(proxy_url).is_err() {
+            panic!("invalid HTTPS proxy URL format: {}", proxy_url);
+        }
+        self.proxy = Some(
+            reqwest::Proxy::https(proxy_url)
+                .expect("invalid HTTPS proxy URL")
+        );
+        self
+    }
+
+    /// Sets an HTTPS proxy for all requests with error handling.
+    ///
+    /// This is a convenience method for setting up HTTPS proxy configuration.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use yfinance_rs::YfClient;
+    ///
+    /// let client = YfClient::builder()
+    ///     .try_https_proxy("https://proxy.example.com:8443")?
+    ///     .build()?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the proxy URL is invalid.
+    pub fn try_https_proxy(mut self, proxy_url: &str) -> Result<Self, YfError> {
+        // Validate URL format first
+        url::Url::parse(proxy_url)
+            .map_err(|e| YfError::InvalidParams(format!("invalid HTTPS proxy URL format: {}", e)))?;
+        
+        let proxy = reqwest::Proxy::https(proxy_url)
+            .map_err(|e| YfError::InvalidParams(format!("invalid HTTPS proxy URL: {}", e)))?;
+        self.proxy = Some(proxy);
+        Ok(self)
+    }
+
     /// Builds the `YfClient`.
     ///
     /// # Errors
@@ -481,18 +639,27 @@ impl YfClientBuilder {
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
         let user_agent = self.user_agent.as_deref().unwrap_or(USER_AGENT).to_string();
-        let mut httpb = reqwest::Client::builder()
-            .user_agent(user_agent.clone())
-            .cookie_store(true);
+        
+        // Use custom client if provided, otherwise build a new one
+        let http = if let Some(custom_client) = self.custom_client {
+            custom_client
+        } else {
+            let mut httpb = reqwest::Client::builder()
+                .user_agent(user_agent.clone())
+                .cookie_store(true);
 
-        if let Some(t) = self.timeout {
-            httpb = httpb.timeout(t);
-        }
-        if let Some(ct) = self.connect_timeout {
-            httpb = httpb.connect_timeout(ct);
-        }
+            if let Some(t) = self.timeout {
+                httpb = httpb.timeout(t);
+            }
+            if let Some(ct) = self.connect_timeout {
+                httpb = httpb.connect_timeout(ct);
+            }
+            if let Some(proxy) = self.proxy {
+                httpb = httpb.proxy(proxy);
+            }
 
-        let http = httpb.build()?;
+            httpb.build()?
+        };
 
         let initial_state = ClientState {
             cookie: {
