@@ -204,9 +204,12 @@ impl YfClient {
 
     pub(crate) async fn send_with_retry(
         &self,
-        req: reqwest::RequestBuilder,
+        mut req: reqwest::RequestBuilder,
         override_retry: Option<&RetryConfig>,
     ) -> Result<reqwest::Response, reqwest::Error> {
+        // Always set User-Agent header explicitly
+        req = req.header("User-Agent", &self.user_agent);
+        
         let cfg = override_retry.unwrap_or(&self.retry);
         if !cfg.enabled {
             return req.send().await;
@@ -286,9 +289,15 @@ pub struct YfClientBuilder {
 }
 
 impl YfClientBuilder {
-    /// Overrides the `User-Agent` header for all HTTP requests.
+    /// Sets the `User-Agent` header for all HTTP requests and WebSocket connections.
     ///
-    /// Defaults to a common desktop browser User-Agent to avoid being blocked
+    /// The user agent is applied consistently across all request types:
+    /// - HTTP requests (quotes, history, fundamentals, etc.)
+    /// - WebSocket streaming connections
+    /// - Authentication requests (cookies, crumbs)
+    ///
+    /// Defaults to a common desktop browser User-Agent to avoid being blocked.
+    /// This setting is applied per-request rather than at the HTTP client level.
     #[must_use]
     pub fn user_agent(mut self, ua: impl Into<String>) -> Self {
         self.user_agent = Some(ua.into());
@@ -645,7 +654,6 @@ impl YfClientBuilder {
             custom_client
         } else {
             let mut httpb = reqwest::Client::builder()
-                .user_agent(user_agent.clone())
                 .cookie_store(true);
 
             if let Some(t) = self.timeout {
