@@ -140,7 +140,7 @@ pub(super) async fn analyst_price_target(
     let root = fetch_modules(client, symbol, "financialData", cache_mode, retry_override).await?;
     let fd = root
         .financial_data
-        .ok_or_else(|| YfError::Data("financialData missing".into()))?;
+        .ok_or_else(|| YfError::MissingData("financialData missing".into()))?;
 
     Ok(PriceTarget {
         mean: from_raw(fd.target_mean_price),

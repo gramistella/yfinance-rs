@@ -21,14 +21,13 @@ pub async fn expiration_dates(
 ) -> Result<Vec<i64>, YfError> {
     let (body, _used_url) =
         fetch_options_raw(client, symbol, None, cache_mode, retry_override).await?;
-    let env: OptEnvelope = serde_json::from_str(&body)
-        .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
+    let env: OptEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
 
     let first = env
         .option_chain
         .and_then(|oc| oc.result)
         .and_then(|mut v| v.pop())
-        .ok_or_else(|| YfError::Data("empty options result".into()))?;
+        .ok_or_else(|| YfError::MissingData("empty options result".into()))?;
 
     Ok(first.expiration_dates.unwrap_or_default())
 }
@@ -42,14 +41,13 @@ pub async fn option_chain(
 ) -> Result<OptionChain, YfError> {
     let (body, used_url) =
         fetch_options_raw(client, symbol, date, cache_mode, retry_override).await?;
-    let env: OptEnvelope = serde_json::from_str(&body)
-        .map_err(|e| YfError::Data(format!("options json parse: {e}")))?;
+    let env: OptEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
 
     let first = env
         .option_chain
         .and_then(|oc| oc.result)
         .and_then(|mut v| v.pop())
-        .ok_or_else(|| YfError::Data("empty options result".into()))?;
+        .ok_or_else(|| YfError::MissingData("empty options result".into()))?;
 
     let Some(od) = first.options.and_then(|mut v| v.pop()) else {
         return Ok(OptionChain {

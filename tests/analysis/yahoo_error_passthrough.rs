@@ -35,10 +35,10 @@ async fn analysis_other_yahoo_errors_are_surfaced_without_retry() {
     api_err.assert();
 
     match err {
-        YfError::Data(s) => assert!(
+        YfError::Api(s) => assert!(
             s.to_ascii_lowercase().contains("yahoo error:") && s.contains("Something broke"),
             "expected yahoo error to be surfaced; got {s}"
         ),
-        other => panic!("expected Data error, got {other:?}"),
+        other => panic!("expected Api error, got {other:?}"),
     }
 }

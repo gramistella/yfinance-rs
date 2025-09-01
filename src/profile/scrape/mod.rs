@@ -50,8 +50,7 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
         let _ = debug_dump_extracted_json(symbol, &json_str);
     }
 
-    let boot: Bootstrap = serde_json::from_str(&json_str)
-        .map_err(|e| YfError::Data(format!("bootstrap json parse: {e}")))?;
+    let boot: Bootstrap = serde_json::from_str(&json_str).map_err(|e| YfError::Json(e))?;
 
     let store = boot.context.dispatcher.stores.quote_summary_store;
 
@@ -97,7 +96,7 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
         "EQUITY" => {
             let sp = store
                 .summary_profile
-                .ok_or_else(|| YfError::Data("summaryProfile missing".into()))?;
+                .ok_or_else(|| YfError::MissingData("summaryProfile missing".into()))?;
             let address = Address {
                 street1: sp.address1,
                 street2: sp.address2,
@@ -119,7 +118,7 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
         "ETF" => {
             let fp = store
                 .fund_profile
-                .ok_or_else(|| YfError::Data("fundProfile missing".into()))?;
+                .ok_or_else(|| YfError::MissingData("fundProfile missing".into()))?;
             Ok(Profile::Fund(Fund {
                 name,
                 family: fp.family,
@@ -127,7 +126,7 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
                 isin: fp.isin,
             }))
         }
-        other => Err(YfError::Data(format!(
+        other => Err(YfError::InvalidParams(format!(
             "unsupported or unknown quoteType: {other}"
         ))),
     }

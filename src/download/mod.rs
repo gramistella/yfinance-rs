@@ -191,7 +191,7 @@ impl DownloadBuilder {
     /// Returns an error if any of the underlying history requests fail.
     pub async fn run(self) -> Result<DownloadResult, YfError> {
         if self.symbols.is_empty() {
-            return Err(YfError::Data("no symbols specified".into()));
+            return Err(YfError::InvalidParams("no symbols specified".into()));
         }
 
         let need_adjust_in_fetch = self.auto_adjust || self.back_adjust;
@@ -202,11 +202,11 @@ impl DownloadBuilder {
             let start = Utc
                 .timestamp_opt(p1, 0)
                 .single()
-                .ok_or_else(|| YfError::Data("invalid period1".into()))?;
+                .ok_or_else(|| YfError::InvalidParams("invalid period1".into()))?;
             let end = Utc
                 .timestamp_opt(p2, 0)
                 .single()
-                .ok_or_else(|| YfError::Data("invalid period2".into()))?;
+                .ok_or_else(|| YfError::InvalidParams("invalid period2".into()))?;
             Some((start, end))
         } else {
             None

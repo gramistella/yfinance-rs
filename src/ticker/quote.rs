@@ -15,9 +15,9 @@ pub async fn fetch_quote(
     let symbols = [symbol];
     let mut results = quotes::fetch_v7_quotes(client, &symbols, cache_mode, retry_override).await?;
 
-    let result = results
-        .pop()
-        .ok_or_else(|| YfError::Data(format!("no quote result found for symbol {symbol}")))?;
+    let result = results.pop().ok_or_else(|| {
+        YfError::MissingData(format!("no quote result found for symbol {symbol}"))
+    })?;
 
     Ok(Quote {
         symbol: result.symbol.unwrap_or_else(|| symbol.to_string()),

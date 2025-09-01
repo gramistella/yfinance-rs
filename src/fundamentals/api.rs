@@ -131,8 +131,7 @@ pub(super) async fn balance_sheet(
         text
     };
 
-    let envelope: TimeseriesEnvelope = serde_json::from_str(&body)
-        .map_err(|e| YfError::Data(format!("balance sheet timeseries json parse: {e}")))?;
+    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
 
     let result_vec = envelope
         .timeseries
@@ -274,8 +273,7 @@ pub(super) async fn cashflow(
         text
     };
 
-    let envelope: TimeseriesEnvelope = serde_json::from_str(&body)
-        .map_err(|e| YfError::Data(format!("cash flow timeseries json parse: {e}")))?;
+    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
 
     let result_vec = envelope
         .timeseries
@@ -341,7 +339,7 @@ pub(super) async fn earnings(
     let root = fetch_modules(client, symbol, "earnings", cache_mode, retry_override).await?;
     let e = root
         .earnings
-        .ok_or_else(|| YfError::Data("earnings missing".into()))?;
+        .ok_or_else(|| YfError::MissingData("earnings missing".into()))?;
 
     let yearly = e
         .financials_chart
@@ -405,7 +403,7 @@ pub(super) async fn calendar(
     let c = root
         .calendar_events
         .and_then(|ce| ce.earnings)
-        .ok_or_else(|| YfError::Data("calendarEvents.earnings missing".into()))?;
+        .ok_or_else(|| YfError::MissingData("calendarEvents.earnings missing".into()))?;
 
     let earnings_dates = c
         .earnings_date
@@ -479,8 +477,7 @@ pub(super) async fn shares(
         text
     };
 
-    let envelope: TimeseriesEnvelope = serde_json::from_str(&body)
-        .map_err(|e| YfError::Data(format!("shares timeseries json parse: {e}")))?;
+    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
 
     let result_data: Option<TimeseriesData> = envelope
         .timeseries
@@ -500,8 +497,8 @@ pub(super) async fn shares(
         return Ok(vec![]);
     };
 
-    let values: Vec<super::wire::TimeseriesValue> = serde_json::from_value(values_json)
-        .map_err(|e| YfError::Data(format!("shares timeseries values parse: {e}")))?;
+    let values: Vec<super::wire::TimeseriesValue> =
+        serde_json::from_value(values_json).map_err(|e| YfError::Json(e))?;
 
     let counts = timestamps
         .into_iter()

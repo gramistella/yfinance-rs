@@ -68,8 +68,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bad_ticker = Ticker::new(&client, "THIS-TICKER-DOES-NOT-EXIST-XYZ");
     match bad_ticker.info().await {
         Ok(_) => println!("Unexpected success fetching bad ticker."),
-        Err(YfError::Data(msg)) => {
-            println!("Correctly failed with a data error: {}", msg);
+        Err(YfError::MissingData(msg)) => {
+            println!("Correctly failed with a missing data error: {}", msg);
         }
         Err(e) => {
             println!("Failed with an unexpected error type: {}", e);

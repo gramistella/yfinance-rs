@@ -38,7 +38,7 @@ pub async fn load_from_quote_summary_api(
         "EQUITY" => {
             let sp = first
                 .asset_profile
-                .ok_or_else(|| YfError::Data("assetProfile missing".into()))?;
+                .ok_or_else(|| YfError::MissingData("assetProfile missing".into()))?;
             let address = Address {
                 street1: sp.address1,
                 street2: sp.address2,
@@ -60,7 +60,7 @@ pub async fn load_from_quote_summary_api(
         "ETF" => {
             let fp = first
                 .fund_profile
-                .ok_or_else(|| YfError::Data("fundProfile missing".into()))?;
+                .ok_or_else(|| YfError::MissingData("fundProfile missing".into()))?;
             Ok(Profile::Fund(Fund {
                 name,
                 family: fp.family,
@@ -68,7 +68,9 @@ pub async fn load_from_quote_summary_api(
                 isin: fp.isin,
             }))
         }
-        other => Err(YfError::Data(format!("unsupported quoteType: {other}"))),
+        other => Err(YfError::InvalidParams(format!(
+            "unsupported quoteType: {other}"
+        ))),
     }
 }
 

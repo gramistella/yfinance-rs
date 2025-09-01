@@ -31,11 +31,11 @@ impl HistoryService for YfClient {
                 let start = Utc
                     .timestamp_opt(p1, 0)
                     .single()
-                    .ok_or(YfError::Data("invalid period1".into()))?;
+                    .ok_or(YfError::InvalidParams("invalid period1".into()))?;
                 let end = Utc
                     .timestamp_opt(p2, 0)
                     .single()
-                    .ok_or(YfError::Data("invalid period2".into()))?;
+                    .ok_or(YfError::InvalidParams("invalid period2".into()))?;
                 hb = hb.between(start, end);
             } else if let Some(r) = req.range {
                 hb = hb.range(r);

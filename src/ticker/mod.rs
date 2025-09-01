@@ -133,7 +133,7 @@ impl Ticker {
         let last = q
             .regular_market_price
             .or(q.regular_market_previous_close)
-            .ok_or_else(|| YfError::Data("quote missing last/previous price".into()))?;
+            .ok_or_else(|| YfError::MissingData("quote missing last/previous price".into()))?;
 
         Ok(FastInfo {
             symbol: q.symbol,

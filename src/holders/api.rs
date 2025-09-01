@@ -38,7 +38,7 @@ pub(super) async fn major_holders(
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
     let breakdown = root
         .major_holders_breakdown
-        .ok_or_else(|| YfError::Data("majorHoldersBreakdown missing".into()))?;
+        .ok_or_else(|| YfError::MissingData("majorHoldersBreakdown missing".into()))?;
 
     let mut result = Vec::new();
     let percent_fmt = |v: Option<f64>| v.map(|p| format!("{:.2}%", p * 100.0)).unwrap_or_default();

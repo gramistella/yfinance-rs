@@ -46,7 +46,7 @@ pub async fn fetch(
         let crumb = client
             .crumb()
             .await
-            .ok_or_else(|| YfError::Data("Crumb is not set".into()))?;
+            .ok_or_else(|| YfError::Auth("Crumb is not set".into()))?;
 
         let mut url = client.base_quote_api().join(symbol)?;
         {
@@ -60,8 +60,7 @@ pub async fn fetch(
         {
             #[cfg(feature = "debug-dumps")]
             let _ = debug_dump_api(symbol, &text);
-            return serde_json::from_str(&text)
-                .map_err(|e| YfError::Data(format!("quoteSummary json parse (cache): {e}")));
+            return serde_json::from_str(&text).map_err(|e| YfError::Json(e));
         }
 
         let req = client.http().get(url.clone());
@@ -81,8 +80,7 @@ pub async fn fetch(
             client.cache_put(&url, &text, None).await;
         }
 
-        serde_json::from_str(&text)
-            .map_err(|e| YfError::Data(format!("quoteSummary json parse: {e}")))
+        serde_json::from_str(&text).map_err(|e| YfError::Json(e))
     }
 
     for attempt in 0..=1 {
@@ -98,13 +96,13 @@ pub async fn fetch(
                 client.clear_crumb().await;
                 continue;
             }
-            return Err(YfError::Data(format!("yahoo error: {}", error.description)));
+            return Err(YfError::Api(format!("yahoo error: {}", error.description)));
         }
 
         return Ok(env);
     }
 
-    Err(YfError::Data(format!(
+    Err(YfError::Api(format!(
         "{caller} API call failed after retry"
     )))
 }
@@ -126,8 +124,7 @@ where
         .quote_summary
         .and_then(|qs| qs.result)
         .and_then(|mut v| v.pop())
-        .ok_or_else(|| YfError::Data("empty quoteSummary result".into()))?;
+        .ok_or_else(|| YfError::MissingData("empty quoteSummary result".into()))?;
 
-    serde_json::from_value(result_val)
-        .map_err(|e| YfError::Data(format!("quoteSummary result parse: {e}")))
+    serde_json::from_value(result_val).map_err(|e| YfError::Json(e))
 }

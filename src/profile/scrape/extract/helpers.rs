@@ -136,8 +136,7 @@ pub fn normalize_store_like(mut store_like: Value) -> Value {
 }
 
 pub fn wrap_store_like(store_like: &Value) -> Result<String, crate::YfError> {
-    let store_json = serde_json::to_string(&store_like)
-        .map_err(|e| crate::YfError::Data(format!("re-serialize: {e}")))?;
+    let store_json = serde_json::to_string(&store_like).map_err(|e| crate::YfError::Json(e))?;
     Ok(format!(
         r#"{{"context":{{"dispatcher":{{"stores":{{"QuoteSummaryStore":{store_json}}}}}}}}}"#
     ))

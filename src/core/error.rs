@@ -1,39 +1,65 @@
 use thiserror::Error;
 
-/// The primary error type for all fallible operations in this crate.
+/// The primary error type for the `yfinance-rs` crate.
 #[derive(Debug, Error)]
 pub enum YfError {
-    /// An error occurred during an HTTP request.
+    /// An error originating from the underlying HTTP client (`reqwest`).
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),
 
-    /// An error occurred with the WebSocket connection.
+    /// An error related to WebSocket communication.
     #[error("WebSocket error: {0}")]
     Websocket(Box<tokio_tungstenite::tungstenite::Error>),
 
-    /// An error occurred while decoding a protobuf message from a stream.
+    /// An error during Protobuf decoding, typically from a WebSocket stream.
     #[error("Protobuf decoding error: {0}")]
     Protobuf(#[from] prost::DecodeError),
 
-    /// A provided URL could not be parsed.
+    /// An error during JSON serialization or deserialization.
+    #[error("JSON parsing error: {0}")]
+    Json(#[from] serde_json::Error),
+
+    /// An error during Base64 decoding.
+    #[error("Base64 decoding error: {0}")]
+    Base64(#[from] base64::DecodeError),
+
+    /// An error that occurs when parsing a URL.
     #[error("Invalid URL: {0}")]
     Url(#[from] url::ParseError),
 
-    /// The server returned an unexpected or unsuccessful HTTP status code.
+    /// An error indicating an unexpected, non-successful HTTP status code.
     #[error("Unexpected response status: {status} at {url}")]
     Status {
         /// The HTTP status code.
         status: u16,
-        /// The URL that returned the error.
+        /// The URL that returned the non-successful status.
         url: String,
     },
 
-    /// The data received from the API was in an unexpected format or was missing a required field.
-    #[error("Data format unexpected or missing field: {0}")]
-    Data(String),
+    /// An error returned by the Yahoo Finance API within an otherwise successful response.
+    ///
+    /// For example, a `200 OK` response might contain a JSON body with an `error` field.
+    #[error("Yahoo API error: {0}")]
+    Api(String),
 
-    /// An invalid date range was provided for a historical data request (start must be before end).
-    #[error("invalid date range: start must be before end")]
+    /// An error related to authentication, such as failing to retrieve a cookie or crumb.
+    #[error("Authentication error: {0}")]
+    Auth(String),
+
+    /// An error that occurs during the web scraping process.
+    #[error("Web scraping error: {0}")]
+    Scrape(String),
+
+    /// Indicates that an expected piece of data was missing from the API response.
+    #[error("Missing data in response: {0}")]
+    MissingData(String),
+
+    /// An error indicating that the parameters provided by the caller were invalid.
+    #[error("Invalid parameters: {0}")]
+    InvalidParams(String),
+
+    /// An error indicating that the provided date range is invalid (e.g., start date after end date).
+    #[error("Invalid date range: start date must be before end date")]
     InvalidDates,
 }
 

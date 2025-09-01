@@ -42,9 +42,9 @@ impl super::YfClient {
         let cookie = resp
             .headers()
             .get(SET_COOKIE)
-            .ok_or(YfError::Data("No cookie received from fc.yahoo.com".into()))?
+            .ok_or(YfError::Auth("No cookie received from fc.yahoo.com".into()))?
             .to_str()
-            .map_err(|_| YfError::Data("Invalid cookie header format".into()))?
+            .map_err(|_| YfError::Auth("Invalid cookie header format".into()))?
             .to_string();
 
         self.state.write().await.cookie = Some(cookie);
@@ -54,7 +54,7 @@ impl super::YfClient {
     async fn get_crumb_internal(&self) -> Result<(), YfError> {
         let state = self.state.read().await;
         if state.cookie.is_none() {
-            return Err(YfError::Data("Cookie is missing, cannot get crumb".into()));
+            return Err(YfError::Auth("Cookie is missing, cannot get crumb".into()));
         }
         drop(state); // release read lock before making http call
 
@@ -64,7 +64,7 @@ impl super::YfClient {
         let crumb = resp.text().await?;
 
         if crumb.is_empty() || crumb.contains('{') || crumb.contains('<') {
-            return Err(YfError::Data(format!("Received invalid crumb: {crumb}")));
+            return Err(YfError::Auth(format!("Received invalid crumb: {crumb}")));
         }
 
         self.state.write().await.crumb = Some(crumb);

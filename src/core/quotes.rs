@@ -108,7 +108,7 @@ pub async fn fetch_v7_quotes(
         if status_code == 401 || status_code == 403 {
             client.ensure_credentials().await?;
             let crumb = client.crumb().await.ok_or_else(|| {
-                YfError::Data("Crumb is not set after ensuring credentials".into())
+                YfError::Auth("Crumb is not set after ensuring credentials".into())
             })?;
 
             // Second attempt, with a crumb.
@@ -132,8 +132,7 @@ pub async fn fetch_v7_quotes(
         body
     };
 
-    let env: V7Envelope = serde_json::from_str(&body_to_parse)
-        .map_err(|e| YfError::Data(format!("quote json parse: {e}")))?;
+    let env: V7Envelope = serde_json::from_str(&body_to_parse)?;
 
     Ok(env
         .quote_response

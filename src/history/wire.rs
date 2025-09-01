@@ -30,7 +30,7 @@ pub struct ChartResult {
     pub(crate) events: Option<Events>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct MetaNode {
     #[serde(default)]
     pub(crate) timezone: Option<String>,
@@ -46,7 +46,7 @@ pub struct Indicators {
     pub(crate) adjclose: Vec<AdjCloseBlock>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct QuoteBlock {
     #[serde(default)]
     pub(crate) open: Vec<Option<f64>>,
@@ -60,13 +60,13 @@ pub struct QuoteBlock {
     pub(crate) volume: Vec<Option<u64>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct AdjCloseBlock {
     #[serde(default)]
     pub(crate) adjclose: Vec<Option<f64>>,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Clone)]
 pub struct Events {
     #[serde(default)]
     pub(crate) dividends: Option<BTreeMap<String, DividendEvent>>,
@@ -76,13 +76,13 @@ pub struct Events {
     pub(crate) capital_gains: Option<BTreeMap<String, CapitalGainEvent>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct DividendEvent {
     pub(crate) amount: Option<f64>,
     pub(crate) date: Option<i64>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct SplitEvent {
     #[serde(default, deserialize_with = "de_opt_u64_from_mixed")]
     pub(crate) numerator: Option<u64>,
@@ -93,7 +93,7 @@ pub struct SplitEvent {
     pub(crate) date: Option<i64>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct CapitalGainEvent {
     pub(crate) amount: Option<f64>,
     pub(crate) date: Option<i64>,

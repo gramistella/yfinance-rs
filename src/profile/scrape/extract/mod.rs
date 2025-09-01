@@ -82,5 +82,5 @@ pub fn extract_bootstrap_json(body: &str) -> Result<String, crate::YfError> {
             "YF_DEBUG [extract_bootstrap_json]: All strategies exhausted; bootstrap not found."
         );
     }
-    Err(crate::YfError::Data("bootstrap not found".into()))
+    Err(crate::YfError::MissingData("bootstrap not found".into()))
 }

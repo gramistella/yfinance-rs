@@ -79,8 +79,8 @@ impl QuotesBuilder {
     /// the response cannot be parsed, or data for the symbols is not available.
     pub async fn fetch(self) -> Result<Vec<crate::core::Quote>, crate::core::YfError> {
         if self.symbols.is_empty() {
-            return Err(crate::core::YfError::Data(
-                "quotes: at least one symbol required".into(),
+            return Err(crate::core::YfError::InvalidParams(
+                "symbols list cannot be empty".into(),
             ));
         }
 

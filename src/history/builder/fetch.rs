@@ -34,7 +34,9 @@ pub async fn fetch_chart(
         } else if let Some(r) = range {
             qp.append_pair("range", r.as_str());
         } else {
-            return Err(crate::core::YfError::Data("no range or period set".into()));
+            return Err(crate::core::YfError::InvalidParams(
+                "no range or period set".into(),
+            ));
         }
 
         qp.append_pair("interval", interval.as_str());
@@ -74,49 +76,45 @@ pub async fn fetch_chart(
 
 // NEW helper to keep fetch_chart compact
 fn decode_chart(body: &str) -> Result<Fetched, crate::core::YfError> {
-    use crate::history::wire::ChartEnvelope;
-    let parsed: ChartEnvelope = serde_json::from_str(body)
-        .map_err(|e| crate::core::YfError::Data(format!("json parse error: {e}")))?;
+    let envelope: crate::history::wire::ChartEnvelope =
+        serde_json::from_str(&body).map_err(|e| crate::core::YfError::Json(e))?;
 
-    let chart = parsed
+    let chart = envelope
         .chart
-        .ok_or_else(|| crate::core::YfError::Data("missing chart".into()))?;
+        .ok_or_else(|| crate::core::YfError::MissingData("missing chart".into()))?;
 
-    if let Some(err) = chart.error {
-        return Err(crate::core::YfError::Data(format!(
-            "yahoo error: {} - {}",
-            err.code, err.description
+    if let Some(error) = chart.error {
+        return Err(crate::core::YfError::Api(format!(
+            "chart error: {} - {}",
+            error.code, error.description
         )));
     }
 
-    let mut results = chart
+    let result = chart
         .result
-        .ok_or_else(|| crate::core::YfError::Data("missing result".into()))?;
+        .ok_or_else(|| crate::core::YfError::MissingData("missing result".into()))?;
 
-    let r0 = results
-        .pop()
-        .ok_or_else(|| crate::core::YfError::Data("empty result".into()))?;
+    let first = result
+        .first()
+        .ok_or_else(|| crate::core::YfError::MissingData("empty result".into()))?;
 
-    let ts = r0.timestamp.unwrap_or_default();
-    let quote = r0
+    let quote = first
         .indicators
         .quote
-        .into_iter()
-        .next()
-        .ok_or_else(|| crate::core::YfError::Data("missing quote".into()))?;
-    let adjclose = r0
+        .first()
+        .ok_or_else(|| crate::core::YfError::MissingData("missing quote".into()))?;
+    let adjclose = first
         .indicators
         .adjclose
-        .into_iter()
-        .next()
-        .map(|a| a.adjclose)
+        .first()
+        .map(|a| a.adjclose.clone())
         .unwrap_or_default();
 
     Ok(Fetched {
-        ts,
-        quote,
+        ts: first.timestamp.clone().unwrap_or_default(),
+        quote: quote.clone(),
         adjclose,
-        events: r0.events,
-        meta: r0.meta,
+        events: first.events.clone(),
+        meta: first.meta.clone(),
     })
 }

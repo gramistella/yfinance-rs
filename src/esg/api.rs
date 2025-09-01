@@ -29,7 +29,7 @@ pub(super) async fn fetch_esg_scores(
 
     let esg = root
         .esg_scores
-        .ok_or_else(|| YfError::Data("esgScores module missing from response".into()))?;
+        .ok_or_else(|| YfError::MissingData("esgScores module missing from response".into()))?;
 
     let b = |x: Option<bool>| x.unwrap_or(false);
 

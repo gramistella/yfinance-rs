@@ -42,8 +42,8 @@ async fn missing_set_cookie_header_is_an_error() {
     cookie.assert();
 
     match err {
-        YfError::Data(s) => assert!(s.contains("No cookie received"), "unexpected error: {s}"),
-        other => panic!("expected Data error, got {other:?}"),
+        YfError::Auth(s) => assert!(s.contains("No cookie received"), "unexpected error: {s}"),
+        other => panic!("expected Auth error, got {other:?}"),
     }
     assert_eq!(
         crumb.hits(),
@@ -86,7 +86,7 @@ async fn invalid_crumb_body_is_an_error() {
     let err = Profile::load(&client, sym).await.unwrap_err();
 
     match err {
-        YfError::Data(s) => assert!(s.contains("Received invalid crumb"), "unexpected: {s}"),
-        other => panic!("expected Data error, got {other:?}"),
+        YfError::Auth(s) => assert!(s.contains("Received invalid crumb"), "unexpected: {s}"),
+        other => panic!("expected Auth error, got {other:?}"),
     }
 }
