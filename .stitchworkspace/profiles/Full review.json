@@ -3,13 +3,12 @@
   "settings": {
     "version": 1,
     "ext_filter": "",
-    "exclude_dirs": ".git, node_modules, target, _target, .elan, .lake, .idea, .vscode, _app, .svelte-kit, .sqlx, venv, .venv, __pycache__, LICENSES, fixtures",
-    "exclude_files": "Cargo.lock, package-lock.json, yarn.lock, .DS_Store, .dockerignore, .gitignore, .npmignore, .pre-commit-config.yaml, .prettierignore, .prettierrc, eslint.config.js, .env, Thumbs.db",
+    "exclude_dirs": ".git, target, fixtures, .idea",
+    "exclude_files": "Cargo.lock",
     "remove_prefix": "",
     "remove_regex": "",
     "hierarchy_only": false,
-    "dirs_only": false,
-    "current_profile": "Full review"
+    "dirs_only": false
   },
   "explicit": [
     {
@@ -17,11 +16,11 @@
       "state": true
     },
     {
-      "path": "tests",
+      "path": "",
       "state": true
     },
     {
-      "path": "",
+      "path": "tests",
       "state": true
     }
   ]

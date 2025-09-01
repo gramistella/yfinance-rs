@@ -4,14 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - Unreleased
+
+### Changed
+- Refactored error handling in the `YfError` enum for better clarity and granularity.
+- Changed error variants from `YfError::Data` to more specific variants like `YfError::MissingData`, `YfError::Auth`, and `YfError::Json`.
+- Updated various functions across the codebase to use the new error structure.
+- Improved error message descriptiveness and alignment with the new error structure.
+
 ## [0.1.3] - 2025-08-31
 
 ### Added
 - Re-exported `CacheMode` and `RetryConfig` from the `core` module.
 
 ### Changed
-- `Ticker::new` now takes `&YfClient` instead of taking ownership. **Breaking change.**
-- `SearchBuilder` now takes `&YfClient` instead of taking ownership. 
+- `Ticker::new` now takes `&YfClient` instead of taking ownership.
+- `SearchBuilder` now takes `&YfClient` instead of taking ownership.
 
 ## [0.1.2] - 2025-08-30
 

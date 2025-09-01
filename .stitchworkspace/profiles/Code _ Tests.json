@@ -3,29 +3,28 @@
   "settings": {
     "version": 1,
     "ext_filter": ".rs, .toml, .proto",
-    "exclude_dirs": ".git, node_modules, target, _target, .elan, .lake, .idea, .vscode, _app, .svelte-kit, .sqlx, venv, .venv, __pycache__, LICENSES, fixtures",
+    "exclude_dirs": ".git, target, fixtures, .idea",
     "exclude_files": "LICENSE, Cargo.lock, package-lock.json, yarn.lock, .DS_Store, .dockerignore, .gitignore, .npmignore, .pre-commit-config.yaml, .prettierignore, .prettierrc, eslint.config.js, .env, Thumbs.db",
     "remove_prefix": "//",
     "remove_regex": "(?s)/\\*.*?\\*/ ",
     "hierarchy_only": false,
-    "dirs_only": false,
-    "current_profile": "Code + Tests"
+    "dirs_only": false
   },
   "explicit": [
-    {
-      "path": "README.md",
-      "state": false
-    },
     {
       "path": "examples",
       "state": false
     },
     {
-      "path": "tests",
-      "state": true
+      "path": "README.md",
+      "state": false
     },
     {
       "path": "",
+      "state": true
+    },
+    {
+      "path": "tests",
       "state": true
     }
   ]
