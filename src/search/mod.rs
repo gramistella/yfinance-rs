@@ -7,7 +7,7 @@ use crate::core::client::RetryConfig;
 use crate::{YfClient, YfError};
 
 fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
-    let env: V1SearchEnvelope = serde_json::from_str(body).map_err(|e| YfError::Json(e))?;
+    let env: V1SearchEnvelope = serde_json::from_str(body).map_err(YfError::Json)?;
 
     let count = env.count.and_then(|c| u32::try_from(c).ok());
     let quotes = env.quotes.unwrap_or_default();

@@ -291,7 +291,7 @@ async fn run_websocket_stream(
     let sub_msg = serde_json::to_string(&WsSubscribe {
         subscribe: &symbols,
     })
-    .map_err(|e| YfError::Json(e))?;
+    .map_err(YfError::Json)?;
     write.send(WsMessage::Text(sub_msg)).await?;
 
     #[cfg(feature = "test-mode")]
@@ -398,7 +398,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
 
     let decoded = general_purpose::STANDARD
         .decode(b64_cow.as_ref())
-        .map_err(|e| YfError::Base64(e))?;
+        .map_err(YfError::Base64)?;
     let ticker = wire_ws::PricingData::decode(&*decoded)?;
     Ok(QuoteUpdate {
         symbol: ticker.id,

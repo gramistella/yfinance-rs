@@ -21,7 +21,7 @@ pub async fn expiration_dates(
 ) -> Result<Vec<i64>, YfError> {
     let (body, _used_url) =
         fetch_options_raw(client, symbol, None, cache_mode, retry_override).await?;
-    let env: OptEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
+    let env: OptEnvelope = serde_json::from_str(&body).map_err(YfError::Json)?;
 
     let first = env
         .option_chain
@@ -41,7 +41,7 @@ pub async fn option_chain(
 ) -> Result<OptionChain, YfError> {
     let (body, used_url) =
         fetch_options_raw(client, symbol, date, cache_mode, retry_override).await?;
-    let env: OptEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
+    let env: OptEnvelope = serde_json::from_str(&body).map_err(YfError::Json)?;
 
     let first = env
         .option_chain

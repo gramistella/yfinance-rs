@@ -77,7 +77,7 @@ pub async fn fetch_chart(
 // NEW helper to keep fetch_chart compact
 fn decode_chart(body: &str) -> Result<Fetched, crate::core::YfError> {
     let envelope: crate::history::wire::ChartEnvelope =
-        serde_json::from_str(&body).map_err(|e| crate::core::YfError::Json(e))?;
+        serde_json::from_str(body).map_err(crate::core::YfError::Json)?;
 
     let chart = envelope
         .chart

@@ -57,7 +57,7 @@ pub(super) async fn fetch_news(
 
     let endpoint = format!("news_{}", tab.as_str());
     let body = net::get_text(resp, &endpoint, symbol, "json").await?;
-    let envelope: wire::NewsEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
+    let envelope: wire::NewsEnvelope = serde_json::from_str(&body).map_err(YfError::Json)?;
 
     let articles = envelope
         .data

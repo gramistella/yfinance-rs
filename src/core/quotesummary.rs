@@ -60,7 +60,7 @@ pub async fn fetch(
         {
             #[cfg(feature = "debug-dumps")]
             let _ = debug_dump_api(symbol, &text);
-            return serde_json::from_str(&text).map_err(|e| YfError::Json(e));
+            return serde_json::from_str(&text).map_err(YfError::Json);
         }
 
         let req = client.http().get(url.clone());
@@ -80,7 +80,7 @@ pub async fn fetch(
             client.cache_put(&url, &text, None).await;
         }
 
-        serde_json::from_str(&text).map_err(|e| YfError::Json(e))
+        serde_json::from_str(&text).map_err(YfError::Json)
     }
 
     for attempt in 0..=1 {
@@ -126,5 +126,5 @@ where
         .and_then(|mut v| v.pop())
         .ok_or_else(|| YfError::MissingData("empty quoteSummary result".into()))?;
 
-    serde_json::from_value(result_val).map_err(|e| YfError::Json(e))
+    serde_json::from_value(result_val).map_err(YfError::Json)
 }

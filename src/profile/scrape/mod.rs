@@ -50,7 +50,7 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
         let _ = debug_dump_extracted_json(symbol, &json_str);
     }
 
-    let boot: Bootstrap = serde_json::from_str(&json_str).map_err(|e| YfError::Json(e))?;
+    let boot: Bootstrap = serde_json::from_str(&json_str).map_err(YfError::Json)?;
 
     let store = boot.context.dispatcher.stores.quote_summary_store;
 

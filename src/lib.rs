@@ -57,7 +57,7 @@
 //! * **Search**: Find tickers by name or keyword.
 //!
 //! ### Real-time Streaming
-//! * **WebSocket Streaming**: Get live quote updates using WebSockets (preferred method).
+//! * **WebSocket Streaming**: Get live quote updates using `WebSockets` (preferred method).
 //! * **HTTP Polling**: Fallback polling method for real-time data.
 //! * **Configurable Streaming**: Customize update frequency and change-only filtering.
 //!

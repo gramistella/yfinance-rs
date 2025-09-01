@@ -22,8 +22,8 @@ use super::{
 /// This function handles the common pattern of:
 /// 1. Constructing the URL for the /ws/fundamentals-timeseries endpoint
 /// 2. Making the request with caching logic
-/// 3. Parsing the TimeseriesEnvelope
-/// 4. Processing the data into a BTreeMap
+/// 3. Parsing the `TimeseriesEnvelope`
+/// 4. Processing the data into a `BTreeMap`
 ///
 /// The `process_item` closure is responsible for processing each timeseries item
 /// and updating the rows map accordingly.
@@ -332,7 +332,7 @@ pub(super) async fn cashflow(
     .await?;
 
     // After filling values, calculate FCF if it's missing.
-    for row in result.iter_mut() {
+    for row in &mut result {
         if row.free_cash_flow.is_none()
             && let (Some(ocf), Some(capex)) = (row.operating_cashflow, row.capital_expenditures)
         {
@@ -491,7 +491,7 @@ pub(super) async fn shares(
         text
     };
 
-    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
+    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(YfError::Json)?;
 
     let result_data: Option<TimeseriesData> = envelope
         .timeseries
@@ -512,7 +512,7 @@ pub(super) async fn shares(
     };
 
     let values: Vec<super::wire::TimeseriesValue> =
-        serde_json::from_value(values_json).map_err(|e| YfError::Json(e))?;
+        serde_json::from_value(values_json).map_err(YfError::Json)?;
 
     let counts = timestamps
         .into_iter()
