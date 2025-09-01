@@ -3,7 +3,7 @@
   "settings": {
     "version": 1,
     "ext_filter": "",
-    "exclude_dirs": ".git, target, fixtures, .idea",
+    "exclude_dirs": ".git, target, fixtures, .idea, .cursor",
     "exclude_files": "Cargo.lock",
     "remove_prefix": "",
     "remove_regex": "",

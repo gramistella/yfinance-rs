@@ -1,6 +1,6 @@
-use std::time::Duration;
 use reqwest::Client;
-use yfinance_rs::{YfClient, Ticker};
+use std::time::Duration;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,9 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .pool_idle_timeout(Duration::from_secs(90))
         .build()?;
 
-    let client_with_custom = YfClient::builder()
-        .custom_client(custom_client)
-        .build()?;
+    let client_with_custom = YfClient::builder().custom_client(custom_client).build()?;
 
     let ticker = Ticker::new(&client_with_custom, "AAPL");
     match ticker.quote().await {
@@ -36,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .proxy("http://proxy.example.com:8080")
     //     .timeout(Duration::from_secs(30))
     //     .build()?;
-    
+
     // For demonstration, we'll show the builder pattern without actually using a proxy
     let client_with_timeout = YfClient::builder()
         .timeout(Duration::from_secs(30))
@@ -57,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .try_https_proxy("https://proxy.example.com:8443")?
     //     .timeout(Duration::from_secs(30))
     //     .build()?;
-    
+
     // For demonstration, we'll show the error handling pattern
     let client_with_retry = YfClient::builder()
         .timeout(Duration::from_secs(30))
@@ -88,7 +86,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ticker = Ticker::new(&client_with_advanced, "TSLA");
     match ticker.quote().await {
-        Ok(quote) => println!("   Fetched quote for {} with advanced client config", quote.symbol),
+        Ok(quote) => println!(
+            "   Fetched quote for {} with advanced client config",
+            quote.symbol
+        ),
         Err(e) => println!("   Rate limited or error fetching quote: {}", e),
     }
     println!();
@@ -114,7 +115,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .retry_enabled(true)
         .cache_ttl(Duration::from_secs(60))
         .build()?;
-    
+
     println!("   Successfully built client with custom configuration");
     println!("   - Retry config: {:?}", client.retry_config());
     println!();

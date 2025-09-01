@@ -209,7 +209,7 @@ impl YfClient {
     ) -> Result<reqwest::Response, reqwest::Error> {
         // Always set User-Agent header explicitly
         req = req.header("User-Agent", &self.user_agent);
-        
+
         let cfg = override_retry.unwrap_or(&self.retry);
         if !cfg.enabled {
             return req.send().await;
@@ -464,7 +464,7 @@ impl YfClientBuilder {
     ///
     /// This allows you to configure advanced features like custom TLS settings,
     /// connection pooling, or other reqwest-specific options. When this is set,
-    /// other HTTP-related builder methods (timeout, connect_timeout, proxy) are ignored.
+    /// other HTTP-related builder methods (timeout, `connect_timeout`, proxy) are ignored.
     ///
     /// # Example
     ///
@@ -509,16 +509,18 @@ impl YfClientBuilder {
     ///
     /// This method will panic if the proxy URL is invalid. For production code,
     /// consider using `try_proxy()` instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the proxy URL format is invalid.
     #[must_use]
     pub fn proxy(mut self, proxy_url: &str) -> Self {
         // Validate URL format before creating proxy
-        if url::Url::parse(proxy_url).is_err() {
-            panic!("invalid proxy URL format: {}", proxy_url);
-        }
-        self.proxy = Some(
-            reqwest::Proxy::http(proxy_url)
-                .expect("invalid proxy URL")
+        assert!(
+            url::Url::parse(proxy_url).is_ok(),
+            "invalid proxy URL format: {proxy_url}"
         );
+        self.proxy = Some(reqwest::Proxy::http(proxy_url).expect("invalid proxy URL"));
         self
     }
 
@@ -545,10 +547,10 @@ impl YfClientBuilder {
     pub fn try_proxy(mut self, proxy_url: &str) -> Result<Self, YfError> {
         // Validate URL format first
         url::Url::parse(proxy_url)
-            .map_err(|e| YfError::InvalidParams(format!("invalid proxy URL format: {}", e)))?;
-        
+            .map_err(|e| YfError::InvalidParams(format!("invalid proxy URL format: {e}")))?;
+
         let proxy = reqwest::Proxy::http(proxy_url)
-            .map_err(|e| YfError::InvalidParams(format!("invalid proxy URL: {}", e)))?;
+            .map_err(|e| YfError::InvalidParams(format!("invalid proxy URL: {e}")))?;
         self.proxy = Some(proxy);
         Ok(self)
     }
@@ -572,16 +574,18 @@ impl YfClientBuilder {
     ///
     /// This method will panic if the proxy URL is invalid. For production code,
     /// consider using `try_https_proxy()` instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the proxy URL format is invalid.
     #[must_use]
     pub fn https_proxy(mut self, proxy_url: &str) -> Self {
         // Validate URL format before creating proxy
-        if url::Url::parse(proxy_url).is_err() {
-            panic!("invalid HTTPS proxy URL format: {}", proxy_url);
-        }
-        self.proxy = Some(
-            reqwest::Proxy::https(proxy_url)
-                .expect("invalid HTTPS proxy URL")
+        assert!(
+            url::Url::parse(proxy_url).is_ok(),
+            "invalid HTTPS proxy URL format: {proxy_url}"
         );
+        self.proxy = Some(reqwest::Proxy::https(proxy_url).expect("invalid HTTPS proxy URL"));
         self
     }
 
@@ -606,10 +610,10 @@ impl YfClientBuilder {
     pub fn try_https_proxy(mut self, proxy_url: &str) -> Result<Self, YfError> {
         // Validate URL format first
         url::Url::parse(proxy_url)
-            .map_err(|e| YfError::InvalidParams(format!("invalid HTTPS proxy URL format: {}", e)))?;
-        
+            .map_err(|e| YfError::InvalidParams(format!("invalid HTTPS proxy URL format: {e}")))?;
+
         let proxy = reqwest::Proxy::https(proxy_url)
-            .map_err(|e| YfError::InvalidParams(format!("invalid HTTPS proxy URL: {}", e)))?;
+            .map_err(|e| YfError::InvalidParams(format!("invalid HTTPS proxy URL: {e}")))?;
         self.proxy = Some(proxy);
         Ok(self)
     }
@@ -648,13 +652,12 @@ impl YfClientBuilder {
         let crumb_url = self.crumb_url.unwrap_or(Url::parse(DEFAULT_CRUMB_URL)?);
 
         let user_agent = self.user_agent.as_deref().unwrap_or(USER_AGENT).to_string();
-        
+
         // Use custom client if provided, otherwise build a new one
         let http = if let Some(custom_client) = self.custom_client {
             custom_client
         } else {
-            let mut httpb = reqwest::Client::builder()
-                .cookie_store(true);
+            let mut httpb = reqwest::Client::builder().cookie_store(true);
 
             if let Some(t) = self.timeout {
                 httpb = httpb.timeout(t);
