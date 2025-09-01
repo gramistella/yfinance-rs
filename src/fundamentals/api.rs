@@ -17,6 +17,103 @@ use super::{
     IncomeStatementRow,
 };
 
+/// Generic helper function to fetch and process timeseries data from the fundamentals API.
+///
+/// This function handles the common pattern of:
+/// 1. Constructing the URL for the /ws/fundamentals-timeseries endpoint
+/// 2. Making the request with caching logic
+/// 3. Parsing the TimeseriesEnvelope
+/// 4. Processing the data into a BTreeMap
+///
+/// The `process_item` closure is responsible for processing each timeseries item
+/// and updating the rows map accordingly.
+#[allow(clippy::too_many_arguments)]
+async fn fetch_timeseries_data<T, F>(
+    client: &YfClient,
+    symbol: &str,
+    quarterly: bool,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+    keys: &[&str],
+    endpoint_name: &str,
+    _create_default_row: fn(i64) -> T,
+    process_item: F,
+) -> Result<Vec<T>, YfError>
+where
+    F: Fn(&str, &serde_json::Value, &mut BTreeMap<i64, T>, &[i64], &str) -> Result<(), YfError>,
+{
+    let prefix = if quarterly { "quarterly" } else { "annual" };
+    let types: Vec<String> = keys.iter().map(|k| format!("{prefix}{k}")).collect();
+    let type_str = types.join(",");
+
+    let end_ts = Utc::now().timestamp();
+    let start_ts = Utc::now()
+        .checked_sub_signed(Duration::days(365 * 5))
+        .map_or(0, |dt| dt.timestamp());
+
+    let mut url = client.base_timeseries().join(symbol)?;
+    url.query_pairs_mut()
+        .append_pair("symbol", symbol)
+        .append_pair("type", &type_str)
+        .append_pair("period1", &start_ts.to_string())
+        .append_pair("period2", &end_ts.to_string());
+
+    client.ensure_credentials().await?;
+    if let Some(crumb) = client.crumb().await {
+        url.query_pairs_mut().append_pair("crumb", &crumb);
+    }
+
+    let body = if cache_mode == CacheMode::Use {
+        if let Some(cached) = client.cache_get(&url).await {
+            cached
+        } else {
+            let resp = client
+                .send_with_retry(client.http().get(url.clone()), retry_override)
+                .await?;
+            let endpoint = format!("timeseries_{endpoint_name}_{prefix}");
+            let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
+            if cache_mode != CacheMode::Bypass {
+                client.cache_put(&url, &text, None).await;
+            }
+            text
+        }
+    } else {
+        let resp = client
+            .send_with_retry(client.http().get(url.clone()), retry_override)
+            .await?;
+        let endpoint = format!("timeseries_{endpoint_name}_{prefix}");
+        let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
+        if cache_mode != CacheMode::Bypass {
+            client.cache_put(&url, &text, None).await;
+        }
+        text
+    };
+
+    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(YfError::Json)?;
+
+    let result_vec = envelope
+        .timeseries
+        .and_then(|ts| ts.result)
+        .unwrap_or_default();
+
+    if result_vec.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let mut rows_map = BTreeMap::<i64, T>::new();
+
+    for item in result_vec {
+        if let (Some(timestamps), Some((key, values_json))) =
+            (item.timestamp, item.values.into_iter().next())
+        {
+            // Process the item using the provided closure
+            process_item(&key, &values_json, &mut rows_map, &timestamps, prefix)?;
+        }
+    }
+
+    Ok(rows_map.into_values().rev().collect())
+}
+
 pub(super) async fn income_statement(
     client: &YfClient,
     symbol: &str,
@@ -76,7 +173,6 @@ pub(super) async fn balance_sheet(
         reported_value: Option<RawNumU64>,
     }
 
-    let prefix = if quarterly { "quarterly" } else { "annual" };
     let keys = [
         "TotalAssets",
         "TotalLiabilitiesNetMinorityInterest",
@@ -85,121 +181,77 @@ pub(super) async fn balance_sheet(
         "LongTermDebt",
         "OrdinarySharesNumber",
     ];
-    let types: Vec<String> = keys.iter().map(|k| format!("{prefix}{k}")).collect();
-    let type_str = types.join(",");
+    let endpoint_name = "balance_sheet";
 
-    let end_ts = Utc::now().timestamp();
-    let start_ts = Utc::now()
-        .checked_sub_signed(Duration::days(365 * 5))
-        .map_or(0, |dt| dt.timestamp());
-
-    let mut url = client.base_timeseries().join(symbol)?;
-    url.query_pairs_mut()
-        .append_pair("symbol", symbol)
-        .append_pair("type", &type_str)
-        .append_pair("period1", &start_ts.to_string())
-        .append_pair("period2", &end_ts.to_string());
-
-    client.ensure_credentials().await?;
-    if let Some(crumb) = client.crumb().await {
-        url.query_pairs_mut().append_pair("crumb", &crumb);
-    }
-
-    let body = if cache_mode == CacheMode::Use {
-        if let Some(cached) = client.cache_get(&url).await {
-            cached
-        } else {
-            let resp = client
-                .send_with_retry(client.http().get(url.clone()), retry_override)
-                .await?;
-            let endpoint = format!("timeseries_balance_sheet_{prefix}");
-            let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
-            if cache_mode != CacheMode::Bypass {
-                client.cache_put(&url, &text, None).await;
-            }
-            text
-        }
-    } else {
-        let resp = client
-            .send_with_retry(client.http().get(url.clone()), retry_override)
-            .await?;
-        let endpoint = format!("timeseries_balance_sheet_{prefix}");
-        let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
-        if cache_mode != CacheMode::Bypass {
-            client.cache_put(&url, &text, None).await;
-        }
-        text
+    let create_default_row = |period_end: i64| BalanceSheetRow {
+        period_end,
+        total_assets: None,
+        total_liabilities: None,
+        total_equity: None,
+        cash: None,
+        long_term_debt: None,
+        shares_outstanding: None,
     };
 
-    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
-
-    let result_vec = envelope
-        .timeseries
-        .and_then(|ts| ts.result)
-        .unwrap_or_default();
-
-    if result_vec.is_empty() {
-        return Ok(vec![]);
-    }
-
-    let mut rows_map = BTreeMap::<i64, BalanceSheetRow>::new();
-
-    for item in result_vec {
-        if let (Some(timestamps), Some((key, values_json))) =
-            (item.timestamp, item.values.into_iter().next())
-        {
-            if key.ends_with("OrdinarySharesNumber") {
-                if let Ok(values) = serde_json::from_value::<Vec<TimeseriesValueU64>>(values_json) {
-                    for (i, ts) in timestamps.iter().enumerate() {
-                        let row = rows_map.entry(*ts).or_insert_with(|| BalanceSheetRow {
-                            period_end: *ts,
-                            total_assets: None,
-                            total_liabilities: None,
-                            total_equity: None,
-                            cash: None,
-                            long_term_debt: None,
-                            shares_outstanding: None,
-                        });
-                        row.shares_outstanding = values
-                            .get(i)
-                            .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
-                    }
-                }
-            } else if let Ok(values) =
-                serde_json::from_value::<Vec<TimeseriesValueF64>>(values_json)
+    let process_item = |key: &str,
+                        values_json: &serde_json::Value,
+                        rows_map: &mut BTreeMap<i64, BalanceSheetRow>,
+                        timestamps: &[i64],
+                        prefix: &str|
+     -> Result<(), YfError> {
+        if key.ends_with("OrdinarySharesNumber") {
+            if let Ok(values) =
+                serde_json::from_value::<Vec<TimeseriesValueU64>>(values_json.clone())
             {
                 for (i, ts) in timestamps.iter().enumerate() {
-                    let row = rows_map.entry(*ts).or_insert_with(|| BalanceSheetRow {
-                        period_end: *ts,
-                        total_assets: None,
-                        total_liabilities: None,
-                        total_equity: None,
-                        cash: None,
-                        long_term_debt: None,
-                        shares_outstanding: None,
-                    });
-
-                    let value = values
+                    let row = rows_map
+                        .entry(*ts)
+                        .or_insert_with(|| create_default_row(*ts));
+                    row.shares_outstanding = values
                         .get(i)
                         .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
+                }
+            }
+        } else if let Ok(values) =
+            serde_json::from_value::<Vec<TimeseriesValueF64>>(values_json.clone())
+        {
+            for (i, ts) in timestamps.iter().enumerate() {
+                let row = rows_map
+                    .entry(*ts)
+                    .or_insert_with(|| create_default_row(*ts));
 
-                    if key == format!("{prefix}TotalAssets") {
-                        row.total_assets = value;
-                    } else if key == format!("{prefix}TotalLiabilitiesNetMinorityInterest") {
-                        row.total_liabilities = value;
-                    } else if key == format!("{prefix}StockholdersEquity") {
-                        row.total_equity = value;
-                    } else if key == format!("{prefix}CashAndCashEquivalents") {
-                        row.cash = value;
-                    } else if key == format!("{prefix}LongTermDebt") {
-                        row.long_term_debt = value;
-                    }
+                let value = values
+                    .get(i)
+                    .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
+
+                if key == format!("{prefix}TotalAssets") {
+                    row.total_assets = value;
+                } else if key == format!("{prefix}TotalLiabilitiesNetMinorityInterest") {
+                    row.total_liabilities = value;
+                } else if key == format!("{prefix}StockholdersEquity") {
+                    row.total_equity = value;
+                } else if key == format!("{prefix}CashAndCashEquivalents") {
+                    row.cash = value;
+                } else if key == format!("{prefix}LongTermDebt") {
+                    row.long_term_debt = value;
                 }
             }
         }
-    }
+        Ok(())
+    };
 
-    Ok(rows_map.into_values().rev().collect())
+    fetch_timeseries_data(
+        client,
+        symbol,
+        quarterly,
+        cache_mode,
+        retry_override,
+        &keys,
+        endpoint_name,
+        create_default_row,
+        process_item,
+    )
+    .await
 }
 
 #[allow(clippy::too_many_lines)]
@@ -220,85 +272,33 @@ pub(super) async fn cashflow(
         reported_value: Option<RawNum<f64>>,
     }
 
-    let prefix = if quarterly { "quarterly" } else { "annual" };
     let keys = [
         "OperatingCashFlow",
         "CapitalExpenditure",
         "FreeCashFlow",
         "NetIncome",
     ];
-    let types: Vec<String> = keys.iter().map(|k| format!("{prefix}{k}")).collect();
-    let type_str = types.join(",");
+    let endpoint_name = "cash_flow";
 
-    let end_ts = Utc::now().timestamp();
-    let start_ts = Utc::now()
-        .checked_sub_signed(Duration::days(365 * 5))
-        .map_or(0, |dt| dt.timestamp());
-
-    let mut url = client.base_timeseries().join(symbol)?;
-    url.query_pairs_mut()
-        .append_pair("symbol", symbol)
-        .append_pair("type", &type_str)
-        .append_pair("period1", &start_ts.to_string())
-        .append_pair("period2", &end_ts.to_string());
-
-    client.ensure_credentials().await?;
-    if let Some(crumb) = client.crumb().await {
-        url.query_pairs_mut().append_pair("crumb", &crumb);
-    }
-
-    let body = if cache_mode == CacheMode::Use {
-        if let Some(cached) = client.cache_get(&url).await {
-            cached
-        } else {
-            let resp = client
-                .send_with_retry(client.http().get(url.clone()), retry_override)
-                .await?;
-            let endpoint = format!("timeseries_cash_flow_{prefix}");
-            let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
-            if cache_mode != CacheMode::Bypass {
-                client.cache_put(&url, &text, None).await;
-            }
-            text
-        }
-    } else {
-        let resp = client
-            .send_with_retry(client.http().get(url.clone()), retry_override)
-            .await?;
-        let endpoint = format!("timeseries_cash_flow_{prefix}");
-        let text = crate::core::net::get_text(resp, &endpoint, symbol, "json").await?;
-        if cache_mode != CacheMode::Bypass {
-            client.cache_put(&url, &text, None).await;
-        }
-        text
+    let create_default_row = |period_end: i64| CashflowRow {
+        period_end,
+        operating_cashflow: None,
+        capital_expenditures: None,
+        free_cash_flow: None,
+        net_income: None,
     };
 
-    let envelope: TimeseriesEnvelope = serde_json::from_str(&body).map_err(|e| YfError::Json(e))?;
-
-    let result_vec = envelope
-        .timeseries
-        .and_then(|ts| ts.result)
-        .unwrap_or_default();
-
-    if result_vec.is_empty() {
-        return Ok(vec![]);
-    }
-
-    let mut rows_map = BTreeMap::<i64, CashflowRow>::new();
-
-    for item in result_vec {
-        if let (Some(timestamps), Some((key, values_json))) =
-            (item.timestamp, item.values.into_iter().next())
-            && let Ok(values) = serde_json::from_value::<Vec<TimeseriesValueF64>>(values_json)
-        {
+    let process_item = |key: &str,
+                        values_json: &serde_json::Value,
+                        rows_map: &mut BTreeMap<i64, CashflowRow>,
+                        timestamps: &[i64],
+                        prefix: &str|
+     -> Result<(), YfError> {
+        if let Ok(values) = serde_json::from_value::<Vec<TimeseriesValueF64>>(values_json.clone()) {
             for (i, ts) in timestamps.iter().enumerate() {
-                let row = rows_map.entry(*ts).or_insert_with(|| CashflowRow {
-                    period_end: *ts,
-                    operating_cashflow: None,
-                    capital_expenditures: None,
-                    free_cash_flow: None,
-                    net_income: None,
-                });
+                let row = rows_map
+                    .entry(*ts)
+                    .or_insert_with(|| create_default_row(*ts));
 
                 let value = values
                     .get(i)
@@ -315,10 +315,24 @@ pub(super) async fn cashflow(
                 }
             }
         }
-    }
+        Ok(())
+    };
+
+    let mut result = fetch_timeseries_data(
+        client,
+        symbol,
+        quarterly,
+        cache_mode,
+        retry_override,
+        &keys,
+        endpoint_name,
+        create_default_row,
+        process_item,
+    )
+    .await?;
 
     // After filling values, calculate FCF if it's missing.
-    for row in rows_map.values_mut() {
+    for row in result.iter_mut() {
         if row.free_cash_flow.is_none()
             && let (Some(ocf), Some(capex)) = (row.operating_cashflow, row.capital_expenditures)
         {
@@ -327,7 +341,7 @@ pub(super) async fn cashflow(
         }
     }
 
-    Ok(rows_map.into_values().rev().collect())
+    Ok(result)
 }
 
 pub(super) async fn earnings(
