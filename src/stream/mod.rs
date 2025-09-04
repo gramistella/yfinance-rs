@@ -292,7 +292,7 @@ async fn run_websocket_stream(
         subscribe: &symbols,
     })
     .map_err(YfError::Json)?;
-    write.send(WsMessage::Text(sub_msg)).await?;
+    write.send(WsMessage::Text(sub_msg.into())).await?;
 
     #[cfg(feature = "test-mode")]
     let mut recorded = false;

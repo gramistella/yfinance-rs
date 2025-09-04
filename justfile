@@ -8,7 +8,7 @@ set export := true
 
 # ---- Tunables ---------------------------------------------------------------
 
-FEATURES := 'test-mode'         # cargo features for tests
+FEATURES := 'test-mode,dataframe'         # cargo features for tests
 TEST_THREADS := '1'             # default for live/record (override: just TEST_THREADS=4 live)
 FIXDIR := ''                    # default when YF_FIXDIR isn't set in the env
 

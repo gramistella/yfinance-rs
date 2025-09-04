@@ -1,7 +1,14 @@
 use serde::Serialize;
 
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
 /// Represents a single news article for a ticker.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct NewsArticle {
     /// A unique identifier for the article.
     pub uuid: String,

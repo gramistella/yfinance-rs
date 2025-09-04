@@ -1,5 +1,11 @@
 use serde::Serialize;
 
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
 /// A container for all ESG (Environmental, Social, and Governance) scores for a company.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct EsgScores {
@@ -21,6 +27,7 @@ pub struct EsgScores {
 
 /// Flags indicating a company's involvement in specific controversial business sectors.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct EsgInvolvement {
     /// Involvement in the adult entertainment industry.

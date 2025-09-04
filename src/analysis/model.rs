@@ -1,7 +1,14 @@
 use serde::Serialize;
 
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
 /// A row representing analyst recommendation counts for a specific period.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct RecommendationRow {
     /// The period for the recommendation counts (e.g., "0m", "-1m").
     pub period: String,
@@ -19,6 +26,7 @@ pub struct RecommendationRow {
 
 /// A compact summary of the latest analyst recommendations.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct RecommendationSummary {
     /// The most recent period for which recommendations are available (e.g., "0m").
     pub latest_period: Option<String>,
@@ -40,6 +48,7 @@ pub struct RecommendationSummary {
 
 /// A row representing a single analyst upgrade or downgrade action.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct UpgradeDowngradeRow {
     /// The Unix timestamp (in seconds) of the action.
     pub ts: i64,
@@ -55,6 +64,7 @@ pub struct UpgradeDowngradeRow {
 
 /// Analyst price target summary.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct PriceTarget {
     /// The mean analyst price target.
     pub mean: Option<f64>,
@@ -68,6 +78,7 @@ pub struct PriceTarget {
 
 /// Represents a single row of earnings trend data for a specific period.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct EarningsTrendRow {
     /// The period the trend data applies to (e.g., "0q", "+1q", "0y", "+1y").
     pub period: String,

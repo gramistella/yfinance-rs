@@ -1,7 +1,14 @@
 use serde::Serialize;
 
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
 /// Represents a physical address for a company.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct Address {
     /// Street address line 1.
     pub street1: Option<String>,

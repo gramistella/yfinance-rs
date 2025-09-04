@@ -1,5 +1,14 @@
+use serde::Serialize;
+
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
 /// A compact quote summary, useful for quick price checks.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct FastInfo {
     /// The ticker symbol.
     pub symbol: String,
@@ -16,7 +25,8 @@ pub struct FastInfo {
 }
 
 /// Represents a single options contract (a call or a put).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct OptionContract {
     /// The unique symbol for the options contract.
     pub contract_symbol: String,

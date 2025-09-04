@@ -21,6 +21,10 @@ pub(crate) mod wire;
 #[cfg(feature = "test-mode")]
 pub(crate) mod fixtures;
 
+#[cfg(feature = "dataframe")]
+/// DataFrame conversion traits.
+pub mod dataframe;
+
 pub(crate) mod net;
 
 // convenient re-exports so most code can just `use crate::core::YfClient`

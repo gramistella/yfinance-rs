@@ -153,7 +153,7 @@ pub use analysis::{
 };
 pub use core::{
     Action, CacheMode, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, RetryConfig,
-    YfClient, YfClientBuilder, YfError,
+    YfClient, YfClientBuilder, YfError
 };
 pub use download::{DownloadBuilder, DownloadResult};
 pub use esg::{EsgBuilder, EsgInvolvement, EsgScores};

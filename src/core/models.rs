@@ -1,8 +1,15 @@
 use serde::Serialize;
 
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
 /* ----- QUOTES (shared by quote/, ticker/, stream/) ----- */
 /// A snapshot of a security's quote, containing key market data.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct Quote {
     /// The ticker symbol of the security.
     pub symbol: String,
@@ -23,6 +30,7 @@ pub struct Quote {
 /* ----- HISTORY (shared by history/ and download/) ----- */
 /// Represents a single OHLCV (Open, High, Low, Close, Volume) data point for a specific time.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct Candle {
     /// The Unix timestamp (in seconds) for the beginning of the candle's time period.
     pub ts: i64,
@@ -69,6 +77,7 @@ pub enum Action {
 
 /// Metadata associated with a historical data response.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct HistoryMeta {
     /// The IANA time zone name for the security's exchange (e.g., "`America/New_York`").
     pub timezone: Option<String>,

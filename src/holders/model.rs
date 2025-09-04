@@ -2,8 +2,16 @@
 
 use serde::Serialize;
 
+#[cfg(feature = "dataframe")]
+use borsa_macros::ToDataFrame;
+
+#[cfg(feature = "dataframe")]
+use crate::core::dataframe::ToDataFrame;
+
+
 /// Represents a single row in the major holders breakdown table.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct MajorHolder {
     /// The category of the holder (e.g., "% of Shares Held by All Insider").
     pub category: String,
@@ -13,6 +21,7 @@ pub struct MajorHolder {
 
 /// Represents a single institutional or mutual fund holder.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct InstitutionalHolder {
     /// The name of the holding institution or fund.
     pub holder: String,
@@ -28,6 +37,7 @@ pub struct InstitutionalHolder {
 
 /// Represents a single insider transaction.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct InsiderTransaction {
     /// The name of the insider who executed the transaction.
     pub insider: String,
@@ -47,6 +57,7 @@ pub struct InsiderTransaction {
 
 /// Represents a single insider on the company's roster.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct InsiderRosterHolder {
     /// The name of the insider.
     pub name: String,
@@ -64,6 +75,7 @@ pub struct InsiderRosterHolder {
 
 /// A summary of net share purchase activity by insiders over a specific period.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
 pub struct NetSharePurchaseActivity {
     /// The period the summary covers (e.g., "3m").
     pub period: String,
