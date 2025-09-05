@@ -32,7 +32,7 @@ async fn profile_api_company_happy() {
         .build()
         .unwrap();
 
-    let prof = Profile::load(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {
@@ -75,7 +75,7 @@ async fn profile_api_fund_happy() {
         .build()
         .unwrap();
 
-    let prof = Profile::load(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {

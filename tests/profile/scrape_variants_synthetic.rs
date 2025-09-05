@@ -37,7 +37,7 @@ async fn scrape_sveltekit_equity() {
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::Profile::load(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     mock.assert();
 
     match prof {
@@ -74,7 +74,7 @@ async fn scrape_infers_equity_when_quote_type_missing() {
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::Profile::load(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     mock.assert();
     assert!(matches!(prof, Profile::Company(_)));
 }

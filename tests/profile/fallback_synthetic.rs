@@ -30,7 +30,7 @@ async fn api_then_scrape_fallback_on_other_error() {
         .build()
         .unwrap();
 
-    let p = Profile::load(&client, sym).await.unwrap();
+    let p = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     api_err.assert();
     scrape.assert();
 

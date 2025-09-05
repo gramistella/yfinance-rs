@@ -1,7 +1,7 @@
 use crate::common;
 use httpmock::Method::GET;
 use url::Url;
-use yfinance_rs::{ApiPreference, Profile, YfClient};
+use yfinance_rs::{Profile, YfClient};
 
 #[tokio::test]
 async fn api_fetches_cookie_and_crumb_first() {
@@ -31,11 +31,10 @@ async fn api_fetches_cookie_and_crumb_first() {
         )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ApiOnly)
         .build()
         .unwrap();
 
-    let p = Profile::load(&client, sym).await.unwrap();
+    let p = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     api.assert();
     cookie_mock.assert();
     crumb_mock.assert();
@@ -57,7 +56,6 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
         )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ApiOnly)
         .preauth("cookie", "stale-crumb")
         .build()
         .unwrap();
@@ -92,7 +90,7 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
             ));
     });
 
-    let p = Profile::load(&client, sym).await.unwrap();
+    let p = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
     invalid.assert();
     cookie_mock.assert();
     crumb_mock.assert();

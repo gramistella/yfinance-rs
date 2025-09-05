@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{ApiPreference, Profile, YfClient, YfError};
+use yfinance_rs::{YfClient, YfError};
 
 #[tokio::test]
 async fn missing_set_cookie_header_is_an_error() {
@@ -34,11 +34,10 @@ async fn missing_set_cookie_header_is_an_error() {
         )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ApiOnly)
         .build()
         .unwrap();
 
-    let err = Profile::load(&client, sym).await.unwrap_err();
+    let err = yfinance_rs::profile::load_profile(&client, sym).await.unwrap_err();
     cookie.assert();
 
     match err {
@@ -79,11 +78,10 @@ async fn invalid_crumb_body_is_an_error() {
         )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ApiOnly)
         .build()
         .unwrap();
 
-    let err = Profile::load(&client, sym).await.unwrap_err();
+    let err = yfinance_rs::profile::load_profile(&client, sym).await.unwrap_err();
 
     match err {
         YfError::Auth(s) => assert!(s.contains("Received invalid crumb"), "unexpected: {s}"),
