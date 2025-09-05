@@ -12,7 +12,7 @@ use polars::prelude::*;
 use yfinance_rs::{Ticker, YfClient, Range, Interval};
 
 #[cfg(feature = "dataframe")]
-use yfinance_rs::core::dataframe::ToDataFrame;
+use borsa_types::dataframe::ToDataFrame;
 
 #[cfg(feature = "dataframe")]
 #[tokio::main]
