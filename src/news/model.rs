@@ -1,23 +1,2 @@
-use serde::Serialize;
-
-#[cfg(feature = "dataframe")]
-use borsa_macros::ToDataFrame;
-
-#[cfg(feature = "dataframe")]
-use crate::core::dataframe::ToDataFrame;
-
-/// Represents a single news article for a ticker.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[cfg_attr(feature = "dataframe", derive(ToDataFrame))]
-pub struct NewsArticle {
-    /// A unique identifier for the article.
-    pub uuid: String,
-    /// The headline of the article.
-    pub title: String,
-    /// The publisher of the article (e.g., "Reuters", "Associated Press").
-    pub publisher: Option<String>,
-    /// A direct link to the article.
-    pub link: Option<String>,
-    /// The Unix timestamp (in seconds) of when the article was published.
-    pub provider_publish_time: i64,
-}
+// Re-export types from borsa-types
+pub use borsa_types::NewsArticle;
