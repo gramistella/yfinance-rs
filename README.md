@@ -1,16 +1,13 @@
 # yfinance-rs
 
-An ergonomic, async-first Rust client for the unofficial Yahoo Finance API.
-
-This crate provides a simple and efficient way to fetch financial data from Yahoo Finance.
-It is designed to feel familiar to users of the popular Python `yfinance` library, but
-leverages Rust's powerful type system and async capabilities for performance and safety.
-
 [![Crates.io](https://img.shields.io/crates/v/yfinance-rs.svg)](https://crates.io/crates/yfinance-rs)
 [![Docs.rs](https://docs.rs/yfinance-rs/badge.svg)](https://docs.rs/yfinance-rs)
-[![CI](https://github.com/gramistella/yfinance-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/gramistella/yfinance-rs/actions/workflows/ci.yml)
 [![Downloads](https://img.shields.io/crates/d/yfinance-rs)](https://crates.io/crates/yfinance-rs)
-[![License](https://img.shields.io/crates/l/yfinance-rs)](https://github.com/gramistella/yfinance-rs/blob/main/LICENSE)
+[![License](https://img.shields.io/crates/l/yfinance-rs)](LICENSE)
+
+## Overview
+
+An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It provides a simple and efficient way to fetch financial data, with a convenient, yfinance-like API, leveraging Rust's type system and async runtime for performance and safety.
 
 ## Features
 
@@ -169,23 +166,15 @@ use std::time::Duration;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
     let (handle, mut receiver) = StreamBuilder::new(&client)
-        .symbols(vec!["AAPL", "GOOGL"])
+        .symbols(vec!["AAPL", "GOOGL"]) 
         .method(StreamMethod::WebsocketWithFallback)
         .interval(Duration::from_secs(1))
         .diff_only(true)
         .start()?;
 
-    // This loop will run indefinitely. In a real application,
-    // you'd want to handle stopping it gracefully.
     while let Some(update) = receiver.recv().await {
         println!("{}: ${:.2}", update.symbol, update.last_price.unwrap_or(0.0));
     }
-    
-    // To stop the stream, you can call handle.stop().await;
-    // For this example, we'll let it run for a bit then stop it.
-    // In a real app, this would be based on user input or another event.
-    // tokio::time::sleep(Duration::from_secs(10)).await;
-    // handle.stop().await;
 
     Ok(())
 }
@@ -339,7 +328,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ..Default::default()
         }));
     
-    // Use the ticker with custom policies
     let quote = ticker.quote().await?;
     println!("Latest price for AAPL with custom client: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
 
@@ -359,7 +347,6 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create a custom reqwest client with advanced configuration
     let custom_client = Client::builder()
         .timeout(Duration::from_secs(30))
         .connect_timeout(Duration::from_secs(10))
@@ -370,7 +357,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = YfClient::builder()
         .custom_client(custom_client)
-        .cache_ttl(Duration::from_secs(300)) // 5 minutes cache
+        .cache_ttl(Duration::from_secs(300))
         .build()?;
 
     let ticker = Ticker::new(&client, "AAPL");
@@ -391,19 +378,16 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // HTTP proxy with error handling
     let client = YfClient::builder()
         .try_proxy("http://proxy.example.com:8080")?
         .timeout(Duration::from_secs(30))
         .build()?;
 
-    // Or HTTPS proxy
     let client_https = YfClient::builder()
         .try_https_proxy("https://proxy.example.com:8443")?
         .timeout(Duration::from_secs(30))
         .build()?;
 
-    // Simple proxy methods (panic on invalid URLs)
     let client_simple = YfClient::builder()
         .proxy("http://proxy.example.com:8080")
         .timeout(Duration::from_secs(30))
@@ -418,13 +402,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request or open an issue.
+Please see our [Contributing Guide](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md). We welcome pull requests and issues.
 
 ## Changelog
-
 See **[CHANGELOG.md](https://github.com/gramistella/yfinance-rs/blob/main/CHANGELOG.md)** for release notes and breaking changes.
