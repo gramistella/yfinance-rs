@@ -493,6 +493,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "borsa-types"
+version = "0.1.0"
+dependencies = [
+ "borsa-macros",
+ "polars",
+ "serde",
+ "thiserror 2.0.14",
+]
+
+[[package]]
 name = "boxcar"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4373,10 +4383,11 @@ checksum = "fdd20c5420375476fbd4394763288da7eb0cc0b8c11deed431a91562af7335d3"
 
 [[package]]
 name = "yfinance-rs"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "base64 0.22.1",
  "borsa-macros",
+ "borsa-types",
  "chrono",
  "futures",
  "futures-util",

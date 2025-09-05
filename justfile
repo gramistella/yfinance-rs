@@ -181,6 +181,10 @@ test-full-debug +args='':
         exit $status; \
     fi
 
+test +args='':
+  @just banner "Alias: test → test-full"
+  just test-full {{args}}
+
 lint:
   cargo clippy --workspace --lib --bins --tests --benches --examples --all-features -- -D warnings
 
