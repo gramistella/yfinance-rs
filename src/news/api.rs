@@ -6,7 +6,7 @@ use crate::{
         client::{CacheMode, RetryConfig},
         net,
     },
-    news::{NewsTab, model::NewsArticle, wire},
+    news::{NewsTab, model::NewsArticle, wire, tab_as_str},
 };
 
 #[derive(Serialize)]
@@ -32,7 +32,7 @@ pub(super) async fn fetch_news(
 ) -> Result<Vec<NewsArticle>, YfError> {
     let mut url = client.base_news().join("xhr/ncp")?;
     url.query_pairs_mut()
-        .append_pair("queryRef", tab.as_str())
+        .append_pair("queryRef", tab_as_str(tab))
         .append_pair("serviceKey", "ncp_fin");
 
     let payload = NewsPayload {
@@ -55,7 +55,7 @@ pub(super) async fn fetch_news(
         });
     }
 
-    let endpoint = format!("news_{}", tab.as_str());
+    let endpoint = format!("news_{}", tab_as_str(tab));
     let body = net::get_text(resp, &endpoint, symbol, "json").await?;
     let envelope: wire::NewsEnvelope = serde_json::from_str(&body).map_err(YfError::Json)?;
 

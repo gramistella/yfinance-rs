@@ -3,31 +3,18 @@ mod model;
 mod wire;
 
 pub use model::NewsArticle;
+pub use borsa_types::NewsTab;
 
 use crate::{
     YfClient, YfError,
     core::client::{CacheMode, RetryConfig},
 };
 
-/// The category of news to fetch.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum NewsTab {
-    /// The latest news articles. (Default)
-    #[default]
-    News,
-    /// All news-related content.
-    All,
-    /// Official press releases.
-    PressReleases,
-}
-
-impl NewsTab {
-    pub(crate) const fn as_str(self) -> &'static str {
-        match self {
-            Self::News => "latestNews",
-            Self::All => "newsAll",
-            Self::PressReleases => "pressRelease",
-        }
+pub(crate) const fn tab_as_str(tab: NewsTab) -> &'static str {
+    match tab {
+        NewsTab::News => "latestNews",
+        NewsTab::All => "newsAll",
+        NewsTab::PressReleases => "pressRelease",
     }
 }
 

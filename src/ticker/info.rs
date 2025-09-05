@@ -1,78 +1,11 @@
 use crate::{
-    Address, Profile, YfClient, YfError, analysis,
+    YfClient, YfError, analysis,
     core::client::{CacheMode, RetryConfig},
-    esg,
+    esg, profile::Profile,
 };
-use serde::Serialize;
 
-/// A comprehensive summary of a ticker's data, aggregated from multiple API endpoints.
-///
-/// This struct is the result of `Ticker::info()` and contains a wide range of data including
-/// quote details, company/fund profile, analyst ratings, and ESG scores. Fields will be `None`
-/// if the corresponding data is not available for the ticker or if a non-essential API call fails.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct Info {
-    // --- Quote Data ---
-    /// The ticker symbol of the security.
-    pub symbol: String,
-    /// The short name of the security.
-    pub short_name: Option<String>,
-    /// The last traded price in the regular market session.
-    pub regular_market_price: Option<f64>,
-    /// The closing price of the previous regular market session.
-    pub regular_market_previous_close: Option<f64>,
-    /// The currency in which the security is traded.
-    pub currency: Option<String>,
-    /// The full name of the exchange where the security is traded.
-    pub exchange: Option<String>,
-    /// The current state of the market for this security (e.g., "REGULAR", "PRE", "POST").
-    pub market_state: Option<String>,
-
-    // --- Profile Data ---
-    // Company-specific
-    /// The business sector the company operates in.
-    pub sector: Option<String>,
-    /// The specific industry within the sector.
-    pub industry: Option<String>,
-    /// The company's official website.
-    pub website: Option<String>,
-    /// A summary of the company's business operations.
-    pub summary: Option<String>,
-    /// The physical address of the company's headquarters.
-    pub address: Option<Address>,
-    // Fund-specific
-    /// The family of funds it belongs to (e.g., "iShares").
-    pub family: Option<String>,
-    /// The legal type of the fund (e.g., "Exchange Traded Fund").
-    pub fund_kind: Option<String>,
-    // Common
-    /// The International Securities Identification Number.
-    pub isin: Option<String>,
-
-    // --- Analysis Data ---
-    /// The mean analyst price target.
-    pub target_mean_price: Option<f64>,
-    /// The highest analyst price target.
-    pub target_high_price: Option<f64>,
-    /// The lowest analyst price target.
-    pub target_low_price: Option<f64>,
-    /// The number of analysts providing an opinion.
-    pub number_of_analyst_opinions: Option<u32>,
-    /// The mean recommendation score (e.g., 1.0 for Strong Buy, 5.0 for Strong Sell).
-    pub recommendation_mean: Option<f64>,
-    /// The categorical key for the mean recommendation (e.g., "buy", "hold").
-    pub recommendation_key: Option<String>,
-
-    // --- ESG Data ---
-    /// The total ESG score, a weighted average of the three component scores.
-    pub total_esg_score: Option<f64>,
-    /// The environmental score, measuring the company's impact on the environment.
-    pub environment_score: Option<f64>,
-    /// The social score, measuring performance on social issues.
-    pub social_score: Option<f64>,
-    /// The governance score, measuring corporate governance practices.
-    pub governance_score: Option<f64>,
-}
+// Re-export Info from borsa-types
+pub use borsa_types::Info;
 
 /// Private helper to handle optional async results, logging errors in debug mode.
 fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option<T> {
@@ -96,7 +29,7 @@ pub(super) async fn fetch_info(
     // Run all fetches concurrently
     let (quote_res, profile_res, price_target_res, rec_summary_res, esg_res) = tokio::join!(
         crate::ticker::quote::fetch_quote(client, symbol, cache_mode, retry_override),
-        Profile::load(client, symbol),
+        crate::profile::load_profile(client, symbol),
         analysis::AnalysisBuilder::new(client, symbol)
             .cache_mode(cache_mode)
             .retry_policy(retry_override.cloned())

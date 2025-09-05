@@ -32,33 +32,31 @@ async fn load_with_fallback(client: &YfClient, symbol: &str) -> Result<Profile, 
     }
 }
 
-impl Profile {
-    /// Loads the profile for a given symbol.
-    ///
-    /// This method will try to load the profile from the quote summary API first,
-    /// and fall back to scraping the quote page if the API fails.
-    ///
-    /// # Errors
-    ///
-    /// Returns `YfError` if the network request fails, the response cannot be parsed,
-    /// or the data for the symbol is not available.
-    pub async fn load(client: &YfClient, symbol: &str) -> Result<Self, YfError> {
-        #[cfg(not(feature = "test-mode"))]
-        {
-            load_with_fallback(client, symbol).await
-        }
+/// Loads the profile for a given symbol.
+///
+/// This function will try to load the profile from the quote summary API first,
+/// and fall back to scraping the quote page if the API fails.
+///
+/// # Errors
+///
+/// Returns `YfError` if the network request fails, the response cannot be parsed,
+/// or the data for the symbol is not available.
+pub async fn load_profile(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
+    #[cfg(not(feature = "test-mode"))]
+    {
+        load_with_fallback(client, symbol).await
+    }
 
-        #[cfg(feature = "test-mode")]
-        {
-            use crate::core::client::ApiPreference;
-            match client.api_preference() {
-                ApiPreference::ApiThenScrape => load_with_fallback(client, symbol).await,
-                ApiPreference::ApiOnly => {
-                    client.ensure_credentials().await?;
-                    api::load_from_quote_summary_api(client, symbol).await
-                }
-                ApiPreference::ScrapeOnly => scrape::load_from_scrape(client, symbol).await,
+    #[cfg(feature = "test-mode")]
+    {
+        use crate::core::client::ApiPreference;
+        match client.api_preference() {
+            ApiPreference::ApiThenScrape => load_with_fallback(client, symbol).await,
+            ApiPreference::ApiOnly => {
+                client.ensure_credentials().await?;
+                api::load_from_quote_summary_api(client, symbol).await
             }
+            ApiPreference::ScrapeOnly => scrape::load_from_scrape(client, symbol).await,
         }
     }
 }

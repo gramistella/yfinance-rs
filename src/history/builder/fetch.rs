@@ -32,14 +32,14 @@ pub async fn fetch_chart(
             qp.append_pair("period1", &p1.to_string());
             qp.append_pair("period2", &p2.to_string());
         } else if let Some(r) = range {
-            qp.append_pair("range", r.as_str());
+            qp.append_pair("range", crate::core::models::range_as_str(r));
         } else {
             return Err(crate::core::YfError::InvalidParams(
                 "no range or period set".into(),
             ));
         }
 
-        qp.append_pair("interval", interval.as_str());
+        qp.append_pair("interval", crate::core::models::interval_as_str(interval));
         if include_actions {
             qp.append_pair("events", "div|split|capitalGains");
         }
