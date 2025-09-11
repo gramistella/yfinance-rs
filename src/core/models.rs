@@ -1,11 +1,5 @@
-// Re-export types from borsa-types
-pub use valuta::Quote;
-
-// Re-export history types from borsa-types
-pub use valuta::{Action, Candle, HistoryMeta, HistoryResponse};
-
-// Re-export history parameter types from borsa-types
-pub use valuta::{Interval, Range};
+// Re-export types from paft
+pub use paft::prelude::*;
 
 // Helper functions for converting to string representations
 pub(crate) fn range_as_str(range: Range) -> &'static str {
@@ -31,7 +25,6 @@ pub(crate) fn interval_as_str(interval: Interval) -> &'static str {
         Interval::I5m => "5m",
         Interval::I15m => "15m",
         Interval::I30m => "30m",
-        Interval::I60m => "60m",
         Interval::I90m => "90m",
         Interval::I1h => "1h",
         Interval::D1 => "1d",

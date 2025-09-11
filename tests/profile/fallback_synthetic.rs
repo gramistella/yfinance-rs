@@ -1,7 +1,8 @@
 use crate::common;
 use httpmock::Method::GET;
 use url::Url;
-use yfinance_rs::{ApiPreference, Profile, YfClient};
+use yfinance_rs::{ApiPreference, YfClient};
+use paft::fundamentals::Profile;
 
 #[tokio::test]
 async fn api_then_scrape_fallback_on_other_error() {

@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{Action, HistoryBuilder, Interval, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn history_auto_adjust_and_actions() {
@@ -66,28 +67,28 @@ async fn history_auto_adjust_and_actions() {
 
     // t1 (1000): prices halved, volume doubled due to 2:1 split after this candle
     let c0 = &resp.candles[0];
-    assert!((c0.open - 50.0).abs() < 1e-9);
-    assert!((c0.high - 50.5).abs() < 1e-9);
-    assert!((c0.low - 49.5).abs() < 1e-9);
-    assert!((c0.close - 50.0).abs() < 1e-9);
+    assert!((money_to_f64(&c0.open) - 50.0).abs() < 1e-9);
+    assert!((money_to_f64(&c0.high) - 50.5).abs() < 1e-9);
+    assert!((money_to_f64(&c0.low) - 49.5).abs() < 1e-9);
+    assert!((money_to_f64(&c0.close) - 50.0).abs() < 1e-9);
     assert_eq!(c0.volume, Some(20));
 
     // t2 (2000): unchanged prices, unchanged volume
     let c1 = &resp.candles[1];
-    assert!((c1.close - 100.0).abs() < 1e-9);
+    assert!((money_to_f64(&c1.close) - 100.0).abs() < 1e-9);
     assert_eq!(c1.volume, Some(10));
 
     // t3 (3000): dividend -> adjclose=99 => factor 0.99
     let c2 = &resp.candles[2];
-    assert!((c2.close - 99.0).abs() < 1e-9);
+    assert!((money_to_f64(&c2.close) - 99.0).abs() < 1e-9);
     assert_eq!(c2.volume, Some(10));
 
     // actions parsed and sorted
     assert_eq!(resp.actions.len(), 2);
     assert!(
-        matches!(resp.actions[0], Action::Split { ts, numerator:2, denominator:1 } if ts==2000)
+        matches!(resp.actions[0], Action::Split { ts, numerator:2, denominator:1 } if ts.timestamp()==2000)
     );
     assert!(
-        matches!(resp.actions[1], Action::Dividend { ts, amount } if ts==3000 && (amount-1.0).abs()<1e-9)
+        matches!(&resp.actions[1], Action::Dividend { ts, amount } if ts.timestamp()==3000 && (money_to_f64(amount)-1.0).abs()<1e-9)
     );
 }

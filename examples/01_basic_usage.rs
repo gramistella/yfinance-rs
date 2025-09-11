@@ -2,6 +2,7 @@ use chrono::{Duration, Utc};
 use yfinance_rs::{
     DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClientBuilder,
 };
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  {}: ${:.2}",
             quote.symbol,
-            quote.regular_market_price.unwrap_or_default()
+            quote.price.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
     println!();
@@ -61,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (symbol, candles) in &results.series {
         println!("{} has {} data points.", symbol, candles.len());
         if let Some(last_candle) = candles.last() {
-            println!("  Last close price: ${:.2}", last_candle.close);
+            println!("  Last close price: ${:.2}", money_to_f64(&last_candle.close));
         }
     }
     println!();
@@ -80,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(first_call) = chain.calls.first() {
             println!(
                 "  First call option: {} @ ${:.2}",
-                first_call.contract_symbol, first_call.strike
+                first_call.contract_symbol, money_to_f64(&first_call.strike)
             );
         }
     }

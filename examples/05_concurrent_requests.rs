@@ -1,6 +1,6 @@
-use chrono::TimeZone;
 use futures::future::try_join_all;
 use yfinance_rs::{FundamentalsBuilder, SearchBuilder, Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,18 +34,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_income_stmt.first() {
         println!(
             "AAPL Latest Annual Revenue: {:.2} (from {})",
-            stmt.total_revenue.unwrap_or_default(),
-            chrono::Utc
-                .timestamp_opt(stmt.period_end, 0)
-                .unwrap()
-                .date_naive()
+            stmt.total_revenue.as_ref().map(money_to_f64).unwrap_or_default(),
+            stmt.period.to_string()
         );
     }
     let annual_cashflow = aapl_fundamentals.cashflow(false).await?;
     if let Some(cf) = annual_cashflow.first() {
         println!(
             "AAPL Latest Annual Free Cash Flow: {:.2}",
-            cf.free_cash_flow.unwrap_or_default()
+            cf.free_cash_flow.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
     println!();

@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn quote_v7_happy_path() {
@@ -42,11 +43,10 @@ async fn quote_v7_happy_path() {
     mock.assert();
 
     assert_eq!(q.symbol, "AAPL");
-    assert_eq!(q.currency.as_deref(), Some("USD"));
-    assert_eq!(q.exchange.as_deref(), Some("NasdaqGS"));
-    assert_eq!(q.market_state.as_deref(), Some("REGULAR"));
-    assert!((q.regular_market_price.unwrap() - 190.25).abs() < 1e-9);
-    assert!((q.regular_market_previous_close.unwrap() - 189.50).abs() < 1e-9);
+    assert_eq!(q.exchange.as_ref().map(|e| e.to_string()), Some("NASDAQ".to_string()));
+    assert_eq!(q.market_state.as_ref().map(|m| m.to_string()), Some("REGULAR".to_string()));
+    assert!((money_to_f64(&q.price.unwrap()) - 190.25).abs() < 1e-9);
+    assert!((money_to_f64(&q.previous_close.unwrap()) - 189.50).abs() < 1e-9);
 }
 
 #[tokio::test]
@@ -92,8 +92,8 @@ async fn fast_info_derives_last_price() {
         (fi.last_price - 421.00).abs() < 1e-9,
         "fallback to previous close"
     );
-    assert_eq!(fi.currency.as_deref(), Some("USD"));
-    assert_eq!(fi.exchange.as_deref(), Some("NasdaqGS"));
+    assert_eq!(fi.currency.as_deref(), None);
+    assert_eq!(fi.exchange.as_deref(), Some("NASDAQ"));
     assert_eq!(fi.market_state.as_deref(), Some("CLOSED"));
 }
 

@@ -1,4 +1,3 @@
-use chrono::TimeZone;
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
@@ -27,12 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  - {}: {} {} shares on {}",
             txn.insider,
-            txn.transaction,
+            txn.transaction_type,
             txn.shares,
-            chrono::Utc
-                .timestamp_opt(txn.start_date, 0)
-                .unwrap()
-                .date_naive()
+            txn.transaction_date.date_naive()
         );
     }
 

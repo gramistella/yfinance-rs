@@ -3,6 +3,7 @@ use url::Url;
 
 use crate::common;
 use yfinance_rs::{DownloadBuilder, Interval, Range, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn download_multi_symbols_happy_path() {
@@ -183,9 +184,9 @@ async fn download_back_adjust_offline() {
 
     assert_eq!(a.len(), b.len(), "same number of bars");
     for (ca, cb) in a.iter().zip(b.iter()) {
-        assert!((ca.open - cb.open).abs() < 1e-9);
-        assert!((ca.high - cb.high).abs() < 1e-9);
-        assert!((ca.low - cb.low).abs() < 1e-9);
+        assert!((money_to_f64(&ca.open) - money_to_f64(&cb.open)).abs() < 1e-9);
+        assert!((money_to_f64(&ca.high) - money_to_f64(&cb.high)).abs() < 1e-9);
+        assert!((money_to_f64(&ca.low) - money_to_f64(&cb.low)).abs() < 1e-9);
         // close may differ due to back_adjust
     }
     assert!(!a.is_empty(), "expected some data");
@@ -252,10 +253,10 @@ async fn download_repair_is_noop_on_clean_data_offline() {
 
     assert_eq!(a.len(), b.len());
     for (ca, cb) in a.iter().zip(b.iter()) {
-        assert!((ca.open - cb.open).abs() < 1e-12);
-        assert!((ca.high - cb.high).abs() < 1e-12);
-        assert!((ca.low - cb.low).abs() < 1e-12);
-        assert!((ca.close - cb.close).abs() < 1e-12);
+        assert!((money_to_f64(&ca.open) - money_to_f64(&cb.open)).abs() < 1e-12);
+        assert!((money_to_f64(&ca.high) - money_to_f64(&cb.high)).abs() < 1e-12);
+        assert!((money_to_f64(&ca.low) - money_to_f64(&cb.low)).abs() < 1e-12);
+        assert!((money_to_f64(&ca.close) - money_to_f64(&cb.close)).abs() < 1e-12);
     }
 }
 
@@ -313,10 +314,10 @@ async fn download_rounding_and_keepna_offline() {
 
     for bars in res.series.values() {
         for c in bars {
-            assert!(!has_more_than_two_decimals(c.open));
-            assert!(!has_more_than_two_decimals(c.high));
-            assert!(!has_more_than_two_decimals(c.low));
-            assert!(!has_more_than_two_decimals(c.close));
+            assert!(!has_more_than_two_decimals(money_to_f64(&c.open)));
+            assert!(!has_more_than_two_decimals(money_to_f64(&c.high)));
+            assert!(!has_more_than_two_decimals(money_to_f64(&c.low)));
+            assert!(!has_more_than_two_decimals(money_to_f64(&c.close)));
         }
     }
 }

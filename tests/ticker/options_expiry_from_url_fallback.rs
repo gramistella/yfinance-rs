@@ -53,7 +53,7 @@ async fn option_chain_expiration_falls_back_to_url_date() {
             .calls
             .iter()
             .chain(chain.puts.iter())
-            .all(|c| c.expiration == date),
+            .all(|c| c.expiration.timestamp() == date),
         "expiration must fall back to 'date' query param"
     );
 }

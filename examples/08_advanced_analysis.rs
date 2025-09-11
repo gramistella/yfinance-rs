@@ -1,5 +1,5 @@
-use chrono::TimeZone;
 use yfinance_rs::{Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -10,12 +10,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let earnings_trend = ticker_aapl.earnings_trend().await?;
     println!("Earnings Trend ({} periods):", earnings_trend.len());
-    if let Some(trend) = earnings_trend.iter().find(|t| t.period == "0y") {
+    if let Some(trend) = earnings_trend.iter().find(|t| t.period.to_string() == "0y") {
         println!(
             "  Current Year ({}): Earnings Est. Avg: {:.2}, Revenue Est. Avg: {}",
             trend.period,
-            trend.earnings_estimate_avg.unwrap_or_default(),
-            trend.revenue_estimate_avg.unwrap_or_default()
+            trend.earnings_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default(),
+            trend.revenue_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
     println!();
@@ -46,9 +46,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let price_target = ticker_aapl.analyst_price_target().await?;
     println!(
         "  Target: avg=${:.2}, high=${:.2}, low=${:.2} (from {} analysts)",
-        price_target.mean.unwrap_or_default(),
-        price_target.high.unwrap_or_default(),
-        price_target.low.unwrap_or_default(),
+        price_target.mean.as_ref().map(money_to_f64).unwrap_or_default(),
+        price_target.high.as_ref().map(money_to_f64).unwrap_or_default(),
+        price_target.low.as_ref().map(money_to_f64).unwrap_or_default(),
         price_target.number_of_analysts.unwrap_or_default()
     );
     println!();
@@ -58,17 +58,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "  Mean score: {:.2} ({})",
         rec_summary.mean.unwrap_or_default(),
-        rec_summary.mean_key.unwrap_or_default()
+        rec_summary.mean_rating_text.as_deref().unwrap_or("N/A")
     );
     println!();
 
     println!("--- Earnings Trend ({} periods):", earnings_trend.len());
-    if let Some(trend) = earnings_trend.iter().find(|t| t.period == "0y") {
+    if let Some(trend) = earnings_trend.iter().find(|t| t.period.to_string() == "0y") {
         println!(
             "  Current Year ({}): Earnings Est. Avg: {:.2}, Revenue Est. Avg: {}",
             trend.period,
-            trend.earnings_estimate_avg.unwrap_or_default(),
-            trend.revenue_estimate_avg.unwrap_or_default()
+            trend.earnings_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default(),
+            trend.revenue_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
     println!();
@@ -94,13 +94,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(date) = calendar.earnings_dates.first() {
         println!(
             "  Next earnings date (approx): {}",
-            chrono::Utc.timestamp_opt(*date, 0).unwrap().date_naive()
+            date.date_naive()
         );
     }
     if let Some(date) = calendar.ex_dividend_date {
         println!(
             "  Ex-dividend date: {}",
-            chrono::Utc.timestamp_opt(date, 0).unwrap().date_naive()
+            date.date_naive()
         );
     }
     println!();

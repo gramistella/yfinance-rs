@@ -99,12 +99,12 @@
 //!
 //!     // Get the latest quote
 //!     let quote = ticker.quote().await?;
-//!     println!("Latest price for AAPL: ${:.2}", quote.regular_market_price.unwrap_or(0.0));
+//!     println!("Latest price for AAPL: ${:.2}", quote.price.as_ref().map(|p| yfinance_rs::core::conversions::money_to_f64(p)).unwrap_or(0.0));
 //!
 //!     // Get historical data for the last 6 months
 //!     let history = ticker.history(Some(Range::M6), Some(Interval::D1), false).await?;
 //!     if let Some(last_bar) = history.last() {
-//!         println!("Last closing price: ${:.2} on timestamp {}", last_bar.close, last_bar.ts);
+//!         println!("Last closing price: ${:.2} on timestamp {}", yfinance_rs::core::conversions::money_to_f64(&last_bar.close), last_bar.ts);
 //!     }
 //!
 //!     // Get analyst recommendations
@@ -148,29 +148,23 @@ pub mod stream;
 pub mod ticker;
 
 // --- re-exports (public API remains the same names as before) ---
-pub use analysis::{
-    EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow,
-};
+// Core types that are provider-specific
 pub use core::{
-    Action, CacheMode, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, RetryConfig,
-    YfClient, YfClientBuilder, YfError,
+    CacheMode, RetryConfig, YfClient, YfClientBuilder, YfError,
 };
-pub use download::{DownloadBuilder, DownloadResult};
-pub use esg::{EsgBuilder, EsgInvolvement, EsgScores};
-pub use fundamentals::{
-    BalanceSheetRow, Calendar as FundCalendar, CashflowRow, Earnings, EarningsQuarter,
-    EarningsQuarterEps, EarningsYear, FundamentalsBuilder, IncomeStatementRow, Num, ShareCount,
-};
-pub use history::HistoryBuilder;
-pub use holders::{
-    HoldersBuilder, InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
-    NetSharePurchaseActivity,
-};
-pub use news::{NewsArticle, NewsBuilder, NewsTab};
-pub use profile::{Address, Company, Fund, Profile};
-pub use quote::{QuotesBuilder, quotes};
-pub use search::{SearchBuilder, SearchQuote, SearchResponse, search};
-pub use stream::{QuoteUpdate, StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
-pub use ticker::{FastInfo, Info, OptionChain, OptionContract, Ticker};
-
 pub use core::client::ApiPreference;
+
+// Provider-specific builders and utilities
+pub use download::{DownloadBuilder, DownloadResult};
+pub use esg::EsgBuilder;
+pub use fundamentals::FundamentalsBuilder;
+pub use history::HistoryBuilder;
+pub use holders::HoldersBuilder;
+pub use news::{NewsBuilder, NewsTab};
+pub use quote::{QuotesBuilder, quotes};
+pub use search::{SearchBuilder, search};
+pub use stream::{StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
+pub use ticker::{FastInfo, Info, Ticker};
+
+// Re-export paft types for convenience (includes most data types)
+pub use paft::prelude::*;

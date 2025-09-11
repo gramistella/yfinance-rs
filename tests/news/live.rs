@@ -22,7 +22,7 @@ async fn live_news_smoke_and_or_record() {
         let article = &news[0];
         assert!(!article.uuid.is_empty());
         assert!(!article.title.is_empty());
-        assert!(article.provider_publish_time > 1_000_000_000); // Sanity check timestamp
+        assert!(article.published_at.timestamp() > 1_000_000_000); // Sanity check timestamp
     }
 }
 

@@ -1,2 +1,2 @@
-// Re-export types from borsa-types
-pub use valuta::{EsgInvolvement, EsgScores};
+// Re-export types from paft
+pub use paft::fundamentals::{EsgInvolvement, EsgScores};

@@ -2,7 +2,7 @@
 
 use crate::{
     YfClient, YfError,
-    core::{client::CacheMode, quotesummary},
+    core::{client::CacheMode, quotesummary, conversions::*},
 };
 use serde::Deserialize;
 
@@ -64,7 +64,7 @@ pub async fn load_from_quote_summary_api(
             Ok(Profile::Fund(Fund {
                 name,
                 family: fp.family,
-                kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
+                kind: string_to_fund_kind(fp.legal_type).unwrap_or_default(),
                 isin: fp.isin,
             }))
         }

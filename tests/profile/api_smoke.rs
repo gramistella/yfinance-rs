@@ -1,7 +1,8 @@
 use crate::common::setup_server;
 use httpmock::Method::GET;
 use url::Url;
-use yfinance_rs::{ApiPreference, Profile, YfClient};
+use yfinance_rs::{ApiPreference, YfClient};
+use paft::fundamentals::Profile;
 
 #[tokio::test]
 async fn profile_api_company_happy() {
@@ -86,7 +87,7 @@ async fn profile_api_fund_happy() {
         Profile::Fund(f) => {
             assert_eq!(f.name, "Invesco QQQ Trust");
             assert_eq!(f.family.as_deref(), Some("Invesco"));
-            assert_eq!(f.kind, "Exchange Traded Fund");
+            assert_eq!(f.kind.to_string(), "ETF");
         }
         _ => panic!("expected Fund"),
     }

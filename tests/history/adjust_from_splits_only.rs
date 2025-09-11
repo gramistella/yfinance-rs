@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{HistoryBuilder, Interval, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn history_auto_adjust_uses_splits_when_adjclose_missing() {
@@ -58,8 +59,8 @@ async fn history_auto_adjust_uses_splits_when_adjclose_missing() {
     assert!(resp.adjusted);
     assert_eq!(resp.candles.len(), 2);
     // First bar should be split-adjusted (0.5x); second bar unchanged.
-    assert!((resp.candles[0].close - 50.0).abs() < 1e-9);
-    assert!((resp.candles[1].close - 100.0).abs() < 1e-9);
+    assert!((money_to_f64(&resp.candles[0].close) - 50.0).abs() < 1e-9);
+    assert!((money_to_f64(&resp.candles[1].close) - 100.0).abs() < 1e-9);
     // Volume before split should be multiplied by 2 and rounded.
     assert_eq!(resp.candles[0].volume, Some(20));
 }

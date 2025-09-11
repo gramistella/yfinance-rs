@@ -13,7 +13,7 @@ async fn live_ticker_quote_for_record() {
 
         if !crate::common::is_recording() {
             assert_eq!(q.symbol, sym);
-            assert!(q.regular_market_price.is_some() || q.regular_market_previous_close.is_some());
+            assert!(q.price.is_some() || q.previous_close.is_some());
         }
     }
 }
@@ -46,7 +46,7 @@ async fn live_ticker_options_for_record() {
                     .calls
                     .iter()
                     .chain(chain.puts.iter())
-                    .all(|c| c.expiration == first),
+                    .all(|c| c.expiration.timestamp() == first),
                 "all option contracts should match the requested expiration"
             );
         }

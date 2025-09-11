@@ -1,2 +1,2 @@
-// Re-export types from borsa-types
-pub use valuta::{Address, CompanyProfile as Company, FundProfile as Fund, Profile};
+// Re-export types from paft
+pub use paft::fundamentals::{Address, CompanyProfile as Company, FundProfile as Fund, Profile};

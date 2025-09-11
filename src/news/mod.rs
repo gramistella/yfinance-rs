@@ -2,7 +2,15 @@ mod api;
 mod model;
 mod wire;
 
-pub use valuta::NewsTab;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum NewsTab {
+    #[default]
+    News,
+    All,
+    PressReleases,
+}
 pub use model::NewsArticle;
 
 use crate::{

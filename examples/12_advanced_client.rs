@@ -3,6 +3,7 @@ use yfinance_rs::{
     Ticker, YfClientBuilder, YfError,
     core::client::{Backoff, RetryConfig},
 };
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,13 +28,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "First fetch for {}: ${:.2} (from network)",
         quote1.symbol,
-        quote1.regular_market_price.unwrap_or_default()
+        quote1.price.as_ref().map(money_to_f64).unwrap_or_default()
     );
     let quote2 = aapl.quote().await?;
     println!(
         "Second fetch for {}: ${:.2} (should be from cache)",
         quote2.symbol,
-        quote2.regular_market_price.unwrap_or_default()
+        quote2.price.as_ref().map(money_to_f64).unwrap_or_default()
     );
     println!();
 
@@ -45,18 +46,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "Third fetch for {}: ${:.2} (from network again)",
         quote3.symbol,
-        quote3.regular_market_price.unwrap_or_default()
+        quote3.price.as_ref().map(money_to_f64).unwrap_or_default()
     );
     println!();
 
     // 4. --- Demonstrating a missing data point (dividend date) ---
     println!("--- Fetching Calendar Events for AAPL (including dividend date) ---");
     let calendar = aapl.calendar().await?;
-    if let Some(date) = calendar.dividend_date {
-        use chrono::{TimeZone, Utc};
+    if let Some(date) = calendar.ex_dividend_date {
         println!(
             "  Dividend date: {}",
-            Utc.timestamp_opt(date, 0).unwrap().date_naive()
+            date.date_naive()
         );
     } else {
         println!("  No upcoming dividend date found.");

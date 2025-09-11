@@ -7,6 +7,8 @@ use crate::{
     core::client::{CacheMode, RetryConfig},
     history::HistoryBuilder,
 };
+use paft::prelude::Money;
+use rust_decimal::prelude::{ToPrimitive, FromPrimitive};
 
 /// The result of a multi-symbol download operation.
 #[derive(Debug, Clone)]
@@ -251,13 +253,13 @@ impl DownloadBuilder {
 
             // Keep your current "back_adjust" semantics but avoid non-finite writes
             if self.back_adjust
-                && let Some(raw) = resp.raw_close.take()
+                && let Some(raw) = resp.unadjusted_close.take()
             {
                 for (i, c) in v.iter_mut().enumerate() {
-                    if let Some(&rc) = raw.get(i)
-                        && rc.is_finite()
+                    if let Some(rc) = raw.get(i)
+                        && rc.amount().to_f64().map_or(false, |v| v.is_finite())
                     {
-                        c.close = rc;
+                        c.close = rc.clone();
                     }
                 }
             }
@@ -268,17 +270,17 @@ impl DownloadBuilder {
 
             if self.rounding {
                 for c in &mut v {
-                    if c.open.is_finite() {
-                        c.open = round2(c.open);
+                    if c.open.amount().to_f64().map_or(false, |v| v.is_finite()) {
+                        c.open = Money::new(rust_decimal::Decimal::from_f64(round2(c.open.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.open.currency().clone());
                     }
-                    if c.high.is_finite() {
-                        c.high = round2(c.high);
+                    if c.high.amount().to_f64().map_or(false, |v| v.is_finite()) {
+                        c.high = Money::new(rust_decimal::Decimal::from_f64(round2(c.high.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.high.currency().clone());
                     }
-                    if c.low.is_finite() {
-                        c.low = round2(c.low);
+                    if c.low.amount().to_f64().map_or(false, |v| v.is_finite()) {
+                        c.low = Money::new(rust_decimal::Decimal::from_f64(round2(c.low.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.low.currency().clone());
                     }
-                    if c.close.is_finite() {
-                        c.close = round2(c.close);
+                    if c.close.amount().to_f64().map_or(false, |v| v.is_finite()) {
+                        c.close = Money::new(rust_decimal::Decimal::from_f64(round2(c.close.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.close.currency().clone());
                     }
                 }
             }
@@ -325,20 +327,24 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
         let (cur, rem) = right.split_first_mut().expect("right has at least 1");
         let next = &rem[0]; // safe because len >= 2 overall ⇒ rem has at least one
 
-        let p = prev.close;
-        let n = next.close;
-        let c = cur.close;
+        let p = &prev.close;
+        let n = &next.close;
+        let c = &cur.close;
 
-        if !(p.is_finite() && n.is_finite() && c.is_finite()) {
+        if !(p.amount().to_f64().map_or(false, |v| v.is_finite()) && n.amount().to_f64().map_or(false, |v| v.is_finite()) && c.amount().to_f64().map_or(false, |v| v.is_finite())) {
             continue;
         }
 
-        let baseline = f64::midpoint(p, n);
+        let p_val = p.amount().to_f64().unwrap_or(0.0);
+        let n_val = n.amount().to_f64().unwrap_or(0.0);
+        let c_val = c.amount().to_f64().unwrap_or(0.0);
+        
+        let baseline = f64::midpoint(p_val, n_val);
         if baseline <= 0.0 {
             continue;
         }
 
-        let ratio = c / baseline;
+        let ratio = c_val / baseline;
 
         // ~100× high
         if ratio > 50.0 && ratio < 200.0 {
@@ -364,16 +370,16 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
 }
 
 fn scale_row_prices(c: &mut Candle, scale: f64) {
-    if c.open.is_finite() {
-        c.open *= scale;
+    if c.open.amount().to_f64().map_or(false, |v| v.is_finite()) {
+        c.open = c.open.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
-    if c.high.is_finite() {
-        c.high *= scale;
+    if c.high.amount().to_f64().map_or(false, |v| v.is_finite()) {
+        c.high = c.high.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
-    if c.low.is_finite() {
-        c.low *= scale;
+    if c.low.amount().to_f64().map_or(false, |v| v.is_finite()) {
+        c.low = c.low.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
-    if c.close.is_finite() {
-        c.close *= scale;
+    if c.close.amount().to_f64().map_or(false, |v| v.is_finite()) {
+        c.close = c.close.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
 }

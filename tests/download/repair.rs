@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::YfClient;
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn download_repair_simple_100x_fix() {
@@ -54,8 +55,8 @@ async fn download_repair_simple_100x_fix() {
 
     let v = res.series.get(sym).unwrap();
     // middle row scaled ~0.01
-    assert!((v[1].close - 10.5).abs() < 1e-9);
-    assert!((v[1].open - 10.0).abs() < 1e-9);
-    assert!((v[1].high - 11.0).abs() < 1e-9);
-    assert!((v[1].low - 9.0).abs() < 1e-9);
+    assert!((money_to_f64(&v[1].close) - 10.5).abs() < 1e-9);
+    assert!((money_to_f64(&v[1].open) - 10.0).abs() < 1e-9);
+    assert!((money_to_f64(&v[1].high) - 11.0).abs() < 1e-9);
+    assert!((money_to_f64(&v[1].low) - 9.0).abs() < 1e-9);
 }

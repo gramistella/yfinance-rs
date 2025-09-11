@@ -1,6 +1,7 @@
 use httpmock::{Method::GET, Mock, MockServer};
 use url::Url;
 use yfinance_rs::{Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 fn fixture(endpoint: &str, symbol: &str) -> String {
     crate::common::fixture(endpoint, symbol, "json")
@@ -64,7 +65,7 @@ async fn offline_all_holders_from_fixture() {
         !mutual_fund.is_empty(),
         "mutual fund holders missing from fixture"
     );
-    assert!(mutual_fund[0].value > 0);
+    assert!(money_to_f64(&mutual_fund[0].value) > 0.0);
 
     // Insider Roster
     let insider_roster = t.insider_roster_holders().await.unwrap();

@@ -4,7 +4,7 @@ use crate::{
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        net,
+        net, conversions::*,
     },
     news::{NewsTab, model::NewsArticle, tab_as_str, wire},
 };
@@ -97,7 +97,7 @@ pub(super) async fn fetch_news(
                 title,
                 publisher: content.provider.and_then(|p| p.display_name),
                 link: content.canonical_url.and_then(|u| u.url),
-                provider_publish_time: timestamp,
+                published_at: i64_to_datetime(timestamp),
             })
         })
         .collect();

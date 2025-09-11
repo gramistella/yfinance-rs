@@ -4,15 +4,22 @@ mod model;
 mod options;
 mod quote;
 
-pub use info::Info;
-pub use model::{FastInfo, OptionChain, OptionContract};
+pub use model::{FastInfo, Info, OptionChain, OptionContract};
 
 use crate::{
-    EsgBuilder, HoldersBuilder, NewsBuilder, Quote, ShareCount, YfClient, YfError,
+    EsgBuilder, HoldersBuilder, NewsBuilder, YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
+    core::conversions::*,
     fundamentals::FundamentalsBuilder,
     history::HistoryBuilder,
+};
+use paft::prelude::*;
+use paft::fundamentals::{
+    MajorHolder, InstitutionalHolder, InsiderTransaction, InsiderRosterHolder, 
+    NetSharePurchaseActivity, RecommendationRow, RecommendationSummary, 
+    UpgradeDowngradeRow, PriceTarget, EarningsTrendRow, EsgScores,
+    IncomeStatementRow, BalanceSheetRow, CashflowRow, Earnings, Calendar, ShareCount
 };
 
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
@@ -35,7 +42,7 @@ use crate::{
 ///
 /// // Get the latest quote
 /// let quote = ticker.quote().await?;
-/// println!("Tesla's last price: {}", quote.regular_market_price.unwrap_or_default());
+/// println!("Tesla's last price: {}", quote.price.as_ref().map(|p| yfinance_rs::core::conversions::money_to_f64(p)).unwrap_or(0.0));
 ///
 /// // Get historical prices for the last year
 /// let history = ticker.history(Some(yfinance_rs::Range::Y1), None, false).await?;
@@ -131,17 +138,19 @@ impl Ticker {
     pub async fn fast_info(&self) -> Result<FastInfo, YfError> {
         let q = self.quote().await?;
         let last = q
-            .regular_market_price
-            .or(q.regular_market_previous_close)
+            .price
+            .as_ref()
+            .map(money_to_f64)
+            .or(q.previous_close.as_ref().map(money_to_f64))
             .ok_or_else(|| YfError::MissingData("quote missing last/previous price".into()))?;
 
         Ok(FastInfo {
             symbol: q.symbol,
             last_price: last,
-            previous_close: q.regular_market_previous_close,
-            currency: q.currency,
-            exchange: q.exchange,
-            market_state: q.market_state,
+            previous_close: q.previous_close.as_ref().map(money_to_f64),
+            currency: None, // paft Quote doesn't have currency field
+            exchange: exchange_to_string(q.exchange),
+            market_state: market_state_to_string(q.market_state),
         })
     }
 
@@ -242,7 +251,7 @@ impl Ticker {
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::Dividend { ts, amount } => Some((ts, amount)),
+                crate::Action::Dividend { ts, amount } => Some((datetime_to_i64(ts), money_to_f64(&amount))),
                 _ => None,
             })
             .collect())
@@ -268,7 +277,7 @@ impl Ticker {
                     ts,
                     numerator,
                     denominator,
-                } => Some((ts, numerator, denominator)),
+                } => Some((datetime_to_i64(ts), numerator, denominator)),
                 _ => None,
             })
             .collect())
@@ -325,7 +334,7 @@ impl Ticker {
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::CapitalGain { ts, gain } => Some((ts, gain)),
+                crate::Action::CapitalGain { ts, gain } => Some((datetime_to_i64(ts), money_to_f64(&gain))),
                 _ => None,
             })
             .collect())
@@ -379,7 +388,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn major_holders(&self) -> Result<Vec<crate::MajorHolder>, YfError> {
+    pub async fn major_holders(&self) -> Result<Vec<MajorHolder>, YfError> {
         self.holders_builder().major_holders().await
     }
 
@@ -388,7 +397,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn institutional_holders(&self) -> Result<Vec<crate::InstitutionalHolder>, YfError> {
+    pub async fn institutional_holders(&self) -> Result<Vec<InstitutionalHolder>, YfError> {
         self.holders_builder().institutional_holders().await
     }
 
@@ -397,7 +406,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn mutual_fund_holders(&self) -> Result<Vec<crate::InstitutionalHolder>, YfError> {
+    pub async fn mutual_fund_holders(&self) -> Result<Vec<InstitutionalHolder>, YfError> {
         self.holders_builder().mutual_fund_holders().await
     }
 
@@ -406,7 +415,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn insider_transactions(&self) -> Result<Vec<crate::InsiderTransaction>, YfError> {
+    pub async fn insider_transactions(&self) -> Result<Vec<InsiderTransaction>, YfError> {
         self.holders_builder().insider_transactions().await
     }
 
@@ -415,7 +424,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn insider_roster_holders(&self) -> Result<Vec<crate::InsiderRosterHolder>, YfError> {
+    pub async fn insider_roster_holders(&self) -> Result<Vec<InsiderRosterHolder>, YfError> {
         self.holders_builder().insider_roster_holders().await
     }
 
@@ -426,7 +435,7 @@ impl Ticker {
     /// This method will return an error if the request fails or the response cannot be parsed.
     pub async fn net_share_purchase_activity(
         &self,
-    ) -> Result<Option<crate::NetSharePurchaseActivity>, YfError> {
+    ) -> Result<Option<NetSharePurchaseActivity>, YfError> {
         self.holders_builder().net_share_purchase_activity().await
     }
 
@@ -443,7 +452,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn recommendations(&self) -> Result<Vec<crate::RecommendationRow>, YfError> {
+    pub async fn recommendations(&self) -> Result<Vec<RecommendationRow>, YfError> {
         self.analysis_builder().recommendations().await
     }
 
@@ -452,7 +461,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn recommendations_summary(&self) -> Result<crate::RecommendationSummary, YfError> {
+    pub async fn recommendations_summary(&self) -> Result<RecommendationSummary, YfError> {
         self.analysis_builder().recommendations_summary().await
     }
 
@@ -461,7 +470,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn upgrades_downgrades(&self) -> Result<Vec<crate::UpgradeDowngradeRow>, YfError> {
+    pub async fn upgrades_downgrades(&self) -> Result<Vec<UpgradeDowngradeRow>, YfError> {
         self.analysis_builder().upgrades_downgrades().await
     }
 
@@ -470,7 +479,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn analyst_price_target(&self) -> Result<crate::PriceTarget, YfError> {
+    pub async fn analyst_price_target(&self) -> Result<PriceTarget, YfError> {
         self.analysis_builder().analyst_price_target().await
     }
 
@@ -481,7 +490,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn earnings_trend(&self) -> Result<Vec<crate::EarningsTrendRow>, YfError> {
+    pub async fn earnings_trend(&self) -> Result<Vec<EarningsTrendRow>, YfError> {
         self.analysis_builder().earnings_trend().await
     }
 
@@ -498,7 +507,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn sustainability(&self) -> Result<crate::EsgScores, YfError> {
+    pub async fn sustainability(&self) -> Result<EsgScores, YfError> {
         self.esg_builder().fetch().await
     }
     /* ---------------- Fundamentals convenience ---------------- */
@@ -514,7 +523,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn income_stmt(&self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
+    pub async fn income_stmt(&self) -> Result<Vec<IncomeStatementRow>, YfError> {
         self.fundamentals_builder().income_statement(false).await
     }
 
@@ -523,7 +532,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn quarterly_income_stmt(&self) -> Result<Vec<crate::IncomeStatementRow>, YfError> {
+    pub async fn quarterly_income_stmt(&self) -> Result<Vec<IncomeStatementRow>, YfError> {
         self.fundamentals_builder().income_statement(true).await
     }
 
@@ -532,7 +541,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn balance_sheet(&self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
+    pub async fn balance_sheet(&self) -> Result<Vec<BalanceSheetRow>, YfError> {
         self.fundamentals_builder().balance_sheet(false).await
     }
 
@@ -541,7 +550,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn quarterly_balance_sheet(&self) -> Result<Vec<crate::BalanceSheetRow>, YfError> {
+    pub async fn quarterly_balance_sheet(&self) -> Result<Vec<BalanceSheetRow>, YfError> {
         self.fundamentals_builder().balance_sheet(true).await
     }
 
@@ -550,7 +559,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn cashflow(&self) -> Result<Vec<crate::CashflowRow>, YfError> {
+    pub async fn cashflow(&self) -> Result<Vec<CashflowRow>, YfError> {
         self.fundamentals_builder().cashflow(false).await
     }
 
@@ -559,7 +568,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn quarterly_cashflow(&self) -> Result<Vec<crate::CashflowRow>, YfError> {
+    pub async fn quarterly_cashflow(&self) -> Result<Vec<CashflowRow>, YfError> {
         self.fundamentals_builder().cashflow(true).await
     }
 
@@ -568,7 +577,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn earnings(&self) -> Result<crate::Earnings, YfError> {
+    pub async fn earnings(&self) -> Result<Earnings, YfError> {
         self.fundamentals_builder().earnings().await
     }
 
@@ -577,7 +586,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn calendar(&self) -> Result<crate::FundCalendar, YfError> {
+    pub async fn calendar(&self) -> Result<Calendar, YfError> {
         self.fundamentals_builder().calendar().await
     }
 

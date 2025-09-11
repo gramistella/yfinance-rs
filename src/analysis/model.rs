@@ -1,4 +1,4 @@
-// Re-export types from borsa-types
-pub use valuta::{
+// Re-export types from paft
+pub use paft::fundamentals::{
     EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow,
 };

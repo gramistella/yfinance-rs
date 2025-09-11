@@ -2,14 +2,15 @@ use chrono::{Duration, Utc};
 use std::collections::BTreeMap;
 
 use crate::{
-    ShareCount,
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        wire::{from_raw, from_raw_date},
+        wire::from_raw,
+        conversions::*,
     },
     fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
+use paft::fundamentals::ShareCount;
 
 use super::fetch::fetch_modules;
 use super::{
@@ -140,11 +141,11 @@ pub(super) async fn income_statement(
     Ok(arr
         .into_iter()
         .map(|n| IncomeStatementRow {
-            period_end: from_raw_date(n.end_date).unwrap_or(0),
-            total_revenue: from_raw(n.total_revenue),
-            gross_profit: from_raw(n.gross_profit),
-            operating_income: from_raw(n.operating_income),
-            net_income: from_raw(n.net_income),
+            period: string_to_period(n.end_date.map(|d| d.raw.unwrap_or_default().to_string()).unwrap_or_default()),
+            total_revenue: from_raw(n.total_revenue).map(|v| f64_to_money(v as f64)),
+            gross_profit: from_raw(n.gross_profit).map(|v| f64_to_money(v as f64)),
+            operating_income: from_raw(n.operating_income).map(|v| f64_to_money(v as f64)),
+            net_income: from_raw(n.net_income).map(|v| f64_to_money(v as f64)),
         })
         .collect())
 }
@@ -184,7 +185,7 @@ pub(super) async fn balance_sheet(
     let endpoint_name = "balance_sheet";
 
     let create_default_row = |period_end: i64| BalanceSheetRow {
-        period_end,
+        period: string_to_period(period_end.to_string()),
         total_assets: None,
         total_liabilities: None,
         total_equity: None,
@@ -225,15 +226,15 @@ pub(super) async fn balance_sheet(
                     .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
 
                 if key == format!("{prefix}TotalAssets") {
-                    row.total_assets = value;
+                    row.total_assets = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}TotalLiabilitiesNetMinorityInterest") {
-                    row.total_liabilities = value;
+                    row.total_liabilities = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}StockholdersEquity") {
-                    row.total_equity = value;
+                    row.total_equity = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}CashAndCashEquivalents") {
-                    row.cash = value;
+                    row.cash = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}LongTermDebt") {
-                    row.long_term_debt = value;
+                    row.long_term_debt = value.map(|v| f64_to_money(v as f64));
                 }
             }
         }
@@ -281,7 +282,7 @@ pub(super) async fn cashflow(
     let endpoint_name = "cash_flow";
 
     let create_default_row = |period_end: i64| CashflowRow {
-        period_end,
+        period: string_to_period(period_end.to_string()),
         operating_cashflow: None,
         capital_expenditures: None,
         free_cash_flow: None,
@@ -305,13 +306,13 @@ pub(super) async fn cashflow(
                     .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
 
                 if key == format!("{prefix}OperatingCashFlow") {
-                    row.operating_cashflow = value;
+                    row.operating_cashflow = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}CapitalExpenditure") {
-                    row.capital_expenditures = value;
+                    row.capital_expenditures = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}FreeCashFlow") {
-                    row.free_cash_flow = value;
+                    row.free_cash_flow = value.map(|v| f64_to_money(v as f64));
                 } else if key == format!("{prefix}NetIncome") {
-                    row.net_income = value;
+                    row.net_income = value.map(|v| f64_to_money(v as f64));
                 }
             }
         }
@@ -334,10 +335,10 @@ pub(super) async fn cashflow(
     // After filling values, calculate FCF if it's missing.
     for row in &mut result {
         if row.free_cash_flow.is_none()
-            && let (Some(ocf), Some(capex)) = (row.operating_cashflow, row.capital_expenditures)
+            && let (Some(ocf), Some(capex)) = (row.operating_cashflow.clone(), row.capital_expenditures.clone())
         {
             // In timeseries API, capex is negative for cash outflow.
-            row.free_cash_flow = Some(ocf + capex);
+            row.free_cash_flow = Some(ocf.add(&capex).unwrap_or(ocf));
         }
     }
 
@@ -363,8 +364,8 @@ pub(super) async fn earnings(
             v.iter()
                 .map(|y| EarningsYear {
                     year: i32::try_from(y.date.unwrap_or(0)).unwrap_or(0),
-                    revenue: y.revenue.as_ref().and_then(|x| x.raw),
-                    earnings: y.earnings.as_ref().and_then(|x| x.raw),
+                    revenue: y.revenue.as_ref().and_then(|x| x.raw.map(|v| f64_to_money(v as f64))),
+                    earnings: y.earnings.as_ref().and_then(|x| x.raw.map(|v| f64_to_money(v as f64))),
                 })
                 .collect()
         })
@@ -377,9 +378,9 @@ pub(super) async fn earnings(
         .map(|v| {
             v.iter()
                 .map(|q| EarningsQuarter {
-                    period: q.date.clone().unwrap_or_default(),
-                    revenue: q.revenue.as_ref().and_then(|x| x.raw),
-                    earnings: q.earnings.as_ref().and_then(|x| x.raw),
+                    period: string_to_period(q.date.clone().unwrap_or_default()),
+                    revenue: q.revenue.as_ref().and_then(|x| x.raw.map(|v| f64_to_money(v as f64))),
+                    earnings: q.earnings.as_ref().and_then(|x| x.raw.map(|v| f64_to_money(v as f64))),
                 })
                 .collect()
         })
@@ -392,9 +393,9 @@ pub(super) async fn earnings(
         .map(|v| {
             v.iter()
                 .map(|q| EarningsQuarterEps {
-                    period: q.date.clone().unwrap_or_default(),
-                    actual: q.actual.as_ref().and_then(|x| x.raw),
-                    estimate: q.estimate.as_ref().and_then(|x| x.raw),
+                    period: string_to_period(q.date.clone().unwrap_or_default()),
+                    actual: q.actual.as_ref().and_then(|x| x.raw.map(|v| f64_to_money(v as f64))),
+                    estimate: q.estimate.as_ref().and_then(|x| x.raw.map(|v| f64_to_money(v as f64))),
                 })
                 .collect()
         })
@@ -423,13 +424,13 @@ pub(super) async fn calendar(
         .earnings_date
         .unwrap_or_default()
         .into_iter()
-        .filter_map(|d| d.raw)
+        .filter_map(|d| d.raw.map(i64_to_datetime))
         .collect();
 
     Ok(super::Calendar {
         earnings_dates,
-        ex_dividend_date: c.ex_dividend_date.and_then(|x| x.raw),
-        dividend_date: c.dividend_date.and_then(|x| x.raw),
+        ex_dividend_date: c.ex_dividend_date.and_then(|x| x.raw.map(i64_to_datetime)),
+        dividend_payment_date: c.dividend_date.and_then(|x| x.raw.map(i64_to_datetime)),
     })
 }
 
@@ -520,7 +521,7 @@ pub(super) async fn shares(
         .filter_map(|(ts, val)| {
             val.reported_value
                 .and_then(|rv| rv.raw)
-                .map(|shares| ShareCount { date: ts, shares })
+                .map(|shares| ShareCount { date: i64_to_datetime(ts), shares })
         })
         .collect();
 

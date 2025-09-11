@@ -51,7 +51,7 @@ async fn offline_news_uses_recorded_fixture() {
     let first = &articles[0];
     assert!(!first.uuid.is_empty());
     assert!(!first.title.is_empty());
-    assert!(first.provider_publish_time > 0);
+    assert!(first.published_at.timestamp() > 0);
 }
 
 #[tokio::test]

@@ -1,5 +1,6 @@
-use crate::core::models::Candle;
 use crate::history::wire::QuoteBlock;
+use paft::prelude::*;
+use crate::core::conversions::*;
 
 use super::adjust::price_factor_for_row;
 
@@ -53,42 +54,42 @@ pub fn assemble_candles(
 
             if let (Some(ov), Some(hv), Some(lv), Some(cv)) = (open, high, low, close) {
                 out.push(Candle {
-                    ts: t,
-                    open: ov,
-                    high: hv,
-                    low: lv,
-                    close: cv,
+                    ts: i64_to_datetime(t),
+                    open: f64_to_money(ov),
+                    high: f64_to_money(hv),
+                    low: f64_to_money(lv),
+                    close: f64_to_money(cv),
                     volume: volume_adj,
                 });
                 raw_close_vec.push(raw_close_val);
             } else if keepna {
                 out.push(Candle {
-                    ts: t,
-                    open: open.unwrap_or(f64::NAN),
-                    high: high.unwrap_or(f64::NAN),
-                    low: low.unwrap_or(f64::NAN),
-                    close: close.unwrap_or(f64::NAN),
+                    ts: i64_to_datetime(t),
+                    open: f64_to_money(open.unwrap_or(f64::NAN)),
+                    high: f64_to_money(high.unwrap_or(f64::NAN)),
+                    low: f64_to_money(low.unwrap_or(f64::NAN)),
+                    close: f64_to_money(close.unwrap_or(f64::NAN)),
                     volume: volume0,
                 });
                 raw_close_vec.push(raw_close_val);
             }
         } else if let (Some(ov), Some(hv), Some(lv), Some(cv)) = (open, high, low, close) {
             out.push(Candle {
-                ts: t,
-                open: ov,
-                high: hv,
-                low: lv,
-                close: cv,
+                ts: i64_to_datetime(t),
+                open: f64_to_money(ov),
+                high: f64_to_money(hv),
+                low: f64_to_money(lv),
+                close: f64_to_money(cv),
                 volume: volume0,
             });
             raw_close_vec.push(raw_close_val);
         } else if keepna {
             out.push(Candle {
-                ts: t,
-                open: open.unwrap_or(f64::NAN),
-                high: high.unwrap_or(f64::NAN),
-                low: low.unwrap_or(f64::NAN),
-                close: close.unwrap_or(f64::NAN),
+                ts: i64_to_datetime(t),
+                open: f64_to_money(open.unwrap_or(f64::NAN)),
+                high: f64_to_money(high.unwrap_or(f64::NAN)),
+                low: f64_to_money(low.unwrap_or(f64::NAN)),
+                close: f64_to_money(close.unwrap_or(f64::NAN)),
                 volume: volume0,
             });
             raw_close_vec.push(raw_close_val);

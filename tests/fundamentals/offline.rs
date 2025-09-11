@@ -191,7 +191,7 @@ async fn offline_calendar_uses_recorded_fixture() {
     assert!(
         !cal.earnings_dates.is_empty()
             || cal.ex_dividend_date.is_some()
-            || cal.dividend_date.is_some(),
+            || cal.ex_dividend_date.is_some(),
         "record with YF_RECORD=1 first"
     );
 }

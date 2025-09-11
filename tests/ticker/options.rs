@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn options_expirations_happy() {
@@ -106,17 +107,17 @@ async fn option_chain_for_specific_date() {
 
     let c = &chain.calls[0];
     assert_eq!(c.contract_symbol, "AAPL250117C00180000");
-    assert!((c.strike - 180.0).abs() < 1e-9);
+    assert!((money_to_f64(&c.strike) - 180.0).abs() < 1e-9);
     assert_eq!(c.volume, Some(123));
     assert_eq!(c.open_interest, Some(1000));
     assert_eq!(c.implied_volatility, Some(0.25));
     assert!(c.in_the_money);
-    assert_eq!(c.expiration, date);
+    assert_eq!(c.expiration.timestamp(), date);
 
     let p = &chain.puts[0];
     assert_eq!(p.contract_symbol, "AAPL250117P00180000");
-    assert!((p.last_price.unwrap() - 3.4).abs() < 1e-9);
-    assert_eq!(p.expiration, date);
+    assert!((money_to_f64(&p.price.as_ref().unwrap()) - 3.4).abs() < 1e-9);
+    assert_eq!(p.expiration.timestamp(), date);
 }
 
 #[tokio::test]

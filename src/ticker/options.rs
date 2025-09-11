@@ -6,6 +6,7 @@ use crate::{
     core::{
         client::{CacheMode, RetryConfig},
         net,
+        conversions::*,
     },
 };
 
@@ -74,15 +75,15 @@ pub async fn option_chain(
             .into_iter()
             .map(|c| OptionContract {
                 contract_symbol: c.contract_symbol.unwrap_or_default(),
-                strike: c.strike.unwrap_or(0.0),
-                last_price: c.last_price,
-                bid: c.bid,
-                ask: c.ask,
+                strike: f64_to_money(c.strike.unwrap_or(0.0)),
+                price: c.last_price.map(f64_to_money),
+                bid: c.bid.map(f64_to_money),
+                ask: c.ask.map(f64_to_money),
                 volume: c.volume,
                 open_interest: c.open_interest,
                 implied_volatility: c.implied_volatility,
                 in_the_money: c.in_the_money.unwrap_or(false),
-                expiration,
+                expiration: i64_to_datetime(expiration),
             })
             .collect()
     };

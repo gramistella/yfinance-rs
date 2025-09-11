@@ -1,5 +1,6 @@
-use crate::core::models::Action;
 use crate::history::wire::Events;
+use paft::prelude::*;
+use crate::core::conversions::*;
 
 #[allow(clippy::cast_possible_truncation)]
 pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>) {
@@ -14,7 +15,10 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
         for (k, d) in divs {
             let ts = k.parse::<i64>().unwrap_or_else(|_| d.date.unwrap_or(0));
             if let Some(amount) = d.amount {
-                out.push(Action::Dividend { ts, amount });
+                out.push(Action::Dividend { 
+                    ts: i64_to_datetime(ts), 
+                    amount: f64_to_money(amount) 
+                });
             }
         }
     }
@@ -23,7 +27,10 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
         for (k, g) in gains {
             let ts = k.parse::<i64>().unwrap_or_else(|_| g.date.unwrap_or(0));
             if let Some(gain) = g.amount {
-                out.push(Action::CapitalGain { ts, gain });
+                out.push(Action::CapitalGain { 
+                    ts: i64_to_datetime(ts), 
+                    gain: f64_to_money(gain) 
+                });
             }
         }
     }
@@ -43,7 +50,7 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
             };
 
             out.push(Action::Split {
-                ts,
+                ts: i64_to_datetime(ts),
                 numerator: num,
                 denominator: den,
             });
@@ -57,9 +64,9 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
         }
     }
 
-    out.sort_by_key(|a| match *a {
+    out.sort_by_key(|a| match a {
         Action::Dividend { ts, .. } | Action::Split { ts, .. } | Action::CapitalGain { ts, .. } => {
-            ts
+            ts.timestamp()
         }
     });
     split_events.sort_by_key(|(ts, _)| *ts);

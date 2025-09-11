@@ -1,5 +1,6 @@
 use chrono::{Duration, Utc};
 use yfinance_rs::{DownloadBuilder, Interval, Range, Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,10 +45,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (symbol, candles) in &results.series {
         println!("- {} ({} candles)", symbol, candles.len());
         if let Some(first_candle) = candles.first() {
-            println!("  First Open: ${:.2}", first_candle.open);
+            println!("  First Open: ${:.2}", money_to_f64(&first_candle.open));
         }
         if let Some(last_candle) = candles.last() {
-            println!("  Last Close: ${:.2}", last_candle.close);
+            println!("  Last Close: ${:.2}", money_to_f64(&last_candle.close));
         }
     }
     println!("--------------------------------------");
@@ -56,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n--- History Metadata for AAPL ---");
     if let Some(m) = meta {
         println!("  Timezone: {}", m.timezone.unwrap_or_default());
-        println!("  GMT Offset: {}", m.gmtoffset.unwrap_or_default());
+        println!("  GMT Offset: {}", m.utc_offset_seconds.unwrap_or_default());
     }
     println!("--------------------------------------");
 

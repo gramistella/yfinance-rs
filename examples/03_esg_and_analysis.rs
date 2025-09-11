@@ -72,9 +72,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "  - Firm: {} | Action: {} | From: {} | To: {}",
                 upgrade.firm.as_deref().unwrap_or("N/A"),
-                upgrade.action.as_deref().unwrap_or("N/A"),
-                upgrade.from_grade.as_deref().unwrap_or("N/A"),
-                upgrade.to_grade.as_deref().unwrap_or("N/A")
+                upgrade.action.as_ref().map(|a| a.to_string()).unwrap_or("N/A".to_string()),
+                upgrade.from_grade.as_ref().map(|g| g.to_string()).unwrap_or("N/A".to_string()),
+                upgrade.to_grade.as_ref().map(|g| g.to_string()).unwrap_or("N/A".to_string())
             );
         }
     }

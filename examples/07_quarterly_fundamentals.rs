@@ -1,5 +1,5 @@
-use chrono::TimeZone;
 use yfinance_rs::{Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,8 +12,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = income_stmt.first() {
         println!(
             "Latest quarterly revenue: {:.2} (from {})",
-            latest.total_revenue.unwrap_or_default(),
-            latest.period_end
+            latest.total_revenue.as_ref().map(money_to_f64).unwrap_or(0.0),
+            latest.period
         );
     } else {
         println!("No quarterly income statement found.");
@@ -24,8 +24,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = balance_sheet.first() {
         println!(
             "Latest quarterly total assets: {:.2} (from {})",
-            latest.total_assets.unwrap_or_default(),
-            latest.period_end
+            latest.total_assets.as_ref().map(money_to_f64).unwrap_or(0.0),
+            latest.period
         );
     } else {
         println!("No quarterly balance sheet found.");
@@ -36,8 +36,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = cashflow_stmt.first() {
         println!(
             "Latest quarterly operating cash flow: {:.2} (from {})",
-            latest.operating_cashflow.unwrap_or_default(),
-            latest.period_end
+            latest.operating_cashflow.as_ref().map(money_to_f64).unwrap_or(0.0),
+            latest.period
         );
     } else {
         println!("No quarterly cash flow statement found.");
@@ -49,10 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "Latest quarterly shares outstanding: {} (from {})",
             latest.shares,
-            chrono::Utc
-                .timestamp_opt(latest.date, 0)
-                .unwrap()
-                .date_naive()
+            latest.date.date_naive()
         );
     } else {
         println!("No quarterly shares outstanding found.");

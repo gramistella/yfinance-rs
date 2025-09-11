@@ -12,7 +12,7 @@ use polars::prelude::*;
 use yfinance_rs::{Interval, Range, Ticker, YfClient};
 
 #[cfg(feature = "dataframe")]
-use valuta::dataframe::ToDataFrame;
+use paft::dataframe::ToDataFrame;
 
 #[cfg(feature = "dataframe")]
 #[tokio::main]

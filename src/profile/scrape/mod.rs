@@ -122,7 +122,7 @@ pub async fn load_from_scrape(client: &YfClient, symbol: &str) -> Result<Profile
             Ok(Profile::Fund(Fund {
                 name,
                 family: fp.family,
-                kind: fp.legal_type.unwrap_or_else(|| "Fund".to_string()),
+                kind: crate::core::conversions::string_to_fund_kind(fp.legal_type).unwrap_or_default(),
                 isin: fp.isin,
             }))
         }

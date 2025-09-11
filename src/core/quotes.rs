@@ -3,12 +3,14 @@ use serde::Deserialize;
 use url::Url;
 
 use crate::{
-    Quote, YfClient, YfError,
+    YfClient, YfError,
     core::{
         client::{CacheMode, RetryConfig},
         net,
+        conversions::*,
     },
 };
+use paft::prelude::*;
 
 // Centralized wire model for the v7 quote API
 #[derive(Deserialize)]
@@ -163,15 +165,15 @@ impl From<V7QuoteNode> for Quote {
         Self {
             symbol: n.symbol.unwrap_or_default(),
             shortname: n.short_name,
-            regular_market_price: n.regular_market_price,
-            regular_market_previous_close: n.regular_market_previous_close,
-            currency: n.currency,
-            exchange: n
-                .full_exchange_name
-                .or(n.exchange)
-                .or(n.market)
-                .or(n.market_cap_figure_exchange),
-            market_state: n.market_state,
+            price: n.regular_market_price.map(f64_to_money),
+            previous_close: n.regular_market_previous_close.map(f64_to_money),
+            exchange: crate::core::conversions::string_to_exchange(
+                n.full_exchange_name
+                    .or(n.exchange)
+                    .or(n.market)
+                    .or(n.market_cap_figure_exchange)
+            ),
+            market_state: n.market_state.map(|s| MarketState::from(s)),
         }
     }
 }

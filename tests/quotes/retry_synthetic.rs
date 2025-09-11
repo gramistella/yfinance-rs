@@ -1,6 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
@@ -68,8 +69,8 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
     assert_eq!(quotes.len(), 2);
     let aapl = quotes.iter().find(|q| q.symbol == "AAPL").unwrap();
     let msft = quotes.iter().find(|q| q.symbol == "MSFT").unwrap();
-    assert_eq!(aapl.regular_market_price, Some(123.0));
-    assert_eq!(msft.regular_market_price, Some(456.0));
-    assert_eq!(aapl.currency.as_deref(), Some("USD"));
-    assert_eq!(aapl.exchange.as_deref(), Some("NasdaqGS"));
+    assert_eq!(aapl.price, Some(f64_to_money(123.0)));
+    assert_eq!(msft.price, Some(f64_to_money(456.0)));
+    assert_eq!(aapl.exchange.as_ref().map(|e| e.to_string()), Some("NASDAQ".to_string()));
+    assert_eq!(msft.exchange.as_ref().map(|e| e.to_string()), Some("NASDAQ".to_string()));
 }

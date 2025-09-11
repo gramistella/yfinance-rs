@@ -4,9 +4,11 @@ mod assemble;
 mod fetch;
 
 use crate::core::client::{CacheMode, RetryConfig};
-use crate::core::models::{Candle, HistoryMeta, HistoryResponse};
-use crate::core::{Interval, Range, YfClient, YfError};
+use crate::core::{YfClient, YfError};
+use crate::core::conversions::*;
 use crate::history::wire::MetaNode;
+use paft::prelude::*;
+use chrono_tz::Tz;
 
 use actions::extract_actions;
 use adjust::cumulative_split_after;
@@ -186,10 +188,10 @@ impl HistoryBuilder {
         );
 
         // ensure actions sorted (extract_actions already sorts, keep consistent)
-        actions_out.sort_by_key(|a| match *a {
-            crate::Action::Dividend { ts, .. }
-            | crate::Action::Split { ts, .. }
-            | crate::Action::CapitalGain { ts, .. } => ts,
+        actions_out.sort_by_key(|a| match a {
+            Action::Dividend { ts, .. }
+            | Action::Split { ts, .. }
+            | Action::CapitalGain { ts, .. } => ts.timestamp(),
         });
 
         // 5) Map metadata
@@ -200,7 +202,7 @@ impl HistoryBuilder {
             actions: actions_out,
             adjusted: self.auto_adjust,
             meta: meta_out,
-            raw_close: Some(raw_close),
+            unadjusted_close: Some(raw_close.into_iter().map(f64_to_money).collect()),
         })
     }
 }
@@ -209,7 +211,7 @@ impl HistoryBuilder {
 
 fn map_meta(m: Option<&MetaNode>) -> Option<HistoryMeta> {
     m.as_ref().map(|mm| HistoryMeta {
-        timezone: mm.timezone.clone(),
-        gmtoffset: mm.gmtoffset,
+        timezone: mm.timezone.as_ref().and_then(|tz_str| tz_str.parse::<Tz>().ok()),
+        utc_offset_seconds: mm.gmtoffset,
     })
 }

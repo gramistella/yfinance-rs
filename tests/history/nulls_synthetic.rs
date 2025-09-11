@@ -1,6 +1,7 @@
 use httpmock::{Method::GET, MockServer};
 use url::Url;
 use yfinance_rs::{HistoryBuilder, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn history_skips_points_with_null_ohlc() {
@@ -37,7 +38,7 @@ async fn history_skips_points_with_null_ohlc() {
         1,
         "second point with null open should be filtered out"
     );
-    assert_eq!(bars[0].open, 100.0);
-    assert_eq!(bars[0].close, 100.5);
+    assert_eq!(bars[0].open, f64_to_money(100.0));
+    assert_eq!(bars[0].close, f64_to_money(100.5));
     assert_eq!(bars[0].volume, Some(1_000_000));
 }

@@ -6,7 +6,7 @@ mod wire;
 
 pub use model::{
     BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps,
-    EarningsYear, IncomeStatementRow, Num, ShareCount,
+    EarningsYear, IncomeStatementRow, ShareCount,
 };
 
 use crate::{

@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{Interval, Range, YfClient};
+use yfinance_rs::core::conversions::*;
 
 fn minimal_ok_body() -> String {
     r#"{
@@ -48,5 +49,5 @@ async fn ticker_history_convenience_builds_expected_query() {
 
     mock.assert();
     assert_eq!(bars.len(), 1);
-    assert!((bars[0].close - 100.5).abs() < 1e-9);
+    assert!((money_to_f64(&bars[0].close) - 100.5).abs() < 1e-9);
 }

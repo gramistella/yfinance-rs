@@ -1,12 +1,11 @@
 use crate::{
     YfClient, YfError, analysis,
     core::client::{CacheMode, RetryConfig},
+    core::conversions::*,
     esg,
     profile::Profile,
+    ticker::model::Info,
 };
-
-// Re-export Info from borsa-types
-pub use valuta::Info;
 
 /// Private helper to handle optional async results, logging errors in debug mode.
 fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option<T> {
@@ -79,11 +78,11 @@ pub(super) async fn fetch_info(
             .as_ref()
             .map_or_else(|| symbol.to_string(), |q| q.symbol.clone()),
         short_name: quote.as_ref().and_then(|q| q.shortname.clone()),
-        regular_market_price: quote.as_ref().and_then(|q| q.regular_market_price),
-        regular_market_previous_close: quote.as_ref().and_then(|q| q.regular_market_previous_close),
-        currency: quote.as_ref().and_then(|q| q.currency.clone()),
-        exchange: quote.as_ref().and_then(|q| q.exchange.clone()),
-        market_state: quote.as_ref().and_then(|q| q.market_state.clone()),
+        regular_market_price: quote.as_ref().and_then(|q| q.price.as_ref().map(money_to_f64)),
+        regular_market_previous_close: quote.as_ref().and_then(|q| q.previous_close.as_ref().map(money_to_f64)),
+        currency: None, // paft Quote doesn't have currency field
+        exchange: quote.as_ref().and_then(|q| exchange_to_string(q.exchange.clone())),
+        market_state: quote.as_ref().and_then(|q| market_state_to_string(q.market_state.clone())),
 
         // From Profile
         sector,
@@ -93,15 +92,15 @@ pub(super) async fn fetch_info(
         address,
         isin,
         family,
-        fund_kind,
+        fund_kind: fund_kind_to_string(fund_kind),
 
         // From Analysis
-        target_mean_price: price_target.as_ref().and_then(|pt| pt.mean),
-        target_high_price: price_target.as_ref().and_then(|pt| pt.high),
-        target_low_price: price_target.as_ref().and_then(|pt| pt.low),
+        target_mean_price: price_target.as_ref().and_then(|pt| pt.mean.as_ref().map(money_to_f64)),
+        target_high_price: price_target.as_ref().and_then(|pt| pt.high.as_ref().map(money_to_f64)),
+        target_low_price: price_target.as_ref().and_then(|pt| pt.low.as_ref().map(money_to_f64)),
         number_of_analyst_opinions: price_target.as_ref().and_then(|pt| pt.number_of_analysts),
         recommendation_mean: rec_summary.as_ref().and_then(|rs| rs.mean),
-        recommendation_key: rec_summary.as_ref().and_then(|rs| rs.mean_key.clone()),
+        recommendation_key: None, // paft RecommendationSummary doesn't have mean_key field
 
         // From ESG
         total_esg_score: esg_scores.as_ref().and_then(|esg| esg.total_esg),

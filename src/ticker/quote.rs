@@ -3,6 +3,7 @@ use crate::{
     core::{
         client::{CacheMode, RetryConfig},
         quotes,
+        conversions::*,
     },
 };
 
@@ -22,14 +23,13 @@ pub async fn fetch_quote(
     Ok(Quote {
         symbol: result.symbol.unwrap_or_else(|| symbol.to_string()),
         shortname: result.short_name,
-        regular_market_price: result.regular_market_price,
-        regular_market_previous_close: result.regular_market_previous_close,
-        currency: result.currency,
-        exchange: result
+        price: result.regular_market_price.map(f64_to_money),
+        previous_close: result.regular_market_previous_close.map(f64_to_money),
+        exchange: string_to_exchange(result
             .full_exchange_name
             .or(result.exchange)
             .or(result.market)
-            .or(result.market_cap_figure_exchange),
-        market_state: result.market_state,
+            .or(result.market_cap_figure_exchange)),
+        market_state: string_to_market_state(result.market_state),
     })
 }

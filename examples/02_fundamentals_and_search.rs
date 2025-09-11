@@ -1,4 +1,5 @@
 use yfinance_rs::{FundamentalsBuilder, HoldersBuilder, SearchBuilder, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,8 +18,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_income_stmt.first() {
         println!(
             "  Period End: {} | Total Revenue: {:.2}",
-            stmt.period_end,
-            stmt.total_revenue.unwrap_or_default()
+            stmt.period.to_string(),
+            stmt.total_revenue.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
 
@@ -30,8 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = quarterly_balance_sheet.first() {
         println!(
             "  Period End: {} | Total Assets: {:.2}",
-            stmt.period_end,
-            stmt.total_assets.unwrap_or_default()
+            stmt.period.to_string(),
+            stmt.total_assets.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
 
@@ -41,8 +42,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  Quarter {}: Revenue: {:.2} | Earnings: {:.2}",
             e.period,
-            e.revenue.unwrap_or_default(),
-            e.earnings.unwrap_or_default()
+            e.revenue.as_ref().map(money_to_f64).unwrap_or_default(),
+            e.earnings.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
     println!("--------------------------------------\n");
@@ -69,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let net_activity = holders_builder.net_share_purchase_activity().await?;
     if let Some(activity) = net_activity {
         println!("\nNet Insider Purchase Activity ({}):", activity.period);
-        println!("  Net shares bought/sold: {}", activity.net_info_shares);
+        println!("  Net shares bought/sold: {}", activity.net_shares);
     }
     println!("--------------------------------------\n");
 

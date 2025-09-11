@@ -1,3 +1,5 @@
+use paft::fundamentals::Profile;
+
 #[tokio::test]
 #[ignore]
 async fn live_profile_company() {
@@ -12,7 +14,7 @@ async fn live_profile_company() {
 
     if !crate::common::is_recording() {
         match prof {
-            yfinance_rs::Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
+            Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
             _ => panic!("expected Company"),
         }
     }

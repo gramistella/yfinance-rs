@@ -2,6 +2,7 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{ApiPreference, Ticker, YfClient};
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn offline_price_target_happy() {
@@ -46,9 +47,9 @@ async fn offline_price_target_happy() {
 
     mock.assert();
 
-    assert_eq!(pt.mean, Some(200.0));
-    assert_eq!(pt.high, Some(250.0));
-    assert_eq!(pt.low, Some(150.0));
+    assert_eq!(pt.mean, Some(f64_to_money(200.0)));
+    assert_eq!(pt.high, Some(f64_to_money(250.0)));
+    assert_eq!(pt.low, Some(f64_to_money(150.0)));
     assert_eq!(pt.number_of_analysts, Some(31));
 }
 
@@ -123,8 +124,8 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
     crumb.assert();
     ok.assert();
 
-    assert_eq!(pt.mean, Some(123.45));
-    assert_eq!(pt.high, Some(150.0));
-    assert_eq!(pt.low, Some(100.0));
+    assert_eq!(pt.mean, Some(f64_to_money(123.45)));
+    assert_eq!(pt.high, Some(f64_to_money(150.0)));
+    assert_eq!(pt.low, Some(f64_to_money(100.0)));
     assert_eq!(pt.number_of_analysts, Some(20));
 }

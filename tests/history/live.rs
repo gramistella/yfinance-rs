@@ -1,3 +1,5 @@
+use yfinance_rs::core::conversions::*;
+
 #[tokio::test]
 #[ignore]
 async fn live_history_smoke() {
@@ -13,7 +15,7 @@ async fn live_history_smoke() {
 
     if !crate::common::is_recording() {
         assert!(!bars.is_empty());
-        assert!(bars[0].open > 0.0 && bars[0].close > 0.0);
+        assert!(money_to_f64(&bars[0].open) > 0.0 && money_to_f64(&bars[0].close) > 0.0);
     }
 }
 

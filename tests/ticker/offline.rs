@@ -18,7 +18,7 @@ async fn offline_quote_uses_recorded_fixture() {
 
     assert_eq!(q.symbol, sym);
     // Don’t assert exact prices — fixtures will be from your latest recording
-    assert!(q.currency.is_some());
+    assert!(q.price.is_some() || q.previous_close.is_some());
 }
 
 #[tokio::test]
@@ -52,6 +52,6 @@ async fn offline_options_uses_recorded_fixtures() {
 
     // Contracts, if present, should carry the requested expiration
     for c in chain.calls.iter().chain(chain.puts.iter()) {
-        assert_eq!(c.expiration, d);
+        assert_eq!(c.expiration.timestamp(), d);
     }
 }
