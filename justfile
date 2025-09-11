@@ -51,7 +51,7 @@ test-offline +args='':
 			TEST_ARGS=("$first" "$@"); \
 		fi; \
 	fi; \
-	cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"
+	cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"
 
 # Full live sweep (no writes; runs all tests including ignored)
 test-live +args='':
@@ -68,7 +68,7 @@ test-live +args='':
 			TEST_ARGS=("$first" "$@"); \
 		fi; \
 	fi; \
-	YF_LIVE=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --include-ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"
+	YF_LIVE=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- --include-ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"
 
 # Record fixtures (live → cache)
 test-record +args='':
@@ -85,7 +85,7 @@ test-record +args='':
 			TEST_ARGS=("$first" "$@"); \
 		fi; \
 	fi; \
-	YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"
+	YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"
 
 # Use a different fixture directory, then replay
 test-with-fixdir dir='/tmp/yf-fixtures' +args='':
@@ -103,8 +103,8 @@ test-with-fixdir dir='/tmp/yf-fixtures' +args='':
 		fi; \
 	fi; \
 	export YF_FIXDIR="{{dir}}"; \
-	YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"; \
-	cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"
+	YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"; \
+	cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"
 
 # Full test: clear phase markers; only run offline if live/record passes
 test-full +args='':
@@ -123,10 +123,10 @@ test-full +args='':
 		fi; \
 	fi; \
 	echo "[$(ts)] 🟦 Phase 1/2 START — Live/Record (runs ignored, writes fixtures)"; \
-	if YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"; then \
+	if YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"; then \
 		echo "[$(ts)] ✅ Phase 1/2 PASS — Live/Record passed"; \
 		echo "[$(ts)] 🟩 Phase 2/2 START — Offline replay (cached fixtures)"; \
-		if cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"; then \
+		if cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"; then \
 			echo "[$(ts)] ✅ Phase 2/2 PASS — Offline replay passed"; \
 			echo "[$(ts)] 🎉 Full test complete: BOTH phases passed"; \
 		else \
@@ -160,10 +160,10 @@ test-full-debug +args='':
         fi; \
     fi; \
     echo "[$(ts)] 🟦 Phase 1/2 START — Live/Record DEBUG (runs ignored, writes fixtures)"; \
-    if YF_DEBUG=1 YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]}"; then \
+    if YF_DEBUG=1 YF_RECORD=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- --ignored --test-threads={{TEST_THREADS}} "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"; then \
         echo "[$(ts)] ✅ Phase 1/2 PASS — Live/Record passed"; \
         echo "[$(ts)] 🟩 Phase 2/2 START — Offline replay DEBUG (cached fixtures)"; \
-        if YF_DEBUG=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]}" -- "${TEST_ARGS[@]}"; then \
+        if YF_DEBUG=1 cargo test --features {{FEATURES}} "${TARGET_OPT[@]+"${TARGET_OPT[@]}"}" -- "${TEST_ARGS[@]+"${TEST_ARGS[@]}"}"; then \
             echo "[$(ts)] ✅ Phase 2/2 PASS — Offline replay passed"; \
             echo "[$(ts)] 🎉 Full debug test complete: BOTH phases passed"; \
         else \

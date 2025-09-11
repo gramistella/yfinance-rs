@@ -133,9 +133,18 @@ async fn fetch_options_raw(
 
     let code = resp.status().as_u16();
     if code != 401 && code != 403 {
-        return Err(YfError::Status {
-            status: code,
-            url: url.to_string(),
+        let url_s = url.to_string();
+        return Err(match code {
+            404 => YfError::NotFound { url: url_s },
+            429 => YfError::RateLimited { url: url_s },
+            500..=599 => YfError::ServerError {
+                status: code,
+                url: url_s,
+            },
+            _ => YfError::Status {
+                status: code,
+                url: url_s,
+            },
         });
     }
 
@@ -158,9 +167,19 @@ async fn fetch_options_raw(
     resp = client.send_with_retry(req2, retry_override).await?;
 
     if !resp.status().is_success() {
-        return Err(YfError::Status {
-            status: resp.status().as_u16(),
-            url: url2.to_string(),
+        let code = resp.status().as_u16();
+        let url_s = url2.to_string();
+        return Err(match code {
+            404 => YfError::NotFound { url: url_s },
+            429 => YfError::RateLimited { url: url_s },
+            500..=599 => YfError::ServerError {
+                status: code,
+                url: url_s,
+            },
+            _ => YfError::Status {
+                status: code,
+                url: url_s,
+            },
         });
     }
 

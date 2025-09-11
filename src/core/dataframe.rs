@@ -9,12 +9,16 @@ pub trait ToDataFrame {
     fn to_dataframe(&self) -> PolarsResult<DataFrame>;
 
     /// Creates an empty DataFrame with the correct schema for this type.
-    fn empty_dataframe() -> PolarsResult<DataFrame> where Self: Sized;
+    fn empty_dataframe() -> PolarsResult<DataFrame>
+    where
+        Self: Sized;
 
     /// Returns the complete flattened schema for this type.
-    /// 
+    ///
     /// This method provides static access to the type's schema without requiring
     /// an instance, making it useful for building nested schemas and validating
     /// data structures at compile time.
-    fn schema() -> PolarsResult<Vec<(&'static str, DataType)>> where Self: Sized;
+    fn schema() -> PolarsResult<Vec<(&'static str, DataType)>>
+    where
+        Self: Sized;
 }

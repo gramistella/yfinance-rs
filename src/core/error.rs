@@ -27,12 +27,35 @@ pub enum YfError {
     #[error("Invalid URL: {0}")]
     Url(#[from] url::ParseError),
 
-    /// An error indicating an unexpected, non-successful HTTP status code.
+    /// A 404 Not Found returned by Yahoo endpoints.
+    #[error("Not found at {url}")]
+    NotFound {
+        /// The URL that returned a 404.
+        url: String,
+    },
+
+    /// A 429 Too Many Requests (rate limit) returned by Yahoo endpoints.
+    #[error("Rate limited at {url}")]
+    RateLimited {
+        /// The URL that returned a 429.
+        url: String,
+    },
+
+    /// A 5xx server error returned by Yahoo endpoints.
+    #[error("Server error {status} at {url}")]
+    ServerError {
+        /// The HTTP status code in the 5xx range.
+        status: u16,
+        /// The URL that returned a server error.
+        url: String,
+    },
+
+    /// An error indicating an unexpected, non-successful HTTP status code (non-404/429/5xx).
     #[error("Unexpected response status: {status} at {url}")]
     Status {
-        /// The HTTP status code.
+        /// The unexpected HTTP status code returned.
         status: u16,
-        /// The URL that returned the non-successful status.
+        /// The URL that returned the status.
         url: String,
     },
 

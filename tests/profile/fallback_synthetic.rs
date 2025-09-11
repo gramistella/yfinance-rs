@@ -25,12 +25,14 @@ async fn api_then_scrape_fallback_on_other_error() {
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ApiThenScrape)
-        .preauth("cookie", "crumb")
+        ._api_preference(ApiPreference::ApiThenScrape)
+        ._preauth("cookie", "crumb")
         .build()
         .unwrap();
 
-    let p = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let p = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     api_err.assert();
     scrape.assert();
 

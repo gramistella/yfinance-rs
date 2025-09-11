@@ -6,7 +6,9 @@ async fn live_profile_company() {
     }
 
     let client = yfinance_rs::YfClient::builder().build().unwrap();
-    let prof = yfinance_rs::profile::load_profile(&client, "AAPL").await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, "AAPL")
+        .await
+        .unwrap();
 
     if !crate::common::is_recording() {
         match prof {
@@ -33,7 +35,7 @@ async fn live_profile_company_scrape_for_record() {
         return;
     }
     let client = yfinance_rs::YfClient::builder()
-        .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
+        ._api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
     let _ = yfinance_rs::profile::load_profile(&client, "AAPL").await;
@@ -46,7 +48,7 @@ async fn live_profile_fund_scrape_for_record() {
         return;
     }
     let client = yfinance_rs::YfClient::builder()
-        .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
+        ._api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
     let _ = yfinance_rs::profile::load_profile(&client, "QQQ").await;

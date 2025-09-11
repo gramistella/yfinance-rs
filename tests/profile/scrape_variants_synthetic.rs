@@ -1,6 +1,6 @@
 use httpmock::{Method::GET, MockServer};
 use url::Url;
-use yfinance_rs::{Profile, YfClient};
+use yfinance_rs::{ApiPreference, Profile, YfClient};
 
 fn svelte_html(payload: &str) -> String {
     format!(
@@ -33,11 +33,13 @@ async fn scrape_sveltekit_equity() {
 
     let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
+        ._api_preference(ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     mock.assert();
 
     match prof {
@@ -70,11 +72,13 @@ async fn scrape_infers_equity_when_quote_type_missing() {
 
     let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(yfinance_rs::ApiPreference::ScrapeOnly)
+        ._api_preference(ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     mock.assert();
     assert!(matches!(prof, Profile::Company(_)));
 }

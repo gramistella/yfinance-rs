@@ -1,5 +1,5 @@
 // Re-export types from borsa-types
-pub use borsa_types::{
+pub use valuta::{
     BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsQuarter, EarningsQuarterEps,
     EarningsYear, IncomeStatementRow, ShareCount,
 };

@@ -1,2 +1,2 @@
 // Re-export types from borsa-types
-pub use borsa_types::{FastInfo, OptionChain, OptionContract};
+pub use valuta::{FastInfo, OptionChain, OptionContract};

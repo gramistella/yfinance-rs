@@ -27,12 +27,14 @@ async fn profile_api_company_happy() {
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie", crumb)
+        ._api_preference(ApiPreference::ApiOnly)
+        ._preauth("cookie", crumb)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     mock.assert();
 
     match prof {
@@ -70,12 +72,14 @@ async fn profile_api_fund_happy() {
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie", crumb)
+        ._api_preference(ApiPreference::ApiOnly)
+        ._preauth("cookie", crumb)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     mock.assert();
 
     match prof {

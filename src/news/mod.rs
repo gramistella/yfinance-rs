@@ -2,8 +2,8 @@ mod api;
 mod model;
 mod wire;
 
+pub use valuta::NewsTab;
 pub use model::NewsArticle;
-pub use borsa_types::NewsTab;
 
 use crate::{
     YfClient, YfError,

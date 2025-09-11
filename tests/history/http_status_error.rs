@@ -29,10 +29,10 @@ async fn history_returns_status_error_on_non_2xx() {
     mock.assert();
 
     match err {
-        yfinance_rs::YfError::Status { status, url } => {
+        yfinance_rs::YfError::ServerError { status, url } => {
             assert_eq!(status, 500);
             assert!(url.contains("/v8/finance/chart/FAIL"));
         }
-        other => panic!("expected Status error, got {other:?}"),
+        other => panic!("expected ServerError, got {other:?}"),
     }
 }

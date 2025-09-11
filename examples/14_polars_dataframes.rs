@@ -9,23 +9,25 @@
 use polars::prelude::*;
 
 #[cfg(feature = "dataframe")]
-use yfinance_rs::{Ticker, YfClient, Range, Interval};
+use yfinance_rs::{Interval, Range, Ticker, YfClient};
 
 #[cfg(feature = "dataframe")]
-use borsa_types::dataframe::ToDataFrame;
+use valuta::dataframe::ToDataFrame;
 
 #[cfg(feature = "dataframe")]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
-    
+
     println!("=== Polars DataFrame Integration with yfinance-rs ===\n");
 
     // Example 1: Historical Price Data
     println!("📈 1. Historical Price Data to DataFrame");
     let ticker = Ticker::new(&client, "AAPL");
-    let history = ticker.history(Some(Range::M6), Some(Interval::D1), false).await?;
-    
+    let history = ticker
+        .history(Some(Range::M6), Some(Interval::D1), false)
+        .await?;
+
     if !history.is_empty() {
         println!("   Converting {} candles to DataFrame...", history.len());
         match history.to_dataframe() {
@@ -36,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => println!("   Error creating DataFrame: {}", e),
         }
     }
-    
+
     println!();
 
     // Example 2: Quote Data
@@ -54,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("   Error fetching quote: {}", e),
     }
-    
+
     println!();
 
     // Example 3: Analyst Recommendations
@@ -62,7 +64,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match ticker.recommendations().await {
         Ok(recommendations) => {
             if !recommendations.is_empty() {
-                println!("   Converting {} recommendation periods to DataFrame...", recommendations.len());
+                println!(
+                    "   Converting {} recommendation periods to DataFrame...",
+                    recommendations.len()
+                );
                 match recommendations.to_dataframe() {
                     Ok(df) => {
                         println!("   DataFrame shape: {:?}", df.shape());
@@ -76,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("   Error fetching recommendations: {}", e),
     }
-    
+
     println!();
 
     // Example 4: Financial Fundamentals
@@ -84,7 +89,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match ticker.income_stmt().await {
         Ok(financials) => {
             if !financials.is_empty() {
-                println!("   Converting {} annual income statements to DataFrame...", financials.len());
+                println!(
+                    "   Converting {} annual income statements to DataFrame...",
+                    financials.len()
+                );
                 match financials.to_dataframe() {
                     Ok(df) => {
                         println!("   DataFrame shape: {:?}", df.shape());
@@ -98,7 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("   Error fetching financials: {}", e),
     }
-    
+
     println!();
 
     // Example 5: ESG Data
@@ -106,7 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match ticker.sustainability().await {
         Ok(esg) => {
             println!("   Converting ESG involvement flags to DataFrame...");
-            
+
             match esg.involvement.to_dataframe() {
                 Ok(df) => {
                     println!("   DataFrame shape: {:?}", df.shape());
@@ -117,7 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("   ESG data not available for this ticker: {}", e),
     }
-    
+
     println!();
 
     // Example 6: Institutional Holders
@@ -125,7 +133,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match ticker.institutional_holders().await {
         Ok(holders) => {
             if !holders.is_empty() {
-                println!("   Converting {} institutional holders to DataFrame...", holders.len());
+                println!(
+                    "   Converting {} institutional holders to DataFrame...",
+                    holders.len()
+                );
                 match holders.to_dataframe() {
                     Ok(df) => {
                         println!("   DataFrame shape: {:?}", df.shape());
@@ -139,19 +150,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("   Institutional holders data not available: {}", e),
     }
-    
+
     println!();
 
     // Example 7: Data Analysis with Polars
     println!("🔍 7. Advanced Data Analysis Example");
-    
+
     // Let's analyze the historical data using Polars operations
     if !history.is_empty() {
         println!("   Performing advanced analysis on price data...");
-        
+
         if let Ok(df) = history.to_dataframe() {
             let full_lf = df.lazy();
-                
+
             // Calculate some basic statistics
             let analysis_result = full_lf
                 .clone()
@@ -163,7 +174,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     (col("high") - col("low")).mean().alias("avg_daily_range"),
                 ])
                 .collect();
-                
+
             match analysis_result {
                 Ok(stats_df) => {
                     println!("   Price Analysis Results:");
@@ -171,7 +182,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Err(e) => println!("   Error in analysis: {}", e),
             }
-            
+
             // Calculate a 5-period moving average.
             // Since the data interval is daily, this is a 5-day moving average.
             let moving_avg_result = full_lf
@@ -185,15 +196,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         })
                         .alias("5d_moving_avg"),
                 )
-                .select([
-                    col("ts"),
-                    col("close"),
-                    col("5d_moving_avg"),
-                    col("volume"),
-                ])
+                .select([col("ts"), col("close"), col("5d_moving_avg"), col("volume")])
                 .limit(10)
                 .collect();
-                
+
             match moving_avg_result {
                 Ok(moving_avg_df) => {
                     println!("\n   Price Analysis (first 10 days with 5-day moving average):");
@@ -203,14 +209,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     println!("\n=== DataFrame Integration Complete ===");
     println!("💡 Tip: Use Polars' powerful DataFrame operations for advanced financial analysis!");
     println!("   - Filter data: df.filter(col(\"close\").gt(100))");
     println!("   - Sort data: df.sort([\"ts\"], Default::default())");
     println!("   - Group by: df.group_by([\"symbol\"]).agg([col(\"close\").mean()])");
-    println!("   - Join DataFrames: df1.join(&df2, [\"symbol\"], [\"symbol\"], JoinArgs::new(JoinType::Inner))");
-    
+    println!(
+        "   - Join DataFrames: df1.join(&df2, [\"symbol\"], [\"symbol\"], JoinArgs::new(JoinType::Inner))"
+    );
+
     Ok(())
 }
 

@@ -10,11 +10,13 @@ async fn profile_scrape_company_happy() {
 
     let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ScrapeOnly)
+        ._api_preference(ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     mock.assert();
 
     match prof {
@@ -37,11 +39,13 @@ async fn profile_scrape_fund_happy() {
 
     let client = YfClient::builder()
         .base_quote(Url::parse(&format!("{}/quote/", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ScrapeOnly)
+        ._api_preference(ApiPreference::ScrapeOnly)
         .build()
         .unwrap();
 
-    let prof = yfinance_rs::profile::load_profile(&client, sym).await.unwrap();
+    let prof = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap();
     mock.assert();
 
     match prof {

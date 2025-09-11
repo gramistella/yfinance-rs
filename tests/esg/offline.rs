@@ -25,7 +25,7 @@ async fn offline_esg_uses_recorded_fixture() {
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
-        .preauth("cookie", "crumb")
+        ._preauth("cookie", "crumb")
         .build()
         .unwrap();
 

@@ -37,7 +37,9 @@ async fn missing_set_cookie_header_is_an_error() {
         .build()
         .unwrap();
 
-    let err = yfinance_rs::profile::load_profile(&client, sym).await.unwrap_err();
+    let err = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap_err();
     cookie.assert();
 
     match err {
@@ -81,7 +83,9 @@ async fn invalid_crumb_body_is_an_error() {
         .build()
         .unwrap();
 
-    let err = yfinance_rs::profile::load_profile(&client, sym).await.unwrap_err();
+    let err = yfinance_rs::profile::load_profile(&client, sym)
+        .await
+        .unwrap_err();
 
     match err {
         YfError::Auth(s) => assert!(s.contains("Received invalid crumb"), "unexpected: {s}"),

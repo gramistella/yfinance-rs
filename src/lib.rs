@@ -83,7 +83,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! yfinance-rs = "0.1.4"
+//! yfinance-rs = "0.2.0-alpha.1"
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!
@@ -153,7 +153,7 @@ pub use analysis::{
 };
 pub use core::{
     Action, CacheMode, Candle, HistoryMeta, HistoryResponse, Interval, Quote, Range, RetryConfig,
-    YfClient, YfClientBuilder, YfError
+    YfClient, YfClientBuilder, YfError,
 };
 pub use download::{DownloadBuilder, DownloadResult};
 pub use esg::{EsgBuilder, EsgInvolvement, EsgScores};
@@ -173,6 +173,4 @@ pub use search::{SearchBuilder, SearchQuote, SearchResponse, search};
 pub use stream::{QuoteUpdate, StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
 pub use ticker::{FastInfo, Info, OptionChain, OptionContract, Ticker};
 
-#[cfg(feature = "test-mode")]
-#[doc(hidden)]
 pub use core::client::ApiPreference;

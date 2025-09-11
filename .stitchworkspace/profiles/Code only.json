@@ -2,33 +2,25 @@
   "name": "Code only",
   "settings": {
     "version": 1,
-    "ext_filter": ".rs, .toml, .proto",
-    "exclude_dirs": ".git, target, .idea, fixtures",
-    "exclude_files": "",
-    "remove_prefix": "//",
-    "remove_regex": "(?s)/\\*.*?\\*/ ",
+    "ext_filter": "-.md",
+    "exclude_dirs": ".git, target, fixtures, .idea, tests, examples, .github",
+    "exclude_files": "Cargo.lock, LICENSE",
+    "remove_prefix": "",
+    "remove_regex": "",
     "hierarchy_only": false,
     "dirs_only": false
   },
   "explicit": [
     {
-      "path": "examples",
-      "state": false
-    },
-    {
-      "path": "tests",
-      "state": false
-    },
-    {
-      "path": "README.md",
-      "state": false
-    },
-    {
-      "path": "examples/13_custom_client_and_proxy.rs",
-      "state": false
+      "path": "CODE_OF_CONDUCT.md",
+      "state": true
     },
     {
       "path": "",
+      "state": true
+    },
+    {
+      "path": "CONTRIBUTING.md",
       "state": true
     }
   ]

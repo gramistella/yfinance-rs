@@ -41,30 +41,29 @@ pub(super) async fn major_holders(
         .ok_or_else(|| YfError::MissingData("majorHoldersBreakdown missing".into()))?;
 
     let mut result = Vec::new();
-    let percent_fmt = |v: Option<f64>| v.map(|p| format!("{:.2}%", p * 100.0)).unwrap_or_default();
 
     if let Some(v) = from_raw(breakdown.insiders_percent_held) {
         result.push(MajorHolder {
             category: "% of Shares Held by All Insiders".into(),
-            value: percent_fmt(Some(v)),
+            value: v,
         });
     }
     if let Some(v) = from_raw(breakdown.institutions_percent_held) {
         result.push(MajorHolder {
             category: "% of Shares Held by Institutions".into(),
-            value: percent_fmt(Some(v)),
+            value: v,
         });
     }
     if let Some(v) = from_raw(breakdown.institutions_float_percent_held) {
         result.push(MajorHolder {
             category: "% of Float Held by Institutions".into(),
-            value: percent_fmt(Some(v)),
+            value: v,
         });
     }
     if let Some(v) = from_raw(breakdown.institutions_count) {
         result.push(MajorHolder {
             category: "Number of Institutions Holding Shares".into(),
-            value: v.to_string(),
+            value: v as f64,
         });
     }
 

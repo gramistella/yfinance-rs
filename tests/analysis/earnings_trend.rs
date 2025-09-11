@@ -25,8 +25,8 @@ async fn offline_earnings_trend_uses_recorded_fixture() {
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie", "crumb")
+        ._api_preference(ApiPreference::ApiOnly)
+        ._preauth("cookie", "crumb")
         .build()
         .unwrap();
 

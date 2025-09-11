@@ -36,8 +36,8 @@ async fn offline_price_target_happy() {
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
         )
-        .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie", "crumb")
+        ._api_preference(ApiPreference::ApiOnly)
+        ._preauth("cookie", "crumb")
         .build()
         .unwrap();
 
@@ -110,8 +110,8 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
         )
         .cookie_url(Url::parse(&format!("{}/consent", server.base_url())).unwrap())
         .crumb_url(Url::parse(&format!("{}/v1/test/getcrumb", server.base_url())).unwrap())
-        .api_preference(ApiPreference::ApiOnly)
-        .preauth("cookie", "stale")
+        ._api_preference(ApiPreference::ApiOnly)
+        ._preauth("cookie", "stale")
         .build()
         .unwrap();
 

@@ -20,8 +20,10 @@ use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use url::Url;
 
-#[cfg(feature = "test-mode")]
 /// Defines the preferred data source for profile lookups when testing.
+///
+/// This enum is always available for API compatibility, but only has effect when
+/// the `test-mode` feature is enabled.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ApiPreference {
     /// Try the API first, then fall back to scraping if the API fails. (Default)
@@ -271,11 +273,11 @@ pub struct YfClientBuilder {
     cookie_url: Option<Url>,
     crumb_url: Option<Url>,
 
-    #[cfg(feature = "test-mode")]
+    #[allow(dead_code)]
     api_preference: Option<ApiPreference>,
-    #[cfg(feature = "test-mode")]
+    #[allow(dead_code)]
     preauth_cookie: Option<String>,
-    #[cfg(feature = "test-mode")]
+    #[allow(dead_code)]
     preauth_crumb: Option<String>,
 
     timeout: Option<Duration>,
@@ -416,20 +418,34 @@ impl YfClientBuilder {
         self
     }
 
-    #[cfg(feature = "test-mode")]
-    /// (Test mode only) Chooses which data source path to use for profile lookups.
+    /// (Internal testing only) Chooses which data source path to use for profile lookups.
+    ///
+    /// This setting only has effect when the `test-mode` feature is enabled.
+    /// In normal usage, this setting is ignored.
+    #[doc(hidden)]
     #[must_use]
-    pub const fn api_preference(mut self, pref: ApiPreference) -> Self {
-        self.api_preference = Some(pref);
+    #[allow(unused_variables, unused_mut)]
+    pub const fn _api_preference(mut self, pref: ApiPreference) -> Self {
+        #[cfg(feature = "test-mode")]
+        {
+            self.api_preference = Some(pref);
+        }
         self
     }
 
-    #[cfg(feature = "test-mode")]
-    /// (Test mode only) Provides pre-authenticated credentials to bypass the cookie/crumb fetch.
+    /// (Internal testing only) Provides pre-authenticated credentials to bypass the cookie/crumb fetch.
+    ///
+    /// This setting only has effect when the `test-mode` feature is enabled.
+    /// In normal usage, this setting is ignored.
+    #[doc(hidden)]
     #[must_use]
-    pub fn preauth(mut self, cookie: impl Into<String>, crumb: impl Into<String>) -> Self {
-        self.preauth_cookie = Some(cookie.into());
-        self.preauth_crumb = Some(crumb.into());
+    #[allow(unused_variables, unused_mut)]
+    pub fn _preauth(mut self, cookie: impl Into<String>, crumb: impl Into<String>) -> Self {
+        #[cfg(feature = "test-mode")]
+        {
+            self.preauth_cookie = Some(cookie.into());
+            self.preauth_crumb = Some(crumb.into());
+        }
         self
     }
 

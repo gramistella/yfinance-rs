@@ -44,9 +44,9 @@ async fn history_retries_on_persistent_5xx() {
 
     // Assert that the final result is the expected error.
     match result {
-        Err(YfError::Status { status, .. }) => {
+        Err(YfError::ServerError { status, .. }) => {
             assert_eq!(status, 503);
         }
-        _ => panic!("Expected a Status error after all retries failed."),
+        other => panic!("Expected a ServerError after all retries failed, got {other:?}"),
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "yfinance-rs"
-version = "0.1.5"
+version = "0.1.4"
 edition = "2024"
 description = "Ergonomic Rust client for Yahoo Finance, supporting historical prices, real-time streaming, options, fundamentals, and more."
 license = "MIT"
@@ -26,8 +26,8 @@ futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.50", features = ["lazy", "strings", "temporal", "serde", "regex", "timezones", "diagonal_concat", "json", "rolling_window", "temporal"], optional = true }
-borsa-macros = { path = "../../borsa-workspace/borsa-macros" }
-borsa-types = { path = "../../borsa-workspace/borsa-types", features = ["dataframe"] }
+paft-macros = { path = "../../paft-workspace/paft-macros" }
+paft = { path = "../../paft-workspace/paft" }
 
 [dev-dependencies]
 httpmock = "0.7"
@@ -36,10 +36,10 @@ httpmock = "0.7"
 prost-build = "0.14"
 
 [features]
-default = ["dataframe"]
+default = []
 test-mode = []
 debug-dumps = []
-dataframe = ["polars"]
+dataframe = ["polars", "paft/dataframe"]
 
 [package.metadata.docs.rs]
 all-features = true

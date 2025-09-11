@@ -116,16 +116,34 @@ pub async fn fetch_v7_quotes(
                 attempt_fetch(client, symbols, Some(&crumb), cache_mode, retry_override).await?;
 
             if let Some(status_code) = maybe_status {
-                return Err(YfError::Status {
-                    status: status_code,
-                    url: url.to_string(),
+                let url_s = url.to_string();
+                return Err(match status_code {
+                    404 => YfError::NotFound { url: url_s },
+                    429 => YfError::RateLimited { url: url_s },
+                    500..=599 => YfError::ServerError {
+                        status: status_code,
+                        url: url_s,
+                    },
+                    _ => YfError::Status {
+                        status: status_code,
+                        url: url_s,
+                    },
                 });
             }
             body
         } else {
-            return Err(YfError::Status {
-                status: status_code,
-                url: url.to_string(),
+            let url_s = url.to_string();
+            return Err(match status_code {
+                404 => YfError::NotFound { url: url_s },
+                429 => YfError::RateLimited { url: url_s },
+                500..=599 => YfError::ServerError {
+                    status: status_code,
+                    url: url_s,
+                },
+                _ => YfError::Status {
+                    status: status_code,
+                    url: url_s,
+                },
             });
         }
     } else {

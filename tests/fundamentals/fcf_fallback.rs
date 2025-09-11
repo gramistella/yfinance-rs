@@ -51,7 +51,7 @@ async fn cashflow_computes_fcf_when_missing() {
             ))
             .unwrap(),
         )
-        .preauth("cookie", "crumb")
+        ._preauth("cookie", "crumb")
         .build()
         .unwrap();
 

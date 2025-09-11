@@ -1,11 +1,12 @@
 use crate::{
     YfClient, YfError, analysis,
     core::client::{CacheMode, RetryConfig},
-    esg, profile::Profile,
+    esg,
+    profile::Profile,
 };
 
 // Re-export Info from borsa-types
-pub use borsa_types::Info;
+pub use valuta::Info;
 
 /// Private helper to handle optional async results, logging errors in debug mode.
 fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option<T> {

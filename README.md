@@ -86,7 +86,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.1.4"
+yfinance-rs = "0.2.0-alpha.1"
 tokio = { version = "1", features = ["full"] }
 ```
 

@@ -6,7 +6,7 @@ use crate::{
         client::{CacheMode, RetryConfig},
         net,
     },
-    news::{NewsTab, model::NewsArticle, wire, tab_as_str},
+    news::{NewsTab, model::NewsArticle, tab_as_str, wire},
 };
 
 #[derive(Serialize)]
@@ -49,9 +49,19 @@ pub(super) async fn fetch_news(
     let resp = client.send_with_retry(req, retry_override).await?;
 
     if !resp.status().is_success() {
-        return Err(YfError::Status {
-            status: resp.status().as_u16(),
-            url: resp.url().to_string(),
+        let code = resp.status().as_u16();
+        let url_s = resp.url().to_string();
+        return Err(match code {
+            404 => YfError::NotFound { url: url_s },
+            429 => YfError::RateLimited { url: url_s },
+            500..=599 => YfError::ServerError {
+                status: code,
+                url: url_s,
+            },
+            _ => YfError::Status {
+                status: code,
+                url: url_s,
+            },
         });
     }
 

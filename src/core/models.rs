@@ -1,11 +1,11 @@
 // Re-export types from borsa-types
-pub use borsa_types::Quote;
+pub use valuta::Quote;
 
 // Re-export history types from borsa-types
-pub use borsa_types::{Action, Candle, HistoryMeta, HistoryResponse};
+pub use valuta::{Action, Candle, HistoryMeta, HistoryResponse};
 
 // Re-export history parameter types from borsa-types
-pub use borsa_types::{Interval, Range};
+pub use valuta::{Interval, Range};
 
 // Helper functions for converting to string representations
 pub(crate) fn range_as_str(range: Range) -> &'static str {
