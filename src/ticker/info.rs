@@ -80,7 +80,9 @@ pub(super) async fn fetch_info(
         short_name: quote.as_ref().and_then(|q| q.shortname.clone()),
         regular_market_price: quote.as_ref().and_then(|q| q.price.as_ref().map(money_to_f64)),
         regular_market_previous_close: quote.as_ref().and_then(|q| q.previous_close.as_ref().map(money_to_f64)),
-        currency: None, // paft Quote doesn't have currency field
+        currency: quote.as_ref()
+            .and_then(|q| q.price.as_ref().and_then(money_to_currency_str)
+                .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str))),
         exchange: quote.as_ref().and_then(|q| exchange_to_string(q.exchange.clone())),
         market_state: quote.as_ref().and_then(|q| market_state_to_string(q.market_state.clone())),
 

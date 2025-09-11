@@ -17,7 +17,7 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
             if let Some(amount) = d.amount {
                 out.push(Action::Dividend { 
                     ts: i64_to_datetime(ts), 
-                    amount: f64_to_money(amount) 
+                    amount: f64_to_money_usd(amount) 
                 });
             }
         }
@@ -29,7 +29,7 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
             if let Some(gain) = g.amount {
                 out.push(Action::CapitalGain { 
                     ts: i64_to_datetime(ts), 
-                    gain: f64_to_money(gain) 
+                    gain: f64_to_money_usd(gain) 
                 });
             }
         }

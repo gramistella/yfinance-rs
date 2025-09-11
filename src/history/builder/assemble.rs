@@ -11,6 +11,7 @@ pub fn assemble_candles(
     auto_adjust: bool,
     keepna: bool,
     cum_split_after: &[f64],
+    currency: Option<&str>,
 ) -> (Vec<Candle>, Vec<f64>) {
     let mut out = Vec::new();
     let mut raw_close_vec = Vec::new();
@@ -55,20 +56,20 @@ pub fn assemble_candles(
             if let (Some(ov), Some(hv), Some(lv), Some(cv)) = (open, high, low, close) {
                 out.push(Candle {
                     ts: i64_to_datetime(t),
-                    open: f64_to_money(ov),
-                    high: f64_to_money(hv),
-                    low: f64_to_money(lv),
-                    close: f64_to_money(cv),
+                    open: f64_to_money_with_currency_str(ov, currency),
+                    high: f64_to_money_with_currency_str(hv, currency),
+                    low: f64_to_money_with_currency_str(lv, currency),
+                    close: f64_to_money_with_currency_str(cv, currency),
                     volume: volume_adj,
                 });
                 raw_close_vec.push(raw_close_val);
             } else if keepna {
                 out.push(Candle {
                     ts: i64_to_datetime(t),
-                    open: f64_to_money(open.unwrap_or(f64::NAN)),
-                    high: f64_to_money(high.unwrap_or(f64::NAN)),
-                    low: f64_to_money(low.unwrap_or(f64::NAN)),
-                    close: f64_to_money(close.unwrap_or(f64::NAN)),
+                    open: f64_to_money_with_currency_str(open.unwrap_or(f64::NAN), currency),
+                    high: f64_to_money_with_currency_str(high.unwrap_or(f64::NAN), currency),
+                    low: f64_to_money_with_currency_str(low.unwrap_or(f64::NAN), currency),
+                    close: f64_to_money_with_currency_str(close.unwrap_or(f64::NAN), currency),
                     volume: volume0,
                 });
                 raw_close_vec.push(raw_close_val);
@@ -76,20 +77,20 @@ pub fn assemble_candles(
         } else if let (Some(ov), Some(hv), Some(lv), Some(cv)) = (open, high, low, close) {
             out.push(Candle {
                 ts: i64_to_datetime(t),
-                open: f64_to_money(ov),
-                high: f64_to_money(hv),
-                low: f64_to_money(lv),
-                close: f64_to_money(cv),
+                open: f64_to_money_with_currency_str(ov, currency),
+                high: f64_to_money_with_currency_str(hv, currency),
+                low: f64_to_money_with_currency_str(lv, currency),
+                close: f64_to_money_with_currency_str(cv, currency),
                 volume: volume0,
             });
             raw_close_vec.push(raw_close_val);
         } else if keepna {
             out.push(Candle {
                 ts: i64_to_datetime(t),
-                open: f64_to_money(open.unwrap_or(f64::NAN)),
-                high: f64_to_money(high.unwrap_or(f64::NAN)),
-                low: f64_to_money(low.unwrap_or(f64::NAN)),
-                close: f64_to_money(close.unwrap_or(f64::NAN)),
+                open: f64_to_money_with_currency_str(open.unwrap_or(f64::NAN), currency),
+                high: f64_to_money_with_currency_str(high.unwrap_or(f64::NAN), currency),
+                low: f64_to_money_with_currency_str(low.unwrap_or(f64::NAN), currency),
+                close: f64_to_money_with_currency_str(close.unwrap_or(f64::NAN), currency),
                 volume: volume0,
             });
             raw_close_vec.push(raw_close_val);

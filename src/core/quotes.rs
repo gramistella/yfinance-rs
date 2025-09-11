@@ -165,8 +165,8 @@ impl From<V7QuoteNode> for Quote {
         Self {
             symbol: n.symbol.unwrap_or_default(),
             shortname: n.short_name,
-            price: n.regular_market_price.map(f64_to_money),
-            previous_close: n.regular_market_previous_close.map(f64_to_money),
+            price: n.regular_market_price.map(|price| f64_to_money_with_currency_str(price, n.currency.as_deref())),
+            previous_close: n.regular_market_previous_close.map(|price| f64_to_money_with_currency_str(price, n.currency.as_deref())),
             exchange: crate::core::conversions::string_to_exchange(
                 n.full_exchange_name
                     .or(n.exchange)

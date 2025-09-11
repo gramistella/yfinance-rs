@@ -178,6 +178,7 @@ impl HistoryBuilder {
         let cum_split_after = cumulative_split_after(&fetched.ts, &split_events);
 
         // 4) Assemble candles (+ raw close) with/without adjustments
+        let currency = fetched.meta.as_ref().and_then(|m| m.currency.as_deref());
         let (candles, raw_close) = assemble_candles(
             &fetched.ts,
             &fetched.quote,
@@ -185,6 +186,7 @@ impl HistoryBuilder {
             self.auto_adjust,
             self.keepna,
             &cum_split_after,
+            currency,
         );
 
         // ensure actions sorted (extract_actions already sorts, keep consistent)
@@ -202,7 +204,7 @@ impl HistoryBuilder {
             actions: actions_out,
             adjusted: self.auto_adjust,
             meta: meta_out,
-            unadjusted_close: Some(raw_close.into_iter().map(f64_to_money).collect()),
+            unadjusted_close: Some(raw_close.into_iter().map(|price| f64_to_money_with_currency_str(price, currency)).collect()),
         })
     }
 }

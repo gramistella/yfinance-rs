@@ -3,15 +3,41 @@
 use paft::prelude::*;
 use chrono::{DateTime, Utc};
 use rust_decimal::prelude::ToPrimitive;
+use std::str::FromStr;
 
-/// Convert f64 to Money with USD currency
-pub fn f64_to_money(value: f64) -> Money {
-    Money::new(rust_decimal::Decimal::from_f64_retain(value).unwrap_or_default(), Currency::USD)
+
+/// Convert f64 to Money with specified currency
+pub fn f64_to_money_with_currency(value: f64, currency: Currency) -> Money {
+    // Use string formatting to avoid f64 precision issues
+    let formatted = format!("{:.4}", value);
+    let decimal = rust_decimal::Decimal::from_str(&formatted).unwrap_or_default();
+    Money::new(decimal, currency)
+}
+
+/// Convert f64 to Money with USD currency (for cases where USD is explicitly intended)
+pub fn f64_to_money_usd(value: f64) -> Money {
+    // Use string formatting to avoid f64 precision issues
+    let formatted = format!("{:.4}", value);
+    let decimal = rust_decimal::Decimal::from_str(&formatted).unwrap_or_default();
+    Money::new(decimal, Currency::USD)
+}
+
+/// Convert f64 to Money with currency string (parses currency string to Currency enum)
+pub fn f64_to_money_with_currency_str(value: f64, currency_str: Option<&str>) -> Money {
+    let currency = currency_str
+        .and_then(|s| Currency::from_str(s).ok())
+        .unwrap_or(Currency::USD);
+    f64_to_money_with_currency(value, currency)
 }
 
 /// Convert Money to f64 (loses currency information)
 pub fn money_to_f64(money: &Money) -> f64 {
     money.amount().to_f64().unwrap_or(0.0)
+}
+
+/// Extract currency string from Money object
+pub fn money_to_currency_str(money: &Money) -> Option<String> {
+    Some(money.currency().to_string())
 }
 
 /// Convert i64 timestamp to DateTime<Utc>

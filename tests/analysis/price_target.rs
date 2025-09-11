@@ -47,9 +47,9 @@ async fn offline_price_target_happy() {
 
     mock.assert();
 
-    assert_eq!(pt.mean, Some(f64_to_money(200.0)));
-    assert_eq!(pt.high, Some(f64_to_money(250.0)));
-    assert_eq!(pt.low, Some(f64_to_money(150.0)));
+    assert_eq!(pt.mean, Some(f64_to_money_usd(200.0)));
+    assert_eq!(pt.high, Some(f64_to_money_usd(250.0)));
+    assert_eq!(pt.low, Some(f64_to_money_usd(150.0)));
     assert_eq!(pt.number_of_analysts, Some(31));
 }
 
@@ -124,8 +124,8 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
     crumb.assert();
     ok.assert();
 
-    assert_eq!(pt.mean, Some(f64_to_money(123.45)));
-    assert_eq!(pt.high, Some(f64_to_money(150.0)));
-    assert_eq!(pt.low, Some(f64_to_money(100.0)));
+    assert_eq!(pt.mean, Some(f64_to_money_usd(123.45)));
+    assert_eq!(pt.high, Some(f64_to_money_usd(150.0)));
+    assert_eq!(pt.low, Some(f64_to_money_usd(100.0)));
     assert_eq!(pt.number_of_analysts, Some(20));
 }

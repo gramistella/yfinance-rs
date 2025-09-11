@@ -62,12 +62,12 @@ async fn cashflow_computes_fcf_when_missing() {
 
     assert_eq!(rows.len(), 1);
     use yfinance_rs::core::conversions::*;
-    assert_eq!(rows[0].operating_cashflow, Some(f64_to_money(100.0)));
-    assert_eq!(rows[0].capital_expenditures, Some(f64_to_money(-30.0)));
+    assert_eq!(rows[0].operating_cashflow, Some(f64_to_money_usd(100.0)));
+    assert_eq!(rows[0].capital_expenditures, Some(f64_to_money_usd(-30.0)));
     assert_eq!(
         rows[0].free_cash_flow,
-        Some(f64_to_money(70.0)),
+        Some(f64_to_money_usd(70.0)),
         "fcf = ocf + capex (where capex is negative)"
     );
-    assert_eq!(rows[0].net_income, Some(f64_to_money(65.0)));
+    assert_eq!(rows[0].net_income, Some(f64_to_money_usd(65.0)));
 }

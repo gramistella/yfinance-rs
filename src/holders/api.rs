@@ -80,7 +80,7 @@ fn map_ownership_list(node: Option<super::wire::OwnershipNode>) -> Vec<Instituti
             shares: from_raw(h.shares).unwrap_or(0),
             date_reported: i64_to_datetime(from_raw_date(h.date_reported).unwrap_or(0)),
             pct_held: from_raw(h.pct_held).unwrap_or(0.0),
-            value: f64_to_money(from_raw(h.value).unwrap_or(0) as f64),
+            value: f64_to_money_usd(from_raw(h.value).unwrap_or(0) as f64),
         })
         .collect()
 }
@@ -124,7 +124,7 @@ pub(super) async fn insider_transactions(
             position: string_to_insider_position(t.position.unwrap_or_default()),
             transaction_type: string_to_transaction_type(t.transaction.unwrap_or_default()),
             shares: from_raw(t.shares).unwrap_or(0),
-            value: f64_to_money(from_raw(t.value).unwrap_or(0) as f64),
+            value: f64_to_money_usd(from_raw(t.value).unwrap_or(0) as f64),
             transaction_date: i64_to_datetime(from_raw_date(t.start_date).unwrap_or(0)),
             url: t.url.unwrap_or_default(),
         })

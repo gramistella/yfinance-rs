@@ -36,6 +36,8 @@ pub struct MetaNode {
     pub(crate) timezone: Option<String>,
     #[serde(default)]
     pub(crate) gmtoffset: Option<i64>,
+    #[serde(default)]
+    pub(crate) currency: Option<String>,
 }
 
 #[derive(Deserialize)]

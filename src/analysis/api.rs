@@ -145,9 +145,9 @@ pub(super) async fn analyst_price_target(
         .ok_or_else(|| YfError::MissingData("financialData missing".into()))?;
 
     Ok(PriceTarget {
-        mean: from_raw(fd.target_mean_price).map(f64_to_money),
-        high: from_raw(fd.target_high_price).map(f64_to_money),
-        low: from_raw(fd.target_low_price).map(f64_to_money),
+        mean: from_raw(fd.target_mean_price).map(f64_to_money_usd),
+        high: from_raw(fd.target_high_price).map(f64_to_money_usd),
+        low: from_raw(fd.target_low_price).map(f64_to_money_usd),
         number_of_analysts: from_raw_u32_round(fd.number_of_analyst_opinions),
     })
 }
@@ -251,28 +251,28 @@ pub(super) async fn earnings_trend(
                 period: string_to_period(n.period.unwrap_or_default()),
                 growth: from_raw(n.growth),
                 earnings_estimate: EarningsEstimate {
-                    avg: earnings_estimate_avg.map(|v| f64_to_money(v as f64)),
-                    low: earnings_estimate_low.map(|v| f64_to_money(v as f64)),
-                    high: earnings_estimate_high.map(|v| f64_to_money(v as f64)),
-                    year_ago_eps: earnings_estimate_year_ago_eps.map(|v| f64_to_money(v as f64)),
+                    avg: earnings_estimate_avg.map(|v| f64_to_money_usd(v as f64)),
+                    low: earnings_estimate_low.map(|v| f64_to_money_usd(v as f64)),
+                    high: earnings_estimate_high.map(|v| f64_to_money_usd(v as f64)),
+                    year_ago_eps: earnings_estimate_year_ago_eps.map(|v| f64_to_money_usd(v as f64)),
                     num_analysts: earnings_estimate_num_analysts,
                     growth: earnings_estimate_growth,
                 },
                 revenue_estimate: RevenueEstimate {
-                    avg: revenue_estimate_avg.map(|v| f64_to_money(v as f64)),
-                    low: revenue_estimate_low.map(|v| f64_to_money(v as f64)),
-                    high: revenue_estimate_high.map(|v| f64_to_money(v as f64)),
-                    year_ago_revenue: revenue_estimate_year_ago_revenue.map(|v| f64_to_money(v as f64)),
+                    avg: revenue_estimate_avg.map(|v| f64_to_money_usd(v as f64)),
+                    low: revenue_estimate_low.map(|v| f64_to_money_usd(v as f64)),
+                    high: revenue_estimate_high.map(|v| f64_to_money_usd(v as f64)),
+                    year_ago_revenue: revenue_estimate_year_ago_revenue.map(|v| f64_to_money_usd(v as f64)),
                     num_analysts: revenue_estimate_num_analysts,
                     growth: revenue_estimate_growth,
                 },
                 eps_trend: EpsTrend {
-                    current: eps_trend_current.map(|v| f64_to_money(v as f64)),
+                    current: eps_trend_current.map(|v| f64_to_money_usd(v as f64)),
                     historical: vec![
-                        TrendPoint::new("7d", f64_to_money(eps_trend_7_days_ago.unwrap_or(0.0))),
-                        TrendPoint::new("30d", f64_to_money(eps_trend_30_days_ago.unwrap_or(0.0))),
-                        TrendPoint::new("60d", f64_to_money(eps_trend_60_days_ago.unwrap_or(0.0))),
-                        TrendPoint::new("90d", f64_to_money(eps_trend_90_days_ago.unwrap_or(0.0))),
+                        TrendPoint::new("7d", f64_to_money_usd(eps_trend_7_days_ago.unwrap_or(0.0))),
+                        TrendPoint::new("30d", f64_to_money_usd(eps_trend_30_days_ago.unwrap_or(0.0))),
+                        TrendPoint::new("60d", f64_to_money_usd(eps_trend_60_days_ago.unwrap_or(0.0))),
+                        TrendPoint::new("90d", f64_to_money_usd(eps_trend_90_days_ago.unwrap_or(0.0))),
                     ],
                 },
                 eps_revisions: EpsRevisions {

@@ -144,11 +144,17 @@ impl Ticker {
             .or(q.previous_close.as_ref().map(money_to_f64))
             .ok_or_else(|| YfError::MissingData("quote missing last/previous price".into()))?;
 
+        // Extract currency from the price or previous_close Money objects
+        let currency = q.price
+            .as_ref()
+            .and_then(money_to_currency_str)
+            .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str));
+
         Ok(FastInfo {
             symbol: q.symbol,
             last_price: last,
             previous_close: q.previous_close.as_ref().map(money_to_f64),
-            currency: None, // paft Quote doesn't have currency field
+            currency,
             exchange: exchange_to_string(q.exchange),
             market_state: market_state_to_string(q.market_state),
         })
