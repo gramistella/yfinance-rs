@@ -362,10 +362,14 @@ pub(super) async fn earnings(
         .and_then(|fc| fc.yearly.as_ref())
         .map(|v| {
             v.iter()
-                .map(|y| EarningsYear {
-                    year: i32::try_from(y.date.unwrap_or(0)).unwrap_or(0),
-                    revenue: y.revenue.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
-                    earnings: y.earnings.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
+                .filter_map(|y| {
+                    y.date.and_then(|date| {
+                        i32::try_from(date).ok().map(|year| EarningsYear {
+                            year,
+                            revenue: y.revenue.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
+                            earnings: y.earnings.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
+                        })
+                    })
                 })
                 .collect()
         })

@@ -69,8 +69,9 @@ async fn offline_recommendations_summary_uses_recorded_fixture() {
     let s = t.recommendations_summary().await.unwrap();
 
     mock.assert();
+    let total = s.strong_buy.unwrap_or(0) + s.buy.unwrap_or(0) + s.hold.unwrap_or(0) + s.sell.unwrap_or(0) + s.strong_sell.unwrap_or(0);
     assert!(
-        s.strong_buy + s.buy + s.hold + s.sell + s.strong_sell > 0,
+        total > 0,
         "record with YF_RECORD=1 first"
     );
 }

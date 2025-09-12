@@ -11,6 +11,7 @@ use crate::{
 use super::fetch::fetch_modules;
 use super::model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 use paft::fundamentals::analysis::{EarningsEstimate, RevenueEstimate, EpsTrend, EpsRevisions, TrendPoint, RevisionPoint};
+use chrono::DateTime;
 
 /* ---------- Public entry points (mapping wire → public models) ---------- */
 
@@ -38,11 +39,11 @@ pub(super) async fn recommendation_trend(
         .into_iter()
         .map(|n| RecommendationRow {
             period: string_to_period(n.period.unwrap_or_default()),
-            strong_buy: u32::try_from(n.strong_buy.unwrap_or(0)).unwrap_or(0),
-            buy: u32::try_from(n.buy.unwrap_or(0)).unwrap_or(0),
-            hold: u32::try_from(n.hold.unwrap_or(0)).unwrap_or(0),
-            sell: u32::try_from(n.sell.unwrap_or(0)).unwrap_or(0),
-            strong_sell: u32::try_from(n.strong_sell.unwrap_or(0)).unwrap_or(0),
+            strong_buy: n.strong_buy.and_then(|v| u32::try_from(v).ok()),
+            buy: n.buy.and_then(|v| u32::try_from(v).ok()),
+            hold: n.hold.and_then(|v| u32::try_from(v).ok()),
+            sell: n.sell.and_then(|v| u32::try_from(v).ok()),
+            strong_sell: n.strong_sell.and_then(|v| u32::try_from(v).ok()),
         })
         .collect();
 
@@ -71,14 +72,14 @@ pub(super) async fn recommendation_summary(
 
     let latest = trend.first();
 
-    let (latest_period, sb, b, h, s, ss) = latest.map_or((None, 0, 0, 0, 0, 0), |t| {
+    let (latest_period, sb, b, h, s, ss) = latest.map_or((None, None, None, None, None, None), |t| {
         (
             Some(string_to_period(t.period.clone().unwrap_or_default())),
-            t.strong_buy.unwrap_or(0),
-            t.buy.unwrap_or(0),
-            t.hold.unwrap_or(0),
-            t.sell.unwrap_or(0),
-            t.strong_sell.unwrap_or(0),
+            t.strong_buy.and_then(|v| u32::try_from(v).ok()),
+            t.buy.and_then(|v| u32::try_from(v).ok()),
+            t.hold.and_then(|v| u32::try_from(v).ok()),
+            t.sell.and_then(|v| u32::try_from(v).ok()),
+            t.strong_sell.and_then(|v| u32::try_from(v).ok()),
         )
     });
 
@@ -88,11 +89,11 @@ pub(super) async fn recommendation_summary(
 
     Ok(RecommendationSummary {
         latest_period,
-        strong_buy: u32::try_from(sb).unwrap_or(0),
-        buy: u32::try_from(b).unwrap_or(0),
-        hold: u32::try_from(h).unwrap_or(0),
-        sell: u32::try_from(s).unwrap_or(0),
-        strong_sell: u32::try_from(ss).unwrap_or(0),
+        strong_buy: sb,
+        buy: b,
+        hold: h,
+        sell: s,
+        strong_sell: ss,
         mean,
         mean_rating_text: None,
     })
@@ -121,7 +122,7 @@ pub(super) async fn upgrades_downgrades(
     let mut rows: Vec<UpgradeDowngradeRow> = hist
         .into_iter()
         .map(|h| UpgradeDowngradeRow {
-            ts: i64_to_datetime(h.epoch_grade_date.unwrap_or(0)),
+            ts: h.epoch_grade_date.map_or_else(|| DateTime::from_timestamp(0, 0).unwrap_or_default(), i64_to_datetime),
             firm: h.firm,
             from_grade: h.from_grade.map(|g| string_to_recommendation_grade(g)),
             to_grade: h.to_grade.map(|g| string_to_recommendation_grade(g)),
@@ -268,18 +269,20 @@ pub(super) async fn earnings_trend(
                 },
                 eps_trend: EpsTrend {
                     current: eps_trend_current.map(|v| f64_to_money_usd(v as f64)),
-                    historical: vec![
-                        TrendPoint::new("7d", f64_to_money_usd(eps_trend_7_days_ago.unwrap_or(0.0))),
-                        TrendPoint::new("30d", f64_to_money_usd(eps_trend_30_days_ago.unwrap_or(0.0))),
-                        TrendPoint::new("60d", f64_to_money_usd(eps_trend_60_days_ago.unwrap_or(0.0))),
-                        TrendPoint::new("90d", f64_to_money_usd(eps_trend_90_days_ago.unwrap_or(0.0))),
-                    ],
+                    historical: [
+                        eps_trend_7_days_ago.map(|v| TrendPoint::new("7d", f64_to_money_usd(v as f64))),
+                        eps_trend_30_days_ago.map(|v| TrendPoint::new("30d", f64_to_money_usd(v as f64))),
+                        eps_trend_60_days_ago.map(|v| TrendPoint::new("60d", f64_to_money_usd(v as f64))),
+                        eps_trend_90_days_ago.map(|v| TrendPoint::new("90d", f64_to_money_usd(v as f64))),
+                    ].into_iter().flatten().collect(),
                 },
                 eps_revisions: EpsRevisions {
-                    historical: vec![
-                        RevisionPoint::new("7d", eps_revisions_up_last_7_days.unwrap_or(0), eps_revisions_down_last_7_days.unwrap_or(0)),
-                        RevisionPoint::new("30d", eps_revisions_up_last_30_days.unwrap_or(0), eps_revisions_down_last_30_days.unwrap_or(0)),
-                    ],
+                    historical: [
+                        eps_revisions_up_last_7_days.zip(eps_revisions_down_last_7_days)
+                            .map(|(up, down)| RevisionPoint::new("7d", up, down)),
+                        eps_revisions_up_last_30_days.zip(eps_revisions_down_last_30_days)
+                            .map(|(up, down)| RevisionPoint::new("30d", up, down)),
+                    ].into_iter().flatten().collect(),
                 },
             }
         })

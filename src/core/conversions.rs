@@ -10,7 +10,7 @@ use std::str::FromStr;
 pub fn f64_to_money_with_currency(value: f64, currency: Currency) -> Money {
     // Use string formatting to avoid f64 precision issues
     let formatted = format!("{:.4}", value);
-    let decimal = rust_decimal::Decimal::from_str(&formatted).unwrap_or_default();
+    let decimal = rust_decimal::Decimal::from_str(&formatted).expect("Invalid f64 to Decimal conversion");
     Money::new(decimal, currency)
 }
 
@@ -18,7 +18,7 @@ pub fn f64_to_money_with_currency(value: f64, currency: Currency) -> Money {
 pub fn f64_to_money_usd(value: f64) -> Money {
     // Use string formatting to avoid f64 precision issues
     let formatted = format!("{:.4}", value);
-    let decimal = rust_decimal::Decimal::from_str(&formatted).unwrap_or_default();
+    let decimal = rust_decimal::Decimal::from_str(&formatted).expect("Invalid f64 to Decimal conversion");
     Money::new(decimal, Currency::USD)
 }
 

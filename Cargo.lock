@@ -4673,7 +4673,7 @@ checksum = "fdd20c5420375476fbd4394763288da7eb0cc0b8c11deed431a91562af7335d3"
 
 [[package]]
 name = "yfinance-rs"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",

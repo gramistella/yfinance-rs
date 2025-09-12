@@ -57,7 +57,7 @@ async fn offline_all_holders_from_fixture() {
         !institutional.is_empty(),
         "institutional holders missing from fixture"
     );
-    assert!(institutional[0].shares > 0);
+    assert!(institutional[0].shares.unwrap_or(0) > 0);
 
     // Mutual Fund Holders
     let mutual_fund = t.mutual_fund_holders().await.unwrap();
@@ -65,7 +65,7 @@ async fn offline_all_holders_from_fixture() {
         !mutual_fund.is_empty(),
         "mutual fund holders missing from fixture"
     );
-    assert!(money_to_f64(&mutual_fund[0].value) > 0.0);
+    assert!(money_to_f64(mutual_fund[0].value.as_ref().unwrap()) > 0.0);
 
     // Insider Roster
     let insider_roster = t.insider_roster_holders().await.unwrap();
@@ -82,7 +82,7 @@ async fn offline_all_holders_from_fixture() {
     // Net Share Purchase Activity
     let net_purchase = t.net_share_purchase_activity().await.unwrap().unwrap();
     assert!(!net_purchase.period.is_empty());
-    assert!(net_purchase.total_insider_shares > 0);
+    assert!(net_purchase.total_insider_shares.unwrap_or(0) > 0);
 
     // Insider Transactions (can be empty)
     let _insider_trans = t.insider_transactions().await.unwrap();
