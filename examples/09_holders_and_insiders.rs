@@ -12,10 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nTop 5 Mutual Fund Holders:");
     for holder in mf_holders.iter().take(5) {
         println!(
-            "  - {}: {} shares ({:.2}%)",
+            "  - {}: {:?} shares ({:.2}%)",
             holder.holder,
             holder.shares,
-            holder.pct_held * 100.0
+            holder.pct_held.unwrap_or(0.0) * 100.0
         );
     }
 
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nLatest 5 Insider Transactions:");
     for txn in insider_txns.iter().take(5) {
         println!(
-            "  - {}: {} {} shares on {}",
+            "  - {}: {} {:?} shares on {}",
             txn.insider,
             txn.transaction_type,
             txn.shares,
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nTop 5 Insider Roster:");
     for insider in insider_roster.iter().take(5) {
         println!(
-            "  - {} ({}): {} shares",
+            "  - {} ({}): {:?} shares",
             insider.name, insider.position, insider.shares_owned_directly
         );
     }

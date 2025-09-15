@@ -142,10 +142,10 @@ pub(super) async fn income_statement(
         .into_iter()
         .map(|n| IncomeStatementRow {
             period: string_to_period(n.end_date.map(|d| d.raw.unwrap_or_default().to_string()).unwrap_or_default()),
-            total_revenue: from_raw(n.total_revenue).map(|v| f64_to_money_usd(v as f64)),
-            gross_profit: from_raw(n.gross_profit).map(|v| f64_to_money_usd(v as f64)),
-            operating_income: from_raw(n.operating_income).map(|v| f64_to_money_usd(v as f64)),
-            net_income: from_raw(n.net_income).map(|v| f64_to_money_usd(v as f64)),
+            total_revenue: from_raw(n.total_revenue).map(f64_to_money_usd),
+            gross_profit: from_raw(n.gross_profit).map(f64_to_money_usd),
+            operating_income: from_raw(n.operating_income).map(f64_to_money_usd),
+            net_income: from_raw(n.net_income).map(f64_to_money_usd),
         })
         .collect())
 }
@@ -226,15 +226,15 @@ pub(super) async fn balance_sheet(
                     .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
 
                 if key == format!("{prefix}TotalAssets") {
-                    row.total_assets = value.map(|v| f64_to_money_usd(v as f64));
+                    row.total_assets = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}TotalLiabilitiesNetMinorityInterest") {
-                    row.total_liabilities = value.map(|v| f64_to_money_usd(v as f64));
+                    row.total_liabilities = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}StockholdersEquity") {
-                    row.total_equity = value.map(|v| f64_to_money_usd(v as f64));
+                    row.total_equity = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}CashAndCashEquivalents") {
-                    row.cash = value.map(|v| f64_to_money_usd(v as f64));
+                    row.cash = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}LongTermDebt") {
-                    row.long_term_debt = value.map(|v| f64_to_money_usd(v as f64));
+                    row.long_term_debt = value.map(f64_to_money_usd);
                 }
             }
         }
@@ -306,13 +306,13 @@ pub(super) async fn cashflow(
                     .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
 
                 if key == format!("{prefix}OperatingCashFlow") {
-                    row.operating_cashflow = value.map(|v| f64_to_money_usd(v as f64));
+                    row.operating_cashflow = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}CapitalExpenditure") {
-                    row.capital_expenditures = value.map(|v| f64_to_money_usd(v as f64));
+                    row.capital_expenditures = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}FreeCashFlow") {
-                    row.free_cash_flow = value.map(|v| f64_to_money_usd(v as f64));
+                    row.free_cash_flow = value.map(f64_to_money_usd);
                 } else if key == format!("{prefix}NetIncome") {
-                    row.net_income = value.map(|v| f64_to_money_usd(v as f64));
+                    row.net_income = value.map(f64_to_money_usd);
                 }
             }
         }
@@ -366,8 +366,8 @@ pub(super) async fn earnings(
                     y.date.and_then(|date| {
                         i32::try_from(date).ok().map(|year| EarningsYear {
                             year,
-                            revenue: y.revenue.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
-                            earnings: y.earnings.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
+                            revenue: y.revenue.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
+                            earnings: y.earnings.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
                         })
                     })
                 })
@@ -383,8 +383,8 @@ pub(super) async fn earnings(
             v.iter()
                 .map(|q| EarningsQuarter {
                     period: string_to_period(q.date.clone().unwrap_or_default()),
-                    revenue: q.revenue.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
-                    earnings: q.earnings.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
+                    revenue: q.revenue.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
+                    earnings: q.earnings.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
                 })
                 .collect()
         })
@@ -398,8 +398,8 @@ pub(super) async fn earnings(
             v.iter()
                 .map(|q| EarningsQuarterEps {
                     period: string_to_period(q.date.clone().unwrap_or_default()),
-                    actual: q.actual.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
-                    estimate: q.estimate.as_ref().and_then(|x| x.raw.map(|v| f64_to_money_usd(v as f64))),
+                    actual: q.actual.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
+                    estimate: q.estimate.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
                 })
                 .collect()
         })

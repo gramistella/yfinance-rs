@@ -124,9 +124,9 @@ pub(super) async fn upgrades_downgrades(
         .map(|h| UpgradeDowngradeRow {
             ts: h.epoch_grade_date.map_or_else(|| DateTime::from_timestamp(0, 0).unwrap_or_default(), i64_to_datetime),
             firm: h.firm,
-            from_grade: h.from_grade.map(|g| string_to_recommendation_grade(g)),
-            to_grade: h.to_grade.map(|g| string_to_recommendation_grade(g)),
-            action: h.action.or(h.grade_change).map(|a| string_to_recommendation_action(a)),
+            from_grade: h.from_grade.map(string_to_recommendation_grade),
+            to_grade: h.to_grade.map(string_to_recommendation_grade),
+            action: h.action.or(h.grade_change).map(string_to_recommendation_action),
         })
         .collect();
 
@@ -252,10 +252,10 @@ pub(super) async fn earnings_trend(
                 period: string_to_period(n.period.unwrap_or_default()),
                 growth: from_raw(n.growth),
                 earnings_estimate: EarningsEstimate {
-                    avg: earnings_estimate_avg.map(|v| f64_to_money_usd(v as f64)),
-                    low: earnings_estimate_low.map(|v| f64_to_money_usd(v as f64)),
-                    high: earnings_estimate_high.map(|v| f64_to_money_usd(v as f64)),
-                    year_ago_eps: earnings_estimate_year_ago_eps.map(|v| f64_to_money_usd(v as f64)),
+                    avg: earnings_estimate_avg.map(f64_to_money_usd),
+                    low: earnings_estimate_low.map(f64_to_money_usd),
+                    high: earnings_estimate_high.map(f64_to_money_usd),
+                    year_ago_eps: earnings_estimate_year_ago_eps.map(f64_to_money_usd),
                     num_analysts: earnings_estimate_num_analysts,
                     growth: earnings_estimate_growth,
                 },
@@ -268,12 +268,12 @@ pub(super) async fn earnings_trend(
                     growth: revenue_estimate_growth,
                 },
                 eps_trend: EpsTrend {
-                    current: eps_trend_current.map(|v| f64_to_money_usd(v as f64)),
+                    current: eps_trend_current.map(f64_to_money_usd),
                     historical: [
-                        eps_trend_7_days_ago.map(|v| TrendPoint::new("7d", f64_to_money_usd(v as f64))),
-                        eps_trend_30_days_ago.map(|v| TrendPoint::new("30d", f64_to_money_usd(v as f64))),
-                        eps_trend_60_days_ago.map(|v| TrendPoint::new("60d", f64_to_money_usd(v as f64))),
-                        eps_trend_90_days_ago.map(|v| TrendPoint::new("90d", f64_to_money_usd(v as f64))),
+                        eps_trend_7_days_ago.map(|v| TrendPoint::new("7d", f64_to_money_usd(v))),
+                        eps_trend_30_days_ago.map(|v| TrendPoint::new("30d", f64_to_money_usd(v))),
+                        eps_trend_60_days_ago.map(|v| TrendPoint::new("60d", f64_to_money_usd(v))),
+                        eps_trend_90_days_ago.map(|v| TrendPoint::new("90d", f64_to_money_usd(v))),
                     ].into_iter().flatten().collect(),
                 },
                 eps_revisions: EpsRevisions {

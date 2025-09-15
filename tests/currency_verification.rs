@@ -72,13 +72,13 @@ async fn test_currency_verification() -> Result<(), YfError> {
             Ok(history) => {
                 if let Some(last_candle) = history.last() {
                     println!("    Last Close: {:?}", last_candle.close);
-                    println!("    Currency: \"{}\"", last_candle.close.currency().to_string());
+                    println!("    Currency: \"{}\"", last_candle.close.currency());
                     
                     let currency_correct = last_candle.close.currency().to_string() == expected_currency;
                     println!("    {} Currency {}: {} (expected {})", 
                         if currency_correct { "✅" } else { "❌" },
                         if currency_correct { "CORRECT" } else { "INCORRECT" },
-                        last_candle.close.currency().to_string(),
+                        last_candle.close.currency(),
                         expected_currency
                     );
                 } else {
@@ -130,10 +130,10 @@ async fn test_currency_verification() -> Result<(), YfError> {
         Ok(batch_quotes) => {
             for (i, quote) in batch_quotes.iter().enumerate() {
                 let symbol = &symbols[i];
-                let expected = match symbol {
-                    &"AAPL" => "USD",
-                    &"TSCO.L" => "GBP", 
-                    &"7203.T" => "JPY",
+                let expected = match *symbol {
+                    "AAPL" => "USD",
+                    "TSCO.L" => "GBP", 
+                    "7203.T" => "JPY",
                     _ => "USD",
                 };
                 

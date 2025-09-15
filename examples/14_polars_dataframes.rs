@@ -12,7 +12,7 @@ use polars::prelude::*;
 use yfinance_rs::{Interval, Range, Ticker, YfClient};
 
 #[cfg(feature = "dataframe")]
-use paft::dataframe::ToDataFrame;
+use yfinance_rs::{ToDataFrame, ToDataFrameVec};
 
 #[cfg(feature = "dataframe")]
 #[tokio::main]
@@ -109,19 +109,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!();
 
-    // Example 5: ESG Data
-    println!("🌱 5. ESG Involvement Data to DataFrame");
+    // Example 5: ESG Scores (no DataFrame conversion provided)
+    println!("🌱 5. ESG Scores");
     match ticker.sustainability().await {
         Ok(esg) => {
-            println!("   Converting ESG involvement flags to DataFrame...");
-
-            match esg.involvement.to_dataframe() {
-                Ok(df) => {
-                    println!("   DataFrame shape: {:?}", df.shape());
-                    println!("   ESG involvement data:\n{}", df);
-                }
-                Err(e) => println!("   Error creating DataFrame: {}", e),
-            }
+            println!("   Environmental: {:?}", esg.environmental);
+            println!("   Social: {:?}", esg.social);
+            println!("   Governance: {:?}", esg.governance);
         }
         Err(e) => println!("   ESG data not available for this ticker: {}", e),
     }

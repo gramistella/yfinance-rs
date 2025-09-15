@@ -4,11 +4,15 @@ mod wire;
 
 use serde::{Deserialize, Serialize};
 
+/// Tabs for filtering the Yahoo Finance news endpoint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum NewsTab {
+    /// Only editorial news items.
     #[default]
     News,
+    /// All items including press releases.
     All,
+    /// Only press releases.
     PressReleases,
 }
 pub use model::NewsArticle;

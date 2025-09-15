@@ -116,7 +116,7 @@ async fn option_chain_for_specific_date() {
 
     let p = &chain.puts[0];
     assert_eq!(p.contract_symbol, "AAPL250117P00180000");
-    assert!((money_to_f64(&p.price.as_ref().unwrap()) - 3.4).abs() < 1e-9);
+    assert!((money_to_f64(p.price.as_ref().unwrap()) - 3.4).abs() < 1e-9);
     assert_eq!(p.expiration.timestamp(), date);
 }
 

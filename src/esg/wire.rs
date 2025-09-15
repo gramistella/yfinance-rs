@@ -12,13 +12,16 @@ pub struct V10Result {
 #[serde(rename_all = "camelCase")]
 pub struct EsgScoresNode {
     // These are objects: { "raw": ... }
+    #[allow(dead_code)]
     pub(crate) total_esg: Option<RawNum<f64>>,
     pub(crate) environment_score: Option<RawNum<f64>>,
     pub(crate) social_score: Option<RawNum<f64>>,
     pub(crate) governance_score: Option<RawNum<f64>>,
 
     // These are primitives
+    #[allow(dead_code)]
     pub(crate) percentile: Option<f64>,
+    #[allow(dead_code)]
     pub(crate) highest_controversy: Option<f64>, // Use f64 to match JSON `2.0`
 
     // Involvement flags

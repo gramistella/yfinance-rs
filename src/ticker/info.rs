@@ -104,11 +104,18 @@ pub(super) async fn fetch_info(
         recommendation_mean: rec_summary.as_ref().and_then(|rs| rs.mean),
         recommendation_key: None, // paft RecommendationSummary doesn't have mean_key field
 
-        // From ESG
-        total_esg_score: esg_scores.as_ref().and_then(|esg| esg.total_esg),
-        environment_score: esg_scores.as_ref().and_then(|esg| esg.environment_score),
-        social_score: esg_scores.as_ref().and_then(|esg| esg.social_score),
-        governance_score: esg_scores.as_ref().and_then(|esg| esg.governance_score),
+        // From ESG (paft::fundamentals::EsgScores)
+        total_esg_score: esg_scores.as_ref().and_then(|esg| {
+            let mut sum = 0.0;
+            let mut count = 0u32;
+            if let Some(v) = esg.environmental { sum += v; count += 1; }
+            if let Some(v) = esg.social { sum += v; count += 1; }
+            if let Some(v) = esg.governance { sum += v; count += 1; }
+            if count > 0 { Some(sum / f64::from(count)) } else { None }
+        }),
+        environment_score: esg_scores.as_ref().and_then(|esg| esg.environmental),
+        social_score: esg_scores.as_ref().and_then(|esg| esg.social),
+        governance_score: esg_scores.as_ref().and_then(|esg| esg.governance),
     };
 
     Ok(info)

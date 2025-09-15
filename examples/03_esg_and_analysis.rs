@@ -14,25 +14,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- ESG Scores for MSFT ---");
     match esg_scores {
         Ok(scores) => {
-            println!(
-                "Total ESG Score: {:.2}",
-                scores.total_esg.unwrap_or_default()
-            );
+            let total_esg = [scores.environmental, scores.social, scores.governance]
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>();
+            let total_esg_score = if total_esg.is_empty() {
+                0.0
+            } else {
+                total_esg.iter().sum::<f64>() / (total_esg.len() as f64)
+            };
+            println!("Total ESG Score: {:.2}", total_esg_score);
             println!(
                 "Environmental Score: {:.2}",
-                scores.environment_score.unwrap_or_default()
+                scores.environmental.unwrap_or_default()
             );
             println!(
                 "Social Score: {:.2}",
-                scores.social_score.unwrap_or_default()
+                scores.social.unwrap_or_default()
             );
             println!(
                 "Governance Score: {:.2}",
-                scores.governance_score.unwrap_or_default()
-            );
-            println!(
-                "Has controversial weapons involvement: {}",
-                scores.involvement.controversial_weapons
+                scores.governance.unwrap_or_default()
             );
         }
         Err(e) => {
@@ -50,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(recs) => {
             if let Some(latest) = recs.first() {
                 println!(
-                    "Latest Recommendation Period ({}): Strong Buy: {}, Buy: {}, Hold: {}, Sell: {}, Strong Sell: {}",
+                    "Latest Recommendation Period ({}): Strong Buy: {:?}, Buy: {:?}, Hold: {:?}, Sell: {:?}, Strong Sell: {:?}",
                     latest.period,
                     latest.strong_buy,
                     latest.buy,

@@ -294,10 +294,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ticker = Ticker::new(&client, "AAPL");
 
     let esg = ticker.sustainability().await?;
-    println!("Total ESG Score: {:.2}", esg.total_esg.unwrap_or(0.0));
-    println!("Environmental Score: {:.2}", esg.environment_score.unwrap_or(0.0));
-    println!("Social Score: {:.2}", esg.social_score.unwrap_or(0.0));
-    println!("Governance Score: {:.2}", esg.governance_score.unwrap_or(0.0));
+    let parts = [esg.environmental, esg.social, esg.governance]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    let total = if parts.is_empty() { 0.0 } else { parts.iter().sum::<f64>() / (parts.len() as f64) };
+    println!("Total ESG Score: {:.2}", total);
+    println!("Environmental Score: {:.2}", esg.environmental.unwrap_or(0.0));
+    println!("Social Score: {:.2}", esg.social.unwrap_or(0.0));
+    println!("Governance Score: {:.2}", esg.governance.unwrap_or(0.0));
     Ok(())
 }
 ```

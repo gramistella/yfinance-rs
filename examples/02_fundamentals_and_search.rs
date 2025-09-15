@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_income_stmt.first() {
         println!(
             "  Period End: {} | Total Revenue: {:.2}",
-            stmt.period.to_string(),
+            stmt.period,
             stmt.total_revenue.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = quarterly_balance_sheet.first() {
         println!(
             "  Period End: {} | Total Assets: {:.2}",
-            stmt.period.to_string(),
+            stmt.period,
             stmt.total_assets.as_ref().map(money_to_f64).unwrap_or_default()
         );
     }
@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nTop 5 Institutional Holders:");
     for holder in inst_holders.iter().take(5) {
         println!(
-            "  - {}: {} shares ({}%)",
+            "  - {}: {:?} shares ({:?}%)",
             holder.holder, holder.shares, holder.pct_held
         );
     }
@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let net_activity = holders_builder.net_share_purchase_activity().await?;
     if let Some(activity) = net_activity {
         println!("\nNet Insider Purchase Activity ({}):", activity.period);
-        println!("  Net shares bought/sold: {}", activity.net_shares);
+        println!("  Net shares bought/sold: {:?}", activity.net_shares);
     }
     println!("--------------------------------------\n");
 

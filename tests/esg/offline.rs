@@ -36,13 +36,9 @@ async fn offline_esg_uses_recorded_fixture() {
 
     // These assertions depend on the contents of the recorded fixture.
     // If you re-record the fixture, you may need to update these values.
+    // paft::EsgScores has no total_esg; ensure at least one component exists
     assert!(
-        esg.total_esg.is_some(),
-        "total_esg should be present in the fixture. Did you run `just test-record esg`?"
-    );
-    assert!(!esg.involvement.tobacco, "tobacco flag should be false");
-    assert!(
-        !esg.involvement.controversial_weapons,
-        "controversial_weapons flag should be false"
+        esg.environmental.is_some() || esg.social.is_some() || esg.governance.is_some(),
+        "At least one ESG component score should be present. Did you run `just test-record esg`?"
     );
 }

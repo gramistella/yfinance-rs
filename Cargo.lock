@@ -667,36 +667,13 @@ dependencies = [
 
 [[package]]
 name = "chrono-tz"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93698b29de5e97ad0ae26447b344c482a7284c737d9ddc5f9e52b74a336671bb"
-dependencies = [
- "chrono",
- "chrono-tz-build",
- "phf 0.11.3",
- "serde",
-]
-
-[[package]]
-name = "chrono-tz"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6139a8597ed92cf816dfb33f5dd6cf0bb93a6adc938f11039f371bc5bcd26c3"
 dependencies = [
  "chrono",
- "phf 0.12.1",
+ "phf",
  "serde",
-]
-
-[[package]]
-name = "chrono-tz-build"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c088aee841df9c3041febbb73934cfc39708749bf96dc827e3359cd39ef11b1"
-dependencies = [
- "parse-zoneinfo",
- "phf 0.11.3",
- "phf_codegen",
 ]
 
 [[package]]
@@ -2038,6 +2015,8 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 [[package]]
 name = "paft"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "492d3ab2c63178c8d4bd4ad9fb664b6760d364688470f0bdf1b7cf8ac93455a5"
 dependencies = [
  "paft-core",
  "paft-fundamentals",
@@ -2047,9 +2026,11 @@ dependencies = [
 [[package]]
 name = "paft-core"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b345271c848d6b4eb04bb5a942b7dcbe10bcb889fd95caae78d6b3f661e27e0"
 dependencies = [
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "df-derive",
  "once_cell",
  "polars",
@@ -2063,6 +2044,8 @@ dependencies = [
 [[package]]
 name = "paft-fundamentals"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3f53c00da4e9f2fc30a4e6bb4d1d14b5fad20f982bfd3ee66668746293c9cbf"
 dependencies = [
  "chrono",
  "df-derive",
@@ -2075,9 +2058,11 @@ dependencies = [
 [[package]]
 name = "paft-market"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0af4be4f4dc64892c292955f141a75b99f02882e9c3e8f1317df1b33f88ef583"
 dependencies = [
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "df-derive",
  "paft-core",
  "polars",
@@ -2114,15 +2099,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parse-zoneinfo"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f2a05b18d44e2957b88f96ba460715e295bc1d7510468a2f3d3b44535d26c24"
-dependencies = [
- "regex",
-]
-
-[[package]]
 name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2146,40 +2122,11 @@ dependencies = [
 
 [[package]]
 name = "phf"
-version = "0.11.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fd6780a80ae0c52cc120a26a1a42c1ae51b247a253e4e06113d23d2c2edd078"
-dependencies = [
- "phf_shared 0.11.3",
-]
-
-[[package]]
-name = "phf"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "913273894cec178f401a31ec4b656318d95473527be05c0752cc41cdc32be8b7"
 dependencies = [
  "phf_shared 0.12.1",
-]
-
-[[package]]
-name = "phf_codegen"
-version = "0.11.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aef8048c789fa5e851558d709946d6d79a8ff88c0440c587967f8e94bfb1216a"
-dependencies = [
- "phf_generator",
- "phf_shared 0.11.3",
-]
-
-[[package]]
-name = "phf_generator"
-version = "0.11.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c80231409c20246a13fddb31776fb942c38553c51e871f8cbd687a4cfb5843d"
-dependencies = [
- "phf_shared 0.11.3",
- "rand 0.8.5",
 ]
 
 [[package]]
@@ -2276,7 +2223,7 @@ dependencies = [
  "bitflags",
  "bytemuck",
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "dyn-clone",
  "either",
  "ethnum",
@@ -2344,7 +2291,7 @@ dependencies = [
  "boxcar",
  "bytemuck",
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "comfy-table",
  "either",
  "hashbrown 0.15.5",
@@ -2433,7 +2380,7 @@ dependencies = [
  "blake3",
  "bytes",
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "fast-float2",
  "fs4",
  "futures",
@@ -2474,7 +2421,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d546be779c0f2e87870538deb87ca6d90910ba09cb867409c87ed5c13518b5d"
 dependencies = [
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "fallible-streaming-iterator",
  "hashbrown 0.15.5",
  "indexmap",
@@ -2546,7 +2493,7 @@ dependencies = [
  "base64 0.22.1",
  "bytemuck",
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "either",
  "hashbrown 0.15.5",
  "hex",
@@ -2615,7 +2562,7 @@ dependencies = [
  "bytemuck",
  "bytes",
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "either",
  "hashbrown 0.15.5",
  "memmap2",
@@ -2733,7 +2680,7 @@ dependencies = [
  "atoi_simd",
  "bytemuck",
  "chrono",
- "chrono-tz 0.10.4",
+ "chrono-tz",
  "now",
  "num-traits",
  "polars-arrow",
@@ -4713,7 +4660,7 @@ version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
- "chrono-tz 0.9.0",
+ "chrono-tz",
  "futures",
  "futures-util",
  "httpmock",

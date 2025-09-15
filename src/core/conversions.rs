@@ -6,19 +6,25 @@ use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
 
 
+fn f64_to_decimal_safely(value: f64) -> rust_decimal::Decimal {
+    if !value.is_finite() {
+        return rust_decimal::Decimal::ZERO;
+    }
+    let formatted = format!("{:.4}", value);
+    rust_decimal::Decimal::from_str(&formatted).unwrap_or(rust_decimal::Decimal::ZERO)
+}
+
 /// Convert f64 to Money with specified currency
 pub fn f64_to_money_with_currency(value: f64, currency: Currency) -> Money {
-    // Use string formatting to avoid f64 precision issues
-    let formatted = format!("{:.4}", value);
-    let decimal = rust_decimal::Decimal::from_str(&formatted).expect("Invalid f64 to Decimal conversion");
+    // Use string formatting to avoid f64 precision issues; coerce non-finite to zero
+    let decimal = f64_to_decimal_safely(value);
     Money::new(decimal, currency)
 }
 
 /// Convert f64 to Money with USD currency (for cases where USD is explicitly intended)
 pub fn f64_to_money_usd(value: f64) -> Money {
-    // Use string formatting to avoid f64 precision issues
-    let formatted = format!("{:.4}", value);
-    let decimal = rust_decimal::Decimal::from_str(&formatted).expect("Invalid f64 to Decimal conversion");
+    // Use string formatting to avoid f64 precision issues; coerce non-finite to zero
+    let decimal = f64_to_decimal_safely(value);
     Money::new(decimal, Currency::USD)
 }
 
@@ -109,7 +115,7 @@ pub fn exchange_to_string(exchange: Option<Exchange>) -> Option<String> {
 
 /// Convert String to MarketState enum
 pub fn string_to_market_state(s: Option<String>) -> Option<MarketState> {
-    s.map(|s| MarketState::from(s))
+    s.map(MarketState::from)
 }
 
 /// Convert MarketState to String
