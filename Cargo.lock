@@ -685,6 +685,7 @@ checksum = "a6139a8597ed92cf816dfb33f5dd6cf0bb93a6adc938f11039f371bc5bcd26c3"
 dependencies = [
  "chrono",
  "phf 0.12.1",
+ "serde",
 ]
 
 [[package]]
@@ -903,6 +904,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c9e6a11ca8224451684bc0d7d5a7adbf8f2fd6887261a1cfc3c0432f9d4068e"
 dependencies = [
  "powerfmt",
+]
+
+[[package]]
+name = "df-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "973e2afa18642414197a53d8321573d3f927317df44e9a69c6442f8146623a57"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
 ]
 
 [[package]]
@@ -2026,10 +2039,19 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 name = "paft"
 version = "0.1.0"
 dependencies = [
+ "paft-core",
+ "paft-fundamentals",
+ "paft-market",
+]
+
+[[package]]
+name = "paft-core"
+version = "0.1.0"
+dependencies = [
  "chrono",
- "chrono-tz 0.9.0",
+ "chrono-tz 0.10.4",
+ "df-derive",
  "once_cell",
- "paft-macros",
  "polars",
  "regex",
  "rust_decimal",
@@ -2039,13 +2061,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "paft-macros"
+name = "paft-fundamentals"
 version = "0.1.0"
 dependencies = [
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn 2.0.104",
+ "chrono",
+ "df-derive",
+ "paft-core",
+ "polars",
+ "serde",
+ "strum",
+]
+
+[[package]]
+name = "paft-market"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "chrono-tz 0.10.4",
+ "df-derive",
+ "paft-core",
+ "polars",
+ "serde",
 ]
 
 [[package]]
@@ -4682,7 +4718,6 @@ dependencies = [
  "futures-util",
  "httpmock",
  "paft",
- "paft-macros",
  "polars",
  "prost",
  "prost-build",

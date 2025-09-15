@@ -2,6 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/yfinance-rs.svg)](https://crates.io/crates/yfinance-rs)
 [![Docs.rs](https://docs.rs/yfinance-rs/badge.svg)](https://docs.rs/yfinance-rs)
+[![CI](https://github.com/gramistella/yfinance-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/gramistella/yfinance-rs/actions/workflows/ci.yml)
 [![Downloads](https://img.shields.io/crates/d/yfinance-rs)](https://crates.io/crates/yfinance-rs)
 [![License](https://img.shields.io/crates/l/yfinance-rs)](LICENSE)
 
@@ -12,6 +13,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 ## Features
 
 ### Core Data
+
 * **Historical Data**: Fetch daily, weekly, or monthly OHLCV data with automatic split/dividend adjustments.
 * **Real-time Quotes**: Get live quote updates with detailed market information.
 * **Fast Quotes**: Optimized quote fetching with essential data only (`fast_info`).
@@ -19,6 +21,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 * **Batch Quotes**: Fetch quotes for multiple symbols efficiently.
 
 ### Corporate Actions & Dividends
+
 * **Dividend History**: Fetch complete dividend payment history with amounts and dates.
 * **Stock Splits**: Get stock split history with split ratios.
 * **Capital Gains**: Retrieve capital gains distributions (especially for mutual funds).

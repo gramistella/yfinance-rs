@@ -27,7 +27,6 @@ futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.50", features = ["lazy", "strings", "temporal", "serde", "regex", "timezones", "diagonal_concat", "json", "rolling_window", "temporal"], optional = true }
-paft-macros = { path = "../../paft-workspace/paft-macros" }
 paft = { path = "../../paft-workspace/paft" }
 rust_decimal = "1.36"
 
