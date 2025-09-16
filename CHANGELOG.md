@@ -9,10 +9,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - New optional `dataframe` feature: all `paft` data models now support `.to_dataframe()` when the feature is enabled, returning Polars `DataFrame`s. Added example `14_polars_dataframes.rs` and README section.
+- Custom HTTP client support via `YfClient::builder().custom_client(...)` for full control over `reqwest` configuration.
+- Proxy configuration helpers on the client builder: `.proxy()`, `.https_proxy()`, `.try_proxy()`, `.try_https_proxy()`. Added example `13_custom_client_and_proxy.rs`.
+- Explicit `User-Agent` is set on all HTTP/WebSocket requests by default, with `.user_agent(...)` to customize it.
+- Improved numeric precision in historical adjustments and conversions using `rust_decimal`.
 
 ### Changed
 
 - **Breaking change:** All public data models (such as `Quote`, `HistoryBar`, `EarningsTrendRow`, etc.) now use types from the [`paft`](https://crates.io/crates/paft) crate instead of custom-defined structs. This unifies data structures with other financial Rust libraries and improves interoperability, but may require code changes for downstream users.
+- Monetary value handling now uses `paft::Money` with currency awareness across APIs and helpers.
+- Consolidated and simplified fundamentals timeseries fetching via a generic helper for consistency.
+- Error handling refined: `YfError` variants and messages standardized for 404/429/5xx and unexpected statuses.
+- Dependencies updated and internal structure adjusted to support the new features.
+
+### Fixed
+
+- Minor clippy findings and documentation typos.
 
 ## [0.1.3] - 2025-08-31
 
