@@ -4,13 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.4] - Unreleased
+## [0.2.0] - 2025-09-16
 
 ### Changed
-- Refactored error handling in the `YfError` enum for better clarity and granularity.
-- Changed error variants from `YfError::Data` to more specific variants like `YfError::MissingData`, `YfError::Auth`, and `YfError::Json`.
-- Updated various functions across the codebase to use the new error structure.
-- Improved error message descriptiveness and alignment with the new error structure.
+
+- **Breaking change:** All public data models (such as `Quote`, `HistoryBar`, `EarningsTrendRow`, etc.) now use types from the [`paft`](https://crates.io/crates/paft) crate instead of custom-defined structs. This unifies data structures with other financial Rust libraries and improves interoperability, but may require code changes for downstream users.
 
 ## [0.1.3] - 2025-08-31
 
