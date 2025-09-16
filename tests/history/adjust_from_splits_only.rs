@@ -1,8 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{HistoryBuilder, Interval, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{HistoryBuilder, Interval, YfClient};
 
 #[tokio::test]
 async fn history_auto_adjust_uses_splits_when_adjclose_missing() {

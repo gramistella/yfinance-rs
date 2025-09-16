@@ -1,5 +1,5 @@
-use yfinance_rs::{FundamentalsBuilder, HoldersBuilder, SearchBuilder, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{FundamentalsBuilder, HoldersBuilder, SearchBuilder, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +19,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  Period End: {} | Total Revenue: {:.2}",
             stmt.period,
-            stmt.total_revenue.as_ref().map(money_to_f64).unwrap_or_default()
+            stmt.total_revenue
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
 
@@ -32,7 +35,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  Period End: {} | Total Assets: {:.2}",
             stmt.period,
-            stmt.total_assets.as_ref().map(money_to_f64).unwrap_or_default()
+            stmt.total_assets
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
 

@@ -1,7 +1,7 @@
 use crate::common::{mock_profile_scrape, setup_server};
+use paft::fundamentals::Profile;
 use url::Url;
 use yfinance_rs::{ApiPreference, YfClient};
-use paft::fundamentals::Profile;
 
 #[tokio::test]
 async fn profile_scrape_company_happy() {

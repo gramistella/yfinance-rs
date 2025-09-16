@@ -1,8 +1,8 @@
 use crate::common::setup_server;
 use httpmock::Method::GET;
+use paft::fundamentals::Profile;
 use url::Url;
 use yfinance_rs::{ApiPreference, YfClient};
-use paft::fundamentals::Profile;
 
 #[tokio::test]
 async fn profile_api_company_happy() {

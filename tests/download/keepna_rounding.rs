@@ -1,9 +1,9 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use rust_decimal::prelude::ToPrimitive;
 use url::Url;
 use yfinance_rs::YfClient;
 use yfinance_rs::core::conversions::*;
-use rust_decimal::prelude::ToPrimitive;
 
 #[tokio::test]
 async fn download_keepna_and_rounding() {
@@ -67,5 +67,7 @@ async fn download_keepna_and_rounding() {
     assert!(v[1].open.amount().to_f64().unwrap_or(0.0) == 0.0 || money_to_f64(&v[1].open).is_nan());
     assert!(v[1].high.amount().to_f64().unwrap_or(0.0) == 0.0 || money_to_f64(&v[1].high).is_nan());
     assert!(v[1].low.amount().to_f64().unwrap_or(0.0) == 0.0 || money_to_f64(&v[1].low).is_nan());
-    assert!(v[1].close.amount().to_f64().unwrap_or(0.0) == 0.0 || money_to_f64(&v[1].close).is_nan());
+    assert!(
+        v[1].close.amount().to_f64().unwrap_or(0.0) == 0.0 || money_to_f64(&v[1].close).is_nan()
+    );
 }

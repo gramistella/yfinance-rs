@@ -14,13 +14,13 @@ use crate::{
     fundamentals::FundamentalsBuilder,
     history::HistoryBuilder,
 };
-use paft::prelude::*;
 use paft::fundamentals::{
-    MajorHolder, InstitutionalHolder, InsiderTransaction, InsiderRosterHolder, 
-    NetSharePurchaseActivity, RecommendationRow, RecommendationSummary, 
-    UpgradeDowngradeRow, PriceTarget, EarningsTrendRow, EsgScores,
-    IncomeStatementRow, BalanceSheetRow, CashflowRow, Earnings, Calendar, ShareCount
+    BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsTrendRow, EsgScores,
+    IncomeStatementRow, InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
+    NetSharePurchaseActivity, PriceTarget, RecommendationRow, RecommendationSummary, ShareCount,
+    UpgradeDowngradeRow,
 };
+use paft::prelude::*;
 
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
 ///
@@ -145,7 +145,8 @@ impl Ticker {
             .ok_or_else(|| YfError::MissingData("quote missing last/previous price".into()))?;
 
         // Extract currency from the price or previous_close Money objects
-        let currency = q.price
+        let currency = q
+            .price
             .as_ref()
             .and_then(money_to_currency_str)
             .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str));
@@ -257,7 +258,9 @@ impl Ticker {
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::Dividend { ts, amount } => Some((datetime_to_i64(ts), money_to_f64(&amount))),
+                crate::Action::Dividend { ts, amount } => {
+                    Some((datetime_to_i64(ts), money_to_f64(&amount)))
+                }
                 _ => None,
             })
             .collect())
@@ -340,7 +343,9 @@ impl Ticker {
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::CapitalGain { ts, gain } => Some((datetime_to_i64(ts), money_to_f64(&gain))),
+                crate::Action::CapitalGain { ts, gain } => {
+                    Some((datetime_to_i64(ts), money_to_f64(&gain)))
+                }
                 _ => None,
             })
             .collect())

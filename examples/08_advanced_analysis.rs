@@ -1,5 +1,5 @@
-use yfinance_rs::{Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,8 +14,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  Current Year ({}): Earnings Est. Avg: {:.2}, Revenue Est. Avg: {}",
             trend.period,
-            trend.earnings_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default(),
-            trend.revenue_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default()
+            trend
+                .earnings_estimate
+                .avg
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default(),
+            trend
+                .revenue_estimate
+                .avg
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
     println!();
@@ -46,9 +56,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let price_target = ticker_aapl.analyst_price_target().await?;
     println!(
         "  Target: avg=${:.2}, high=${:.2}, low=${:.2} (from {} analysts)",
-        price_target.mean.as_ref().map(money_to_f64).unwrap_or_default(),
-        price_target.high.as_ref().map(money_to_f64).unwrap_or_default(),
-        price_target.low.as_ref().map(money_to_f64).unwrap_or_default(),
+        price_target
+            .mean
+            .as_ref()
+            .map(money_to_f64)
+            .unwrap_or_default(),
+        price_target
+            .high
+            .as_ref()
+            .map(money_to_f64)
+            .unwrap_or_default(),
+        price_target
+            .low
+            .as_ref()
+            .map(money_to_f64)
+            .unwrap_or_default(),
         price_target.number_of_analysts.unwrap_or_default()
     );
     println!();
@@ -67,8 +89,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "  Current Year ({}): Earnings Est. Avg: {:.2}, Revenue Est. Avg: {}",
             trend.period,
-            trend.earnings_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default(),
-            trend.revenue_estimate.avg.as_ref().map(money_to_f64).unwrap_or_default()
+            trend
+                .earnings_estimate
+                .avg
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default(),
+            trend
+                .revenue_estimate
+                .avg
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
     println!();
@@ -92,16 +124,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Upcoming Calendar Events for AAPL ---");
     let calendar = ticker_aapl.calendar().await?;
     if let Some(date) = calendar.earnings_dates.first() {
-        println!(
-            "  Next earnings date (approx): {}",
-            date.date_naive()
-        );
+        println!("  Next earnings date (approx): {}", date.date_naive());
     }
     if let Some(date) = calendar.ex_dividend_date {
-        println!(
-            "  Ex-dividend date: {}",
-            date.date_naive()
-        );
+        println!("  Ex-dividend date: {}", date.date_naive());
     }
     println!();
 

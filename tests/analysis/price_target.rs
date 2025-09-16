@@ -1,8 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{ApiPreference, Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{ApiPreference, Ticker, YfClient};
 
 #[tokio::test]
 async fn offline_price_target_happy() {

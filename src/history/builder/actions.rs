@@ -1,6 +1,6 @@
+use crate::core::conversions::*;
 use crate::history::wire::Events;
 use paft::prelude::*;
-use crate::core::conversions::*;
 
 #[allow(clippy::cast_possible_truncation)]
 pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>) {
@@ -15,9 +15,9 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
         for (k, d) in divs {
             let ts = k.parse::<i64>().unwrap_or_else(|_| d.date.unwrap_or(0));
             if let Some(amount) = d.amount {
-                out.push(Action::Dividend { 
-                    ts: i64_to_datetime(ts), 
-                    amount: f64_to_money_usd(amount) 
+                out.push(Action::Dividend {
+                    ts: i64_to_datetime(ts),
+                    amount: f64_to_money_usd(amount),
                 });
             }
         }
@@ -27,9 +27,9 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
         for (k, g) in gains {
             let ts = k.parse::<i64>().unwrap_or_else(|_| g.date.unwrap_or(0));
             if let Some(gain) = g.amount {
-                out.push(Action::CapitalGain { 
-                    ts: i64_to_datetime(ts), 
-                    gain: f64_to_money_usd(gain) 
+                out.push(Action::CapitalGain {
+                    ts: i64_to_datetime(ts),
+                    gain: f64_to_money_usd(gain),
                 });
             }
         }

@@ -4,11 +4,11 @@ mod assemble;
 mod fetch;
 
 use crate::core::client::{CacheMode, RetryConfig};
-use crate::core::{YfClient, YfError};
 use crate::core::conversions::*;
+use crate::core::{YfClient, YfError};
 use crate::history::wire::MetaNode;
-use paft::prelude::*;
 use chrono_tz::Tz;
+use paft::prelude::*;
 
 use actions::extract_actions;
 use adjust::cumulative_split_after;
@@ -204,7 +204,12 @@ impl HistoryBuilder {
             actions: actions_out,
             adjusted: self.auto_adjust,
             meta: meta_out,
-            unadjusted_close: Some(raw_close.into_iter().map(|price| f64_to_money_with_currency_str(price, currency)).collect()),
+            unadjusted_close: Some(
+                raw_close
+                    .into_iter()
+                    .map(|price| f64_to_money_with_currency_str(price, currency))
+                    .collect(),
+            ),
         })
     }
 }
@@ -213,7 +218,10 @@ impl HistoryBuilder {
 
 fn map_meta(m: Option<&MetaNode>) -> Option<HistoryMeta> {
     m.as_ref().map(|mm| HistoryMeta {
-        timezone: mm.timezone.as_ref().and_then(|tz_str| tz_str.parse::<Tz>().ok()),
+        timezone: mm
+            .timezone
+            .as_ref()
+            .and_then(|tz_str| tz_str.parse::<Tz>().ok()),
         utc_offset_seconds: mm.gmtoffset,
     })
 }

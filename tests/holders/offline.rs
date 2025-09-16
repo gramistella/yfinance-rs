@@ -1,7 +1,7 @@
 use httpmock::{Method::GET, Mock, MockServer};
 use url::Url;
-use yfinance_rs::{Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Ticker, YfClient};
 
 fn fixture(endpoint: &str, symbol: &str) -> String {
     crate::common::fixture(endpoint, symbol, "json")

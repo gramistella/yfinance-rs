@@ -2,8 +2,8 @@ use httpmock::Method::GET;
 use url::Url;
 
 use crate::common;
-use yfinance_rs::{DownloadBuilder, Interval, Range, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{DownloadBuilder, Interval, Range, YfClient};
 
 #[tokio::test]
 async fn download_multi_symbols_happy_path() {

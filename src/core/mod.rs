@@ -25,8 +25,8 @@ pub(crate) mod fixtures;
 /// DataFrame conversion traits.
 pub mod dataframe;
 
-pub(crate) mod net;
 pub mod conversions;
+pub(crate) mod net;
 
 // convenient re-exports so most code can just `use crate::core::YfClient`
 pub use client::{CacheMode, RetryConfig, YfClient, YfClientBuilder};

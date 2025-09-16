@@ -1,5 +1,5 @@
-use yfinance_rs::{Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,7 +12,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = income_stmt.first() {
         println!(
             "Latest quarterly revenue: {:.2} (from {})",
-            latest.total_revenue.as_ref().map(money_to_f64).unwrap_or(0.0),
+            latest
+                .total_revenue
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or(0.0),
             latest.period
         );
     } else {
@@ -24,7 +28,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = balance_sheet.first() {
         println!(
             "Latest quarterly total assets: {:.2} (from {})",
-            latest.total_assets.as_ref().map(money_to_f64).unwrap_or(0.0),
+            latest
+                .total_assets
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or(0.0),
             latest.period
         );
     } else {
@@ -36,7 +44,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = cashflow_stmt.first() {
         println!(
             "Latest quarterly operating cash flow: {:.2} (from {})",
-            latest.operating_cashflow.as_ref().map(money_to_f64).unwrap_or(0.0),
+            latest
+                .operating_cashflow
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or(0.0),
             latest.period
         );
     } else {

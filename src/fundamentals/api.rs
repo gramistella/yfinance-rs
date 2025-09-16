@@ -5,8 +5,8 @@ use crate::{
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        wire::from_raw,
         conversions::*,
+        wire::from_raw,
     },
     fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
@@ -141,7 +141,11 @@ pub(super) async fn income_statement(
     Ok(arr
         .into_iter()
         .map(|n| IncomeStatementRow {
-            period: string_to_period(n.end_date.map(|d| d.raw.unwrap_or_default().to_string()).unwrap_or_default()),
+            period: string_to_period(
+                n.end_date
+                    .map(|d| d.raw.unwrap_or_default().to_string())
+                    .unwrap_or_default(),
+            ),
             total_revenue: from_raw(n.total_revenue).map(f64_to_money_usd),
             gross_profit: from_raw(n.gross_profit).map(f64_to_money_usd),
             operating_income: from_raw(n.operating_income).map(f64_to_money_usd),
@@ -335,7 +339,10 @@ pub(super) async fn cashflow(
     // After filling values, calculate FCF if it's missing.
     for row in &mut result {
         if row.free_cash_flow.is_none()
-            && let (Some(ocf), Some(capex)) = (row.operating_cashflow.clone(), row.capital_expenditures.clone())
+            && let (Some(ocf), Some(capex)) = (
+                row.operating_cashflow.clone(),
+                row.capital_expenditures.clone(),
+            )
         {
             // In timeseries API, capex is negative for cash outflow.
             row.free_cash_flow = Some(ocf.add(&capex).unwrap_or(ocf));
@@ -367,7 +374,10 @@ pub(super) async fn earnings(
                         i32::try_from(date).ok().map(|year| EarningsYear {
                             year,
                             revenue: y.revenue.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
-                            earnings: y.earnings.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
+                            earnings: y
+                                .earnings
+                                .as_ref()
+                                .and_then(|x| x.raw.map(f64_to_money_usd)),
                         })
                     })
                 })
@@ -384,7 +394,10 @@ pub(super) async fn earnings(
                 .map(|q| EarningsQuarter {
                     period: string_to_period(q.date.clone().unwrap_or_default()),
                     revenue: q.revenue.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
-                    earnings: q.earnings.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
+                    earnings: q
+                        .earnings
+                        .as_ref()
+                        .and_then(|x| x.raw.map(f64_to_money_usd)),
                 })
                 .collect()
         })
@@ -399,7 +412,10 @@ pub(super) async fn earnings(
                 .map(|q| EarningsQuarterEps {
                     period: string_to_period(q.date.clone().unwrap_or_default()),
                     actual: q.actual.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
-                    estimate: q.estimate.as_ref().and_then(|x| x.raw.map(f64_to_money_usd)),
+                    estimate: q
+                        .estimate
+                        .as_ref()
+                        .and_then(|x| x.raw.map(f64_to_money_usd)),
                 })
                 .collect()
         })
@@ -525,7 +541,10 @@ pub(super) async fn shares(
         .filter_map(|(ts, val)| {
             val.reported_value
                 .and_then(|rv| rv.raw)
-                .map(|shares| ShareCount { date: i64_to_datetime(ts), shares })
+                .map(|shares| ShareCount {
+                    date: i64_to_datetime(ts),
+                    shares,
+                })
         })
         .collect();
 

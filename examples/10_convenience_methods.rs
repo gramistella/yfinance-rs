@@ -1,5 +1,5 @@
-use yfinance_rs::{Interval, Range, Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Interval, Range, Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,7 +12,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "  {}: ${:.2} (prev_close: ${:.2})",
         quote.symbol,
         quote.price.as_ref().map(money_to_f64).unwrap_or_default(),
-        quote.previous_close.as_ref().map(money_to_f64).unwrap_or_default()
+        quote
+            .previous_close
+            .as_ref()
+            .map(money_to_f64)
+            .unwrap_or_default()
     );
     println!();
 
@@ -50,7 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_income.first() {
         println!(
             "  Latest annual revenue: {:.2}",
-            stmt.total_revenue.as_ref().map(money_to_f64).unwrap_or_default()
+            stmt.total_revenue
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
 
@@ -58,7 +65,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_balance.first() {
         println!(
             "  Latest annual assets: {:.2}",
-            stmt.total_assets.as_ref().map(money_to_f64).unwrap_or_default()
+            stmt.total_assets
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
 
@@ -66,7 +76,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_cashflow.first() {
         println!(
             "  Latest annual free cash flow: {:.2}",
-            stmt.free_cash_flow.as_ref().map(money_to_f64).unwrap_or_default()
+            stmt.free_cash_flow
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
 

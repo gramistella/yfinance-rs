@@ -28,10 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "Environmental Score: {:.2}",
                 scores.environmental.unwrap_or_default()
             );
-            println!(
-                "Social Score: {:.2}",
-                scores.social.unwrap_or_default()
-            );
+            println!("Social Score: {:.2}", scores.social.unwrap_or_default());
             println!(
                 "Governance Score: {:.2}",
                 scores.governance.unwrap_or_default()
@@ -74,9 +71,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "  - Firm: {} | Action: {} | From: {} | To: {}",
                 upgrade.firm.as_deref().unwrap_or("N/A"),
-                upgrade.action.as_ref().map(|a| a.to_string()).unwrap_or("N/A".to_string()),
-                upgrade.from_grade.as_ref().map(|g| g.to_string()).unwrap_or("N/A".to_string()),
-                upgrade.to_grade.as_ref().map(|g| g.to_string()).unwrap_or("N/A".to_string())
+                upgrade
+                    .action
+                    .as_ref()
+                    .map(|a| a.to_string())
+                    .unwrap_or("N/A".to_string()),
+                upgrade
+                    .from_grade
+                    .as_ref()
+                    .map(|g| g.to_string())
+                    .unwrap_or("N/A".to_string()),
+                upgrade
+                    .to_grade
+                    .as_ref()
+                    .map(|g| g.to_string())
+                    .unwrap_or("N/A".to_string())
             );
         }
     }

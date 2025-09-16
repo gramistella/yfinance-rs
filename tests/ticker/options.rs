@@ -1,8 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
 async fn options_expirations_happy() {

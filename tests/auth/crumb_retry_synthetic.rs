@@ -1,8 +1,8 @@
 use crate::common;
 use httpmock::Method::GET;
+use paft::fundamentals::Profile;
 use url::Url;
 use yfinance_rs::YfClient;
-use paft::fundamentals::Profile;
 
 #[tokio::test]
 async fn api_fetches_cookie_and_crumb_first() {

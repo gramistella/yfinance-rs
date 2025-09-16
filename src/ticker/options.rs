@@ -5,8 +5,8 @@ use crate::{
     YfClient, YfError,
     core::{
         client::{CacheMode, RetryConfig},
-        net,
         conversions::*,
+        net,
     },
 };
 

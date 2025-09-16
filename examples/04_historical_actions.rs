@@ -1,6 +1,6 @@
 use chrono::{Duration, Utc};
-use yfinance_rs::{DownloadBuilder, Interval, Range, Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{DownloadBuilder, Interval, Range, Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

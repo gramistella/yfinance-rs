@@ -1,6 +1,6 @@
+use crate::core::conversions::*;
 use crate::history::wire::QuoteBlock;
 use paft::prelude::*;
-use crate::core::conversions::*;
 
 use super::adjust::price_factor_for_row;
 

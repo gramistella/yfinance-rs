@@ -1,8 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{HistoryBuilder, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{HistoryBuilder, YfClient};
 
 #[tokio::test]
 async fn history_keepna_preserves_null_rows() {

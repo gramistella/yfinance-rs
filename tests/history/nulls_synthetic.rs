@@ -1,7 +1,7 @@
 use httpmock::{Method::GET, MockServer};
 use url::Url;
-use yfinance_rs::{HistoryBuilder, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{HistoryBuilder, YfClient};
 
 #[tokio::test]
 async fn history_skips_points_with_null_ohlc() {

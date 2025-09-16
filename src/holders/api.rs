@@ -7,8 +7,8 @@ use crate::core::wire::{from_raw, from_raw_date};
 use crate::core::{
     YfClient, YfError,
     client::{CacheMode, RetryConfig},
-    quotesummary,
     conversions::*,
+    quotesummary,
 };
 use chrono::DateTime;
 
@@ -79,7 +79,10 @@ fn map_ownership_list(node: Option<super::wire::OwnershipNode>) -> Vec<Instituti
         .map(|h| InstitutionalHolder {
             holder: h.organization.unwrap_or_default(),
             shares: from_raw(h.shares),
-            date_reported: from_raw_date(h.date_reported).map_or_else(|| DateTime::from_timestamp(0, 0).unwrap_or_default(), i64_to_datetime),
+            date_reported: from_raw_date(h.date_reported).map_or_else(
+                || DateTime::from_timestamp(0, 0).unwrap_or_default(),
+                i64_to_datetime,
+            ),
             pct_held: from_raw(h.pct_held),
             value: from_raw(h.value).map(|v| f64_to_money_usd(v as f64)),
         })
@@ -126,7 +129,10 @@ pub(super) async fn insider_transactions(
             transaction_type: string_to_transaction_type(t.transaction.unwrap_or_default()),
             shares: from_raw(t.shares),
             value: from_raw(t.value).map(|v| f64_to_money_usd(v as f64)),
-            transaction_date: from_raw_date(t.start_date).map_or_else(|| DateTime::from_timestamp(0, 0).unwrap_or_default(), i64_to_datetime),
+            transaction_date: from_raw_date(t.start_date).map_or_else(
+                || DateTime::from_timestamp(0, 0).unwrap_or_default(),
+                i64_to_datetime,
+            ),
             url: t.url.unwrap_or_default(),
         })
         .collect())
@@ -149,10 +155,18 @@ pub(super) async fn insider_roster_holders(
         .map(|h| InsiderRosterHolder {
             name: h.name.unwrap_or_default(),
             position: string_to_insider_position(h.relation.unwrap_or_default()),
-            most_recent_transaction: string_to_transaction_type(h.most_recent_transaction.unwrap_or_default()),
-            latest_transaction_date: from_raw_date(h.latest_transaction_date).map_or_else(|| DateTime::from_timestamp(0, 0).unwrap_or_default(), i64_to_datetime),
+            most_recent_transaction: string_to_transaction_type(
+                h.most_recent_transaction.unwrap_or_default(),
+            ),
+            latest_transaction_date: from_raw_date(h.latest_transaction_date).map_or_else(
+                || DateTime::from_timestamp(0, 0).unwrap_or_default(),
+                i64_to_datetime,
+            ),
             shares_owned_directly: from_raw(h.shares_owned_directly),
-            position_direct_date: from_raw_date(h.position_direct_date).map_or_else(|| DateTime::from_timestamp(0, 0).unwrap_or_default(), i64_to_datetime),
+            position_direct_date: from_raw_date(h.position_direct_date).map_or_else(
+                || DateTime::from_timestamp(0, 0).unwrap_or_default(),
+                i64_to_datetime,
+            ),
         })
         .collect())
 }

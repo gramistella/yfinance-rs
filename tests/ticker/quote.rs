@@ -1,8 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
 async fn quote_v7_happy_path() {
@@ -43,8 +43,14 @@ async fn quote_v7_happy_path() {
     mock.assert();
 
     assert_eq!(q.symbol, "AAPL");
-    assert_eq!(q.exchange.as_ref().map(|e| e.to_string()), Some("NASDAQ".to_string()));
-    assert_eq!(q.market_state.as_ref().map(|m| m.to_string()), Some("REGULAR".to_string()));
+    assert_eq!(
+        q.exchange.as_ref().map(|e| e.to_string()),
+        Some("NASDAQ".to_string())
+    );
+    assert_eq!(
+        q.market_state.as_ref().map(|m| m.to_string()),
+        Some("REGULAR".to_string())
+    );
     assert!((money_to_f64(&q.price.unwrap()) - 190.25).abs() < 1e-9);
     assert!((money_to_f64(&q.previous_close.unwrap()) - 189.50).abs() < 1e-9);
 }

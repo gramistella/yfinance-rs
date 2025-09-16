@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use paft::fundamentals::Address;
+use serde::{Deserialize, Serialize};
 
 // Re-export types from paft
 pub use paft::market::{OptionChain, OptionContract};

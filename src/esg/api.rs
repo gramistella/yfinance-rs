@@ -40,7 +40,10 @@ pub(super) async fn fetch_esg_scores(
     let mut involvement: Vec<EsgInvolvement> = Vec::new();
     let mut push_flag = |name: &str, val: Option<bool>| {
         if val.unwrap_or(false) {
-            involvement.push(EsgInvolvement { category: name.to_string(), score: None });
+            involvement.push(EsgInvolvement {
+                category: name.to_string(),
+                score: None,
+            });
         }
     };
     push_flag("adult", esg.adult);

@@ -1,8 +1,8 @@
 use crate::common;
 use crate::common::{mock_history_chart, setup_server};
 use url::Url;
-use yfinance_rs::{HistoryBuilder, Range, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{HistoryBuilder, Range, YfClient};
 
 #[tokio::test]
 async fn history_happy_path() {

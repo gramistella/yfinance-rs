@@ -1,10 +1,9 @@
 //! Conversion utilities between old valuta types and new paft types
 
-use paft::prelude::*;
 use chrono::{DateTime, Utc};
+use paft::prelude::*;
 use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
-
 
 fn f64_to_decimal_safely(value: f64) -> rust_decimal::Decimal {
     if !value.is_finite() {

@@ -1,7 +1,7 @@
 use httpmock::{Method::GET, MockServer};
+use paft::fundamentals::Profile;
 use url::Url;
 use yfinance_rs::{ApiPreference, YfClient};
-use paft::fundamentals::Profile;
 
 fn svelte_html(payload: &str) -> String {
     format!(

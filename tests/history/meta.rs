@@ -47,6 +47,9 @@ async fn get_history_metadata_returns_timezone() {
 
     mock.assert();
     let m = meta.expect("meta should be Some");
-    assert_eq!(m.timezone.as_ref().map(|tz| tz.to_string()), Some("America/New_York".to_string()));
+    assert_eq!(
+        m.timezone.as_ref().map(|tz| tz.to_string()),
+        Some("America/New_York".to_string())
+    );
     assert_eq!(m.utc_offset_seconds, Some(-14400));
 }

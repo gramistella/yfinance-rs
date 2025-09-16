@@ -4,7 +4,8 @@ use crate::{
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        net, conversions::*,
+        conversions::*,
+        net,
     },
     news::{NewsTab, model::NewsArticle, tab_as_str, wire},
 };

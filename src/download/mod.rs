@@ -8,7 +8,7 @@ use crate::{
     history::HistoryBuilder,
 };
 use paft::prelude::Money;
-use rust_decimal::prelude::{ToPrimitive, FromPrimitive};
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 
 /// The result of a multi-symbol download operation.
 #[derive(Debug, Clone)]
@@ -271,16 +271,40 @@ impl DownloadBuilder {
             if self.rounding {
                 for c in &mut v {
                     if c.open.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.open = Money::new(rust_decimal::Decimal::from_f64(round2(c.open.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.open.currency().clone());
+                        c.open = Money::new(
+                            rust_decimal::Decimal::from_f64(round2(
+                                c.open.amount().to_f64().unwrap_or(0.0),
+                            ))
+                            .unwrap_or_default(),
+                            c.open.currency().clone(),
+                        );
                     }
                     if c.high.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.high = Money::new(rust_decimal::Decimal::from_f64(round2(c.high.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.high.currency().clone());
+                        c.high = Money::new(
+                            rust_decimal::Decimal::from_f64(round2(
+                                c.high.amount().to_f64().unwrap_or(0.0),
+                            ))
+                            .unwrap_or_default(),
+                            c.high.currency().clone(),
+                        );
                     }
                     if c.low.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.low = Money::new(rust_decimal::Decimal::from_f64(round2(c.low.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.low.currency().clone());
+                        c.low = Money::new(
+                            rust_decimal::Decimal::from_f64(round2(
+                                c.low.amount().to_f64().unwrap_or(0.0),
+                            ))
+                            .unwrap_or_default(),
+                            c.low.currency().clone(),
+                        );
                     }
                     if c.close.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.close = Money::new(rust_decimal::Decimal::from_f64(round2(c.close.amount().to_f64().unwrap_or(0.0))).unwrap_or_default(), c.close.currency().clone());
+                        c.close = Money::new(
+                            rust_decimal::Decimal::from_f64(round2(
+                                c.close.amount().to_f64().unwrap_or(0.0),
+                            ))
+                            .unwrap_or_default(),
+                            c.close.currency().clone(),
+                        );
                     }
                 }
             }
@@ -331,14 +355,17 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
         let n = &next.close;
         let c = &cur.close;
 
-        if !(p.amount().to_f64().is_some_and(|v| v.is_finite()) && n.amount().to_f64().is_some_and(|v| v.is_finite()) && c.amount().to_f64().is_some_and(|v| v.is_finite())) {
+        if !(p.amount().to_f64().is_some_and(|v| v.is_finite())
+            && n.amount().to_f64().is_some_and(|v| v.is_finite())
+            && c.amount().to_f64().is_some_and(|v| v.is_finite()))
+        {
             continue;
         }
 
         let p_val = p.amount().to_f64().unwrap_or(0.0);
         let n_val = n.amount().to_f64().unwrap_or(0.0);
         let c_val = c.amount().to_f64().unwrap_or(0.0);
-        
+
         let baseline = f64::midpoint(p_val, n_val);
         if baseline <= 0.0 {
             continue;
@@ -371,15 +398,23 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
 
 fn scale_row_prices(c: &mut Candle, scale: f64) {
     if c.open.amount().to_f64().is_some_and(|v| v.is_finite()) {
-        c.open = c.open.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+        c.open = c
+            .open
+            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
     if c.high.amount().to_f64().is_some_and(|v| v.is_finite()) {
-        c.high = c.high.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+        c.high = c
+            .high
+            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
     if c.low.amount().to_f64().is_some_and(|v| v.is_finite()) {
-        c.low = c.low.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+        c.low = c
+            .low
+            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
     if c.close.amount().to_f64().is_some_and(|v| v.is_finite()) {
-        c.close = c.close.mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+        c.close = c
+            .close
+            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
 }

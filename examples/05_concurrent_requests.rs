@@ -1,6 +1,6 @@
 use futures::future::try_join_all;
-use yfinance_rs::{FundamentalsBuilder, SearchBuilder, Ticker, YfClient};
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{FundamentalsBuilder, SearchBuilder, Ticker, YfClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,7 +34,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(stmt) = annual_income_stmt.first() {
         println!(
             "AAPL Latest Annual Revenue: {:.2} (from {})",
-            stmt.total_revenue.as_ref().map(money_to_f64).unwrap_or_default(),
+            stmt.total_revenue
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default(),
             stmt.period
         );
     }
@@ -42,7 +45,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(cf) = annual_cashflow.first() {
         println!(
             "AAPL Latest Annual Free Cash Flow: {:.2}",
-            cf.free_cash_flow.as_ref().map(money_to_f64).unwrap_or_default()
+            cf.free_cash_flow
+                .as_ref()
+                .map(money_to_f64)
+                .unwrap_or_default()
         );
     }
     println!();
@@ -50,11 +56,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Fetching ESG and holder data for MSFT ---");
     let msft_ticker = Ticker::new(&client, "MSFT");
     let esg_scores = msft_ticker.sustainability().await?;
-    let parts = [esg_scores.environmental, esg_scores.social, esg_scores.governance]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
-    let total_esg = if parts.is_empty() { 0.0 } else { parts.iter().sum::<f64>() / (parts.len() as f64) };
+    let parts = [
+        esg_scores.environmental,
+        esg_scores.social,
+        esg_scores.governance,
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<_>>();
+    let total_esg = if parts.is_empty() {
+        0.0
+    } else {
+        parts.iter().sum::<f64>() / (parts.len() as f64)
+    };
     println!("MSFT Total ESG Score: {:.2}", total_esg);
     let institutional_holders = msft_ticker.institutional_holders().await?;
     if let Some(holder) = institutional_holders.first() {

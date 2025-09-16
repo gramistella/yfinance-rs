@@ -1,9 +1,9 @@
 use std::time::Duration;
+use yfinance_rs::core::conversions::*;
 use yfinance_rs::{
     Ticker, YfClientBuilder, YfError,
     core::client::{Backoff, RetryConfig},
 };
-use yfinance_rs::core::conversions::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -54,10 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Fetching Calendar Events for AAPL (including dividend date) ---");
     let calendar = aapl.calendar().await?;
     if let Some(date) = calendar.ex_dividend_date {
-        println!(
-            "  Dividend date: {}",
-            date.date_naive()
-        );
+        println!("  Dividend date: {}", date.date_naive());
     } else {
         println!("  No upcoming dividend date found.");
     }
