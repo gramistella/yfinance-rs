@@ -74,6 +74,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 * **Back Adjustment**: Alternative price adjustment methods.
 * **Historical Metadata**: Timezone and other metadata for historical data.
 * **ISIN Lookup**: Get International Securities Identification Numbers.
+* **Polars DataFrames**: Convert results to Polars DataFrames via `.to_dataframe()` (enable the `dataframe` feature).
 
 ### Developer Experience
 * **Async API**: Built on `tokio` and `reqwest` for non-blocking I/O.
@@ -91,6 +92,14 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 [dependencies]
 yfinance-rs = "0.2.0"
 tokio = { version = "1", features = ["full"] }
+```
+
+To enable DataFrame conversions backed by Polars, turn on the optional `dataframe` feature and (if you use Polars types in your code) add `polars`:
+
+```toml
+[dependencies]
+yfinance-rs = { version = "0.2.0", features = ["dataframe"] }
+polars = "0.50"
 ```
 
 Then, create a `YfClient` and use a `Ticker` to fetch data.
@@ -129,6 +138,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 ## Advanced Examples
+
+### Polars DataFrames (to_dataframe)
+
+Enable the `dataframe` feature to convert any returned `paft` model into a Polars `DataFrame` with `.to_dataframe()`.
+
+```rust
+use yfinance_rs::{Interval, Range, Ticker, YfClient, ToDataFrame, ToDataFrameVec};
+use polars::prelude::*;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, "AAPL");
+
+    // Quotes → DataFrame
+    let quote_df = ticker.quote().await?.to_dataframe()?;
+    println!("Quote as DataFrame:\n{}", quote_df);
+
+    // History (Vec<Candle>) → DataFrame
+    let hist_df = ticker
+        .history(Some(Range::M1), Some(Interval::D1), false)
+        .await?
+        .to_dataframe()?;
+    println!("History rows: {}", hist_df.height());
+
+    Ok(())
+}
+```
+
+Works for quotes, historical candles, fundamentals, analyst data, holders, options, and more. All `paft` structs returned by this crate implement `.to_dataframe()` when the `dataframe` feature is enabled. See the full example: `examples/14_polars_dataframes.rs`.
 
 ### Multi-Symbol Data Download
 
