@@ -1,7 +1,7 @@
 use yfinance_rs::{NewsTab, Ticker, YfClient};
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_news_smoke_and_or_record() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -27,7 +27,7 @@ async fn live_news_smoke_and_or_record() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_news_press_releases_for_record() {
     if !crate::common::is_recording() {
         return;

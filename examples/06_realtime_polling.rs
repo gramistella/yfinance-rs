@@ -28,12 +28,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
             count += 1;
         }
-        println!("Finished polling after {} updates.", count);
+        println!("Finished polling after {count} updates.");
     });
 
     // Stop the stream after 20 seconds, regardless of how many updates were received.
     tokio::select! {
-        _ = tokio::time::sleep(Duration::seconds(20).to_std()?) => {
+        () = tokio::time::sleep(Duration::seconds(20).to_std()?) => {
             println!("Stopping polling due to timeout.");
             handle.stop().await;
         }

@@ -21,7 +21,7 @@ async fn offline_info_uses_recorded_fixtures() {
     // 2. Mock for Profile::load -> uses `profile_api_assetProfile-quoteType-fundProfile_MSFT.json`
     let profile_mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "assetProfile,quoteType,fundProfile");
         then.status(200)
             .header("content-type", "application/json")
@@ -35,7 +35,7 @@ async fn offline_info_uses_recorded_fixtures() {
     // 3. Mock for price_target -> uses `analysis_api_financialData_MSFT.json`
     let price_target_mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "financialData");
         then.status(200)
             .header("content-type", "application/json")
@@ -49,7 +49,7 @@ async fn offline_info_uses_recorded_fixtures() {
     // 4. Mock for recommendations_summary -> uses `analysis_api_recommendationTrend-financialData_MSFT.json`
     let rec_summary_mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "recommendationTrend,financialData");
         then.status(200)
             .header("content-type", "application/json")
@@ -63,7 +63,7 @@ async fn offline_info_uses_recorded_fixtures() {
     // 5. Mock for esg_scores -> uses `esg_api_esgScores_MSFT.json`
     let esg_mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{}", sym))
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
             .query_param("modules", "esgScores");
         then.status(200)
             .header("content-type", "application/json")

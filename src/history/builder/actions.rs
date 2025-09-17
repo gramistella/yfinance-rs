@@ -1,11 +1,11 @@
-use crate::core::conversions::*;
+use crate::core::conversions::{i64_to_datetime, f64_to_money_with_currency};
 use crate::history::wire::Events;
 use paft::prelude::*;
 
 #[allow(clippy::cast_possible_truncation)]
 pub fn extract_actions(
     events: Option<&Events>,
-    currency: Currency,
+    currency: &Currency,
 ) -> (Vec<Action>, Vec<(i64, f64)>) {
     let mut out: Vec<Action> = Vec::new();
     let mut split_events: Vec<(i64, f64)> = Vec::new();

@@ -3,7 +3,7 @@ use crate::{
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        conversions::*,
+        conversions::{string_to_period, i64_to_datetime, string_to_recommendation_grade, string_to_recommendation_action, f64_to_money_with_currency, i64_to_money_with_currency},
         wire::{from_raw, from_raw_u32_round},
     },
 };
@@ -279,13 +279,13 @@ pub(super) async fn earnings_trend(
                 },
                 revenue_estimate: RevenueEstimate {
                     avg: revenue_estimate_avg
-                        .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
+                        .map(|v| i64_to_money_with_currency(v, currency.clone())),
                     low: revenue_estimate_low
-                        .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
+                        .map(|v| i64_to_money_with_currency(v, currency.clone())),
                     high: revenue_estimate_high
-                        .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
+                        .map(|v| i64_to_money_with_currency(v, currency.clone())),
                     year_ago_revenue: revenue_estimate_year_ago_revenue
-                        .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
+                        .map(|v| i64_to_money_with_currency(v, currency.clone())),
                     num_analysts: revenue_estimate_num_analysts,
                     growth: revenue_estimate_growth,
                 },

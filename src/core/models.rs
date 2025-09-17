@@ -2,7 +2,7 @@
 pub use paft::prelude::*;
 
 // Helper functions for converting to string representations
-pub(crate) fn range_as_str(range: Range) -> &'static str {
+pub(crate) const fn range_as_str(range: Range) -> &'static str {
     match range {
         Range::D1 => "1d",
         Range::D5 => "5d",
@@ -18,7 +18,7 @@ pub(crate) fn range_as_str(range: Range) -> &'static str {
     }
 }
 
-pub(crate) fn interval_as_str(interval: Interval) -> &'static str {
+pub(crate) const fn interval_as_str(interval: Interval) -> &'static str {
     match interval {
         Interval::I1m => "1m",
         Interval::I2m => "2m",

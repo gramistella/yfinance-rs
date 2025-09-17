@@ -7,11 +7,20 @@ use crate::core::wire::{from_raw, from_raw_date};
 use crate::core::{
     YfClient, YfError,
     client::{CacheMode, RetryConfig},
-    conversions::*,
+    conversions::{
+        i64_to_datetime,
+        string_to_insider_position,
+        string_to_transaction_type,
+        u64_to_money_with_currency,
+    },
     quotesummary,
 };
 use chrono::DateTime;
 use paft::prelude::Currency;
+
+#[inline]
+#[allow(clippy::cast_precision_loss)]
+const fn u64_to_f64(n: u64) -> f64 { n as f64 }
 
 const MODULES: &str = "institutionOwnership,fundOwnership,majorHoldersBreakdown,insiderTransactions,insiderHolders,netSharePurchaseActivity";
 
@@ -66,7 +75,7 @@ pub(super) async fn major_holders(
     if let Some(v) = from_raw(breakdown.institutions_count) {
         result.push(MajorHolder {
             category: "Number of Institutions Holding Shares".into(),
-            value: v as f64,
+            value: u64_to_f64(v),
         });
     }
 
@@ -75,7 +84,7 @@ pub(super) async fn major_holders(
 
 fn map_ownership_list(
     node: Option<super::wire::OwnershipNode>,
-    currency: Currency,
+    currency: &Currency,
 ) -> Vec<InstitutionalHolder> {
     node.and_then(|n| n.ownership_list)
         .unwrap_or_default()
@@ -89,7 +98,7 @@ fn map_ownership_list(
             ),
             pct_held: from_raw(h.pct_held),
             value: from_raw(h.value)
-                .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
+                .map(|v| u64_to_money_with_currency(v, currency.clone())),
         })
         .collect()
 }
@@ -102,7 +111,7 @@ pub(super) async fn institutional_holders(
 ) -> Result<Vec<InstitutionalHolder>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
     let currency = client.reporting_currency(symbol, None).await;
-    Ok(map_ownership_list(root.institution_ownership, currency))
+    Ok(map_ownership_list(root.institution_ownership, &currency))
 }
 
 pub(super) async fn mutual_fund_holders(
@@ -113,7 +122,7 @@ pub(super) async fn mutual_fund_holders(
 ) -> Result<Vec<InstitutionalHolder>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
     let currency = client.reporting_currency(symbol, None).await;
-    Ok(map_ownership_list(root.fund_ownership, currency))
+    Ok(map_ownership_list(root.fund_ownership, &currency))
 }
 
 pub(super) async fn insider_transactions(
@@ -137,7 +146,7 @@ pub(super) async fn insider_transactions(
             transaction_type: string_to_transaction_type(t.transaction.unwrap_or_default()),
             shares: from_raw(t.shares),
             value: from_raw(t.value)
-                .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
+                .map(|v| u64_to_money_with_currency(v, currency.clone())),
             transaction_date: from_raw_date(t.start_date).map_or_else(
                 || DateTime::from_timestamp(0, 0).unwrap_or_default(),
                 i64_to_datetime,

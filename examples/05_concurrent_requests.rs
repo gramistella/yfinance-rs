@@ -1,5 +1,5 @@
 use futures::future::try_join_all;
-use yfinance_rs::core::conversions::*;
+use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{FundamentalsBuilder, SearchBuilder, Ticker, YfClient};
 
 #[tokio::main]
@@ -67,9 +67,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let total_esg = if parts.is_empty() {
         0.0
     } else {
-        parts.iter().sum::<f64>() / (parts.len() as f64)
+        let denom: f64 = u32::try_from(parts.len()).map(f64::from).unwrap_or(1.0);
+        parts.iter().sum::<f64>() / denom
     };
-    println!("MSFT Total ESG Score: {:.2}", total_esg);
+    println!("MSFT Total ESG Score: {total_esg:.2}");
     let institutional_holders = msft_ticker.institutional_holders().await?;
     if let Some(holder) = institutional_holders.first() {
         println!(

@@ -14,8 +14,7 @@ async fn offline_shares_uses_recorded_fixture() {
     let mock_annual = server.mock(|when, then| {
         when.method(GET)
             .path(format!(
-                "/ws/fundamentals-timeseries/v1/finance/timeseries/{}",
-                sym
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
             ))
             .query_param("symbol", sym)
             .query_param("type", "annualBasicAverageShares")
@@ -29,8 +28,7 @@ async fn offline_shares_uses_recorded_fixture() {
     let mock_quarterly = server.mock(|when, then| {
         when.method(GET)
             .path(format!(
-                "/ws/fundamentals-timeseries/v1/finance/timeseries/{}",
-                sym
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
             ))
             .query_param("symbol", sym)
             .query_param("type", "quarterlyBasicAverageShares")

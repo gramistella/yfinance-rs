@@ -21,9 +21,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let total_esg_score = if total_esg.is_empty() {
                 0.0
             } else {
-                total_esg.iter().sum::<f64>() / (total_esg.len() as f64)
+                let denom = u32::try_from(total_esg.len()).map(f64::from).unwrap_or(1.0);
+                total_esg.iter().sum::<f64>() / denom
             };
-            println!("Total ESG Score: {:.2}", total_esg_score);
+            println!("Total ESG Score: {total_esg_score:.2}");
             println!(
                 "Environmental Score: {:.2}",
                 scores.environmental.unwrap_or_default()
@@ -35,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         Err(e) => {
-            eprintln!("Failed to fetch ESG scores: {}", e);
+            eprintln!("Failed to fetch ESG scores: {e}");
         }
     }
     println!("--------------------------------------\n");
@@ -60,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Err(e) => {
-            eprintln!("Failed to fetch recommendations: {}", e);
+            eprintln!("Failed to fetch recommendations: {e}");
         }
     }
 
@@ -74,18 +75,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 upgrade
                     .action
                     .as_ref()
-                    .map(|a| a.to_string())
-                    .unwrap_or("N/A".to_string()),
+                    .map_or("N/A".to_string(), std::string::ToString::to_string),
                 upgrade
                     .from_grade
                     .as_ref()
-                    .map(|g| g.to_string())
-                    .unwrap_or("N/A".to_string()),
+                    .map_or("N/A".to_string(), std::string::ToString::to_string),
                 upgrade
                     .to_grade
                     .as_ref()
-                    .map(|g| g.to_string())
-                    .unwrap_or("N/A".to_string())
+                    .map_or("N/A".to_string(), std::string::ToString::to_string)
             );
         }
     }
@@ -95,13 +93,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let query = "Apple Inc.";
     let search_results = SearchBuilder::new(&client, query).fetch().await;
 
-    println!("--- Searching for '{}' ---", query);
+    println!("--- Searching for '{query}' ---");
     match search_results {
         Ok(results) => {
             println!("Found {} results:", results.quotes.len());
             for quote in results.quotes.iter().take(5) {
                 println!(
-                    "  - {} ({}): {}",
+                    "  - {} ({}) : {}",
                     quote.symbol,
                     quote.quote_type.as_deref().unwrap_or("N/A"),
                     quote.longname.as_deref().unwrap_or("N/A")
@@ -109,7 +107,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Err(e) => {
-            eprintln!("Search failed: {}", e);
+            eprintln!("Search failed: {e}");
         }
     }
     println!("--------------------------------------");

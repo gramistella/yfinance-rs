@@ -1,7 +1,7 @@
 use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_history_smoke() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -20,7 +20,7 @@ async fn live_history_smoke() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_history_for_record() {
     if !crate::common::is_recording() {
         return;

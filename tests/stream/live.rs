@@ -1,7 +1,8 @@
 use yfinance_rs::StreamMethod;
+use tokio::time::{Duration, timeout};
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_stream_smoke() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -15,7 +16,6 @@ async fn live_stream_smoke() {
 
     let (handle, mut rx) = builder.start().unwrap();
 
-    use tokio::time::{Duration, timeout};
     let got = timeout(Duration::from_secs(90), rx.recv()).await;
 
     handle.abort();

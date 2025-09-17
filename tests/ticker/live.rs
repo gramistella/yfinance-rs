@@ -1,5 +1,5 @@
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_ticker_quote_for_record() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -19,7 +19,7 @@ async fn live_ticker_quote_for_record() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_ticker_options_for_record() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -35,7 +35,7 @@ async fn live_ticker_options_for_record() {
         assert!(!expiries.is_empty());
     }
 
-    if let Some(first) = expiries.first().cloned() {
+    if let Some(first) = expiries.first().copied() {
         let chain = t.option_chain(Some(first)).await.unwrap();
 
         if !crate::common::is_recording() {
@@ -54,7 +54,7 @@ async fn live_ticker_options_for_record() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_ticker_shares_for_record() {
     if !crate::common::is_recording() {
         return;
@@ -66,7 +66,7 @@ async fn live_ticker_shares_for_record() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_ticker_capital_gains_for_record() {
     if !crate::common::is_recording() {
         return;

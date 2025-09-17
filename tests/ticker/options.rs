@@ -37,7 +37,7 @@ async fn options_expirations_happy() {
     let expiries = t.options().await.unwrap();
     mock.assert();
 
-    assert_eq!(expiries, vec![1737072000, 1737676800]);
+    assert_eq!(expiries, vec![1_737_072_000, 1_737_676_800]);
 }
 
 #[tokio::test]
@@ -82,7 +82,7 @@ async fn option_chain_for_specific_date() {
       }
     }"#;
 
-    let date = 1737072000_i64;
+    let date = 1_737_072_000_i64;
 
     let mock = server.mock(|when, then| {
         when.method(GET)
@@ -130,7 +130,7 @@ async fn options_retry_with_crumb_on_403() {
     let server = MockServer::start();
 
     // First call returns 403 (unauthorized) ONLY when the crumb is missing.
-    let date = 1737072000_i64;
+    let date = 1_737_072_000_i64;
     let first = server.mock(|when, then| {
         when.method(GET)
             .path("/v7/finance/options/MSFT")
@@ -138,8 +138,8 @@ async fn options_retry_with_crumb_on_403() {
             .matches(|req| {
                 // httpmock 0.7 exposes `query_params` as a nested Vec.
                 // Reject the match if ANY "crumb" param is present.
-                for group in req.query_params.iter() {
-                    for (k, _) in group.iter() {
+                if let Some(group) = &req.query_params {
+                    for (k, _) in group {
                         if k == "crumb" {
                             return false;
                         }

@@ -9,6 +9,8 @@ use crate::{
 };
 use paft::prelude::Money;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+type DateRange = (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>);
+type MaybeDateRange = Option<DateRange>;
 
 /// The result of a multi-symbol download operation.
 #[derive(Debug, Clone)]
@@ -54,6 +56,146 @@ pub struct DownloadBuilder {
 }
 
 impl DownloadBuilder {
+    fn precompute_period_dt(&self) -> Result<MaybeDateRange, YfError> {
+        if let Some((p1, p2)) = self.period {
+            use chrono::{TimeZone, Utc};
+            let start = Utc
+                .timestamp_opt(p1, 0)
+                .single()
+                .ok_or_else(|| YfError::InvalidParams("invalid period1".into()))?;
+            let end = Utc
+                .timestamp_opt(p2, 0)
+                .single()
+                .ok_or_else(|| YfError::InvalidParams("invalid period2".into()))?;
+            Ok(Some((start, end)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn build_history_for_symbol(
+        &self,
+        sym: &str,
+        period_dt: Option<(chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>,
+        need_adjust_in_fetch: bool,
+    ) -> HistoryBuilder {
+        let mut hb: HistoryBuilder = HistoryBuilder::new(&self.client, sym.to_string())
+            .interval(self.interval)
+            .auto_adjust(need_adjust_in_fetch)
+            .prepost(self.include_prepost)
+            .actions(self.include_actions)
+            .keepna(self.keepna)
+            .cache_mode(self.cache_mode)
+            .retry_policy(self.retry_override.clone());
+
+        if let Some((start, end)) = period_dt {
+            hb = hb.between(start, end);
+        } else if let Some(r) = self.range {
+            hb = hb.range(r);
+        } else {
+            hb = hb.range(Range::M6);
+        }
+        hb
+    }
+
+    fn apply_back_adjust(&self, rows: &mut [Candle], unadjusted_close: &mut Option<Vec<Money>>) {
+        if self.back_adjust
+            && let Some(raw) = unadjusted_close.take()
+        {
+            for (i, c) in rows.iter_mut().enumerate() {
+                if let Some(rc) = raw.get(i)
+                    && rc.amount().to_f64().is_some_and(f64::is_finite)
+                {
+                    c.close = rc.clone();
+                }
+            }
+        }
+    }
+
+    fn apply_rounding_if_enabled(&self, rows: &mut [Candle]) {
+        if !self.rounding {
+            return;
+        }
+        for c in rows {
+            if c.open.amount().to_f64().is_some_and(f64::is_finite) {
+                c.open = Money::new(
+                    rust_decimal::Decimal::from_f64(round2(
+                        c.open.amount().to_f64().unwrap_or(0.0),
+                    ))
+                    .unwrap_or_default(),
+                    c.open.currency().clone(),
+                );
+            }
+            if c.high.amount().to_f64().is_some_and(f64::is_finite) {
+                c.high = Money::new(
+                    rust_decimal::Decimal::from_f64(round2(
+                        c.high.amount().to_f64().unwrap_or(0.0),
+                    ))
+                    .unwrap_or_default(),
+                    c.high.currency().clone(),
+                );
+            }
+            if c.low.amount().to_f64().is_some_and(f64::is_finite) {
+                c.low = Money::new(
+                    rust_decimal::Decimal::from_f64(round2(
+                        c.low.amount().to_f64().unwrap_or(0.0),
+                    ))
+                    .unwrap_or_default(),
+                    c.low.currency().clone(),
+                );
+            }
+            if c.close.amount().to_f64().is_some_and(f64::is_finite) {
+                c.close = Money::new(
+                    rust_decimal::Decimal::from_f64(round2(
+                        c.close.amount().to_f64().unwrap_or(0.0),
+                    ))
+                    .unwrap_or_default(),
+                    c.close.currency().clone(),
+                );
+            }
+        }
+    }
+
+    fn maybe_repair(&self, rows: &mut [Candle]) {
+        if self.repair {
+            repair_scale_outliers(rows);
+        }
+    }
+
+    fn process_joined_results(
+        &self,
+        joined: Vec<(String, HistoryResponse)>,
+        need_adjust_in_fetch: bool,
+    ) -> DownloadResult {
+        let mut series: std::collections::HashMap<String, Vec<Candle>> =
+            std::collections::HashMap::new();
+        let mut meta: std::collections::HashMap<String, Option<HistoryMeta>> =
+            std::collections::HashMap::new();
+        let mut actions: std::collections::HashMap<String, Vec<Action>> =
+            std::collections::HashMap::new();
+
+        for (sym, mut resp) in joined {
+            let mut v = resp.candles;
+
+            self.apply_back_adjust(&mut v, &mut resp.unadjusted_close);
+            self.maybe_repair(&mut v);
+            self.apply_rounding_if_enabled(&mut v);
+
+            if self.include_actions {
+                actions.insert(sym.clone(), resp.actions);
+            }
+            meta.insert(sym.clone(), resp.meta);
+            series.insert(sym, v);
+        }
+
+        DownloadResult {
+            series,
+            meta,
+            actions,
+            adjusted: need_adjust_in_fetch,
+        }
+    }
+
     /// Creates a new `DownloadBuilder`.
     #[must_use]
     pub fn new(client: &YfClient) -> Self {
@@ -197,41 +339,11 @@ impl DownloadBuilder {
         }
 
         let need_adjust_in_fetch = self.auto_adjust || self.back_adjust;
-
-        // Precompute period timestamps here so we can use `?` safely
-        let period_dt = if let Some((p1, p2)) = self.period {
-            use chrono::{TimeZone, Utc};
-            let start = Utc
-                .timestamp_opt(p1, 0)
-                .single()
-                .ok_or_else(|| YfError::InvalidParams("invalid period1".into()))?;
-            let end = Utc
-                .timestamp_opt(p2, 0)
-                .single()
-                .ok_or_else(|| YfError::InvalidParams("invalid period2".into()))?;
-            Some((start, end))
-        } else {
-            None
-        };
+        let period_dt = self.precompute_period_dt()?;
 
         let futures = self.symbols.iter().map(|sym| {
             let sym = sym.clone();
-            let mut hb: HistoryBuilder = HistoryBuilder::new(&self.client, sym.clone())
-                .interval(self.interval)
-                .auto_adjust(need_adjust_in_fetch)
-                .prepost(self.include_prepost)
-                .actions(self.include_actions)
-                .keepna(self.keepna)
-                .cache_mode(self.cache_mode)
-                .retry_policy(self.retry_override.clone());
-
-            if let Some((start, end)) = period_dt {
-                hb = hb.between(start, end);
-            } else if let Some(r) = self.range {
-                hb = hb.range(r);
-            } else {
-                hb = hb.range(Range::M6);
-            }
+            let hb = self.build_history_for_symbol(&sym, period_dt, need_adjust_in_fetch);
 
             async move {
                 let full: HistoryResponse = hb.fetch_full().await?;
@@ -240,88 +352,7 @@ impl DownloadBuilder {
         });
 
         let joined: Vec<(String, HistoryResponse)> = try_join_all(futures).await?;
-
-        let mut series: std::collections::HashMap<String, Vec<Candle>> =
-            std::collections::HashMap::new();
-        let mut meta: std::collections::HashMap<String, Option<HistoryMeta>> =
-            std::collections::HashMap::new();
-        let mut actions: std::collections::HashMap<String, Vec<Action>> =
-            std::collections::HashMap::new();
-
-        for (sym, mut resp) in joined {
-            let mut v = resp.candles;
-
-            // Keep your current "back_adjust" semantics but avoid non-finite writes
-            if self.back_adjust
-                && let Some(raw) = resp.unadjusted_close.take()
-            {
-                for (i, c) in v.iter_mut().enumerate() {
-                    if let Some(rc) = raw.get(i)
-                        && rc.amount().to_f64().is_some_and(|v| v.is_finite())
-                    {
-                        c.close = rc.clone();
-                    }
-                }
-            }
-
-            if self.repair {
-                repair_scale_outliers(&mut v);
-            }
-
-            if self.rounding {
-                for c in &mut v {
-                    if c.open.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.open = Money::new(
-                            rust_decimal::Decimal::from_f64(round2(
-                                c.open.amount().to_f64().unwrap_or(0.0),
-                            ))
-                            .unwrap_or_default(),
-                            c.open.currency().clone(),
-                        );
-                    }
-                    if c.high.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.high = Money::new(
-                            rust_decimal::Decimal::from_f64(round2(
-                                c.high.amount().to_f64().unwrap_or(0.0),
-                            ))
-                            .unwrap_or_default(),
-                            c.high.currency().clone(),
-                        );
-                    }
-                    if c.low.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.low = Money::new(
-                            rust_decimal::Decimal::from_f64(round2(
-                                c.low.amount().to_f64().unwrap_or(0.0),
-                            ))
-                            .unwrap_or_default(),
-                            c.low.currency().clone(),
-                        );
-                    }
-                    if c.close.amount().to_f64().is_some_and(|v| v.is_finite()) {
-                        c.close = Money::new(
-                            rust_decimal::Decimal::from_f64(round2(
-                                c.close.amount().to_f64().unwrap_or(0.0),
-                            ))
-                            .unwrap_or_default(),
-                            c.close.currency().clone(),
-                        );
-                    }
-                }
-            }
-
-            if self.include_actions {
-                actions.insert(sym.clone(), resp.actions);
-            }
-            meta.insert(sym.clone(), resp.meta);
-            series.insert(sym, v);
-        }
-
-        Ok(DownloadResult {
-            series,
-            meta,
-            actions,
-            adjusted: need_adjust_in_fetch,
-        })
+        Ok(self.process_joined_results(joined, need_adjust_in_fetch))
     }
 }
 
@@ -355,9 +386,9 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
         let n = &next.close;
         let c = &cur.close;
 
-        if !(p.amount().to_f64().is_some_and(|v| v.is_finite())
-            && n.amount().to_f64().is_some_and(|v| v.is_finite())
-            && c.amount().to_f64().is_some_and(|v| v.is_finite()))
+        if !(p.amount().to_f64().is_some_and(f64::is_finite)
+            && n.amount().to_f64().is_some_and(f64::is_finite)
+            && c.amount().to_f64().is_some_and(f64::is_finite))
         {
             continue;
         }
@@ -397,22 +428,22 @@ fn repair_scale_outliers(rows: &mut [Candle]) {
 }
 
 fn scale_row_prices(c: &mut Candle, scale: f64) {
-    if c.open.amount().to_f64().is_some_and(|v| v.is_finite()) {
+    if c.open.amount().to_f64().is_some_and(f64::is_finite) {
         c.open = c
             .open
             .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
-    if c.high.amount().to_f64().is_some_and(|v| v.is_finite()) {
+    if c.high.amount().to_f64().is_some_and(f64::is_finite) {
         c.high = c
             .high
             .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
-    if c.low.amount().to_f64().is_some_and(|v| v.is_finite()) {
+    if c.low.amount().to_f64().is_some_and(f64::is_finite) {
         c.low = c
             .low
             .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
     }
-    if c.close.amount().to_f64().is_some_and(|v| v.is_finite()) {
+    if c.close.amount().to_f64().is_some_and(f64::is_finite) {
         c.close = c
             .close
             .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());

@@ -10,7 +10,7 @@ use crate::{
     EsgBuilder, HoldersBuilder, NewsBuilder, YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
-    core::conversions::*,
+    core::conversions::{money_to_f64, money_to_currency_str, exchange_to_string, market_state_to_string, datetime_to_i64},
     fundamentals::FundamentalsBuilder,
     history::HistoryBuilder,
 };
@@ -103,12 +103,12 @@ impl Ticker {
     ///
     /// This method will return an error if the core profile data cannot be fetched.
     pub async fn info(&self) -> Result<Info, YfError> {
-        info::fetch_info(
+        Box::pin(info::fetch_info(
             &self.client,
             &self.symbol,
             self.cache_mode,
             self.retry_override.as_ref(),
-        )
+        ))
         .await
     }
 
@@ -141,7 +141,7 @@ impl Ticker {
             .price
             .as_ref()
             .map(money_to_f64)
-            .or(q.previous_close.as_ref().map(money_to_f64))
+            .or_else(|| q.previous_close.as_ref().map(money_to_f64))
             .ok_or_else(|| YfError::MissingData("quote missing last/previous price".into()))?;
 
         // Extract currency from the price or previous_close Money objects

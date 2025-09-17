@@ -9,7 +9,7 @@ async fn offline_capital_gains_from_history() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v8/finance/chart/{}", sym))
+            .path(format!("/v8/finance/chart/{sym}"))
             .query_param("range", "max")
             .query_param("interval", "1d")
             .query_param("events", "div|split|capitalGains");

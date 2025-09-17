@@ -4,7 +4,7 @@
 use url::Url;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn record_multi_quotes_live() {
     let url = Url::parse("https://query1.finance.yahoo.com/v7/finance/quote").unwrap();
     let client = yfinance_rs::YfClient::builder()

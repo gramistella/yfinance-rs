@@ -1,4 +1,4 @@
-use yfinance_rs::core::conversions::*;
+use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{Interval, Range, Ticker, YfClient};
 
 #[tokio::main]
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let actions = ticker.actions(Some(Range::Ytd)).await?;
     println!("  Found {} actions (dividends/splits) YTD.", actions.len());
     if let Some(action) = actions.last() {
-        println!("  Most recent action: {:?}", action);
+        println!("  Most recent action: {action:?}");
     }
     println!();
 

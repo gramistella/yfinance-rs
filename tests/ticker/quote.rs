@@ -44,11 +44,11 @@ async fn quote_v7_happy_path() {
 
     assert_eq!(q.symbol, "AAPL");
     assert_eq!(
-        q.exchange.as_ref().map(|e| e.to_string()),
+        q.exchange.as_ref().map(std::string::ToString::to_string),
         Some("NASDAQ".to_string())
     );
     assert_eq!(
-        q.market_state.as_ref().map(|m| m.to_string()),
+        q.market_state.as_ref().map(std::string::ToString::to_string),
         Some("REGULAR".to_string())
     );
     assert!((money_to_f64(&q.price.unwrap()) - 190.25).abs() < 1e-9);
@@ -104,7 +104,7 @@ async fn fast_info_derives_last_price() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_quote_smoke() {
     if std::env::var("YF_LIVE").ok().as_deref() != Some("1")
         && std::env::var("YF_RECORD").ok().as_deref() != Some("1")

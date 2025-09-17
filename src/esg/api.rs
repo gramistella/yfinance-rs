@@ -65,7 +65,7 @@ pub(super) async fn fetch_esg_scores(
     // If percentile/controversy are needed later, they can be mapped into an EsgSummary in paft.
     // For now we return only scores, and tests/examples using booleans will need to be adjusted.
 
-    // Return scores packed in paft type; involvement is returned separately via paft EsgSummary in future.
-    // Here we mimic the previous API by returning scores only; callers expecting flags must adapt.
+    // Currently the public API returns only scores; suppress unused warning for involvement until used.
+    let _ = involvement;
     Ok(scores)
 }

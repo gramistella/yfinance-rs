@@ -6,7 +6,7 @@ use yfinance_rs::{Ticker, YfClient};
 #[tokio::test]
 async fn option_chain_expiration_falls_back_to_url_date() {
     let server = MockServer::start();
-    let date = 1737072000_i64;
+    let date = 1_737_072_000_i64;
 
     // Note: "expirationDate" is deliberately omitted from the payload.
     let body = r#"{

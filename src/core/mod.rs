@@ -23,7 +23,7 @@ pub(crate) mod wire;
 pub(crate) mod fixtures;
 
 #[cfg(feature = "dataframe")]
-/// DataFrame conversion traits.
+/// `DataFrame` conversion traits.
 pub mod dataframe;
 
 pub mod conversions;

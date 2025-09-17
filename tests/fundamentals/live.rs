@@ -1,5 +1,5 @@
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_fundamentals_smoke() {
     // Mirrors the live/record pattern used elsewhere
     if !crate::common::live_or_record_enabled() {
@@ -53,7 +53,7 @@ async fn live_fundamentals_smoke() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_fundamentals_for_record() {
     // Only run when actually recording; this populates fixtures for offline tests.
     if !crate::common::is_recording() {

@@ -19,6 +19,11 @@ fn fixture_dir() -> PathBuf {
 }
 
 #[must_use]
+/// Returns fixture file contents for a given endpoint/symbol/extension.
+///
+/// # Panics
+///
+/// Panics if the fixture file cannot be read.
 pub fn fixture(endpoint: &str, symbol: &str, ext: &str) -> String {
     let path = fixture_path(endpoint, symbol, ext);
     fs::read_to_string(&path)

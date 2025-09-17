@@ -1,5 +1,5 @@
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_download_smoke() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -19,7 +19,7 @@ async fn live_download_smoke() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_download_for_record() {
     // Only writes fixtures when YF_RECORD=1
     if !crate::common::is_recording() {

@@ -79,11 +79,11 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
         Some(f64_to_money_with_currency(456.0, Currency::USD))
     );
     assert_eq!(
-        aapl.exchange.as_ref().map(|e| e.to_string()),
+        aapl.exchange.as_ref().map(std::string::ToString::to_string),
         Some("NASDAQ".to_string())
     );
     assert_eq!(
-        msft.exchange.as_ref().map(|e| e.to_string()),
+        msft.exchange.as_ref().map(std::string::ToString::to_string),
         Some("NASDAQ".to_string())
     );
 }

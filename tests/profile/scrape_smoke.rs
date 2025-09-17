@@ -28,7 +28,7 @@ async fn profile_scrape_company_happy() {
             assert_eq!(c.website.as_deref(), Some("https://www.apple.com"));
             assert!(c.address.is_some());
         }
-        _ => panic!("expected Company"),
+        Profile::Fund(_) => panic!("expected Company"),
     }
 }
 
@@ -55,6 +55,6 @@ async fn profile_scrape_fund_happy() {
             assert_eq!(f.family.as_deref(), Some("Invesco"));
             assert_eq!(f.kind.to_string(), "ETF");
         }
-        _ => panic!("expected Fund"),
+        Profile::Company(_) => panic!("expected Fund"),
     }
 }

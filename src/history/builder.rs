@@ -4,7 +4,7 @@ mod assemble;
 mod fetch;
 
 use crate::core::client::{CacheMode, RetryConfig};
-use crate::core::conversions::*;
+use crate::core::conversions::f64_to_money_with_currency_str;
 use crate::core::{YfClient, YfError};
 use crate::history::wire::MetaNode;
 use chrono_tz::Tz;
@@ -175,7 +175,7 @@ impl HistoryBuilder {
         let reporting_currency = self.client.reporting_currency(&self.symbol, None).await;
 
         let (mut actions_out, split_events) =
-            extract_actions(fetched.events.as_ref(), reporting_currency.clone());
+            extract_actions(fetched.events.as_ref(), &reporting_currency);
 
         // 3) Cumulative split factors after each bar
         let cum_split_after = cumulative_split_after(&fetched.ts, &split_events);

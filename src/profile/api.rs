@@ -2,7 +2,7 @@
 
 use crate::{
     YfClient, YfError,
-    core::{client::CacheMode, conversions::*, quotesummary},
+    core::{client::CacheMode, conversions::string_to_fund_kind, quotesummary},
 };
 use serde::Deserialize;
 

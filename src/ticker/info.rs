@@ -1,11 +1,12 @@
 use crate::{
     YfClient, YfError, analysis,
     core::client::{CacheMode, RetryConfig},
-    core::conversions::*,
+    core::conversions::{money_to_f64, money_to_currency_str, exchange_to_string, market_state_to_string, fund_kind_to_string},
     esg,
     profile::Profile,
     ticker::model::Info,
 };
+use crate::ticker::{PriceTarget, RecommendationSummary};
 
 /// Private helper to handle optional async results, logging errors in debug mode.
 fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option<T> {
@@ -26,7 +27,43 @@ pub(super) async fn fetch_info(
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<Info, YfError> {
-    // Run all fetches concurrently
+    let (quote, profile, price_target, rec_summary, esg_scores) =
+        Box::pin(fetch_info_parts(client, symbol, cache_mode, retry_override)).await?;
+    let ProfileFields { sector, industry, website, summary, address, isin, family, fund_kind } =
+        extract_profile_fields(&profile);
+    let info = assemble_info(
+        symbol,
+        quote.as_ref(),
+        sector,
+        industry,
+        website,
+        summary,
+        address,
+        isin,
+        family,
+        fund_kind,
+        price_target.as_ref(),
+        rec_summary.as_ref(),
+        esg_scores.as_ref(),
+    );
+    Ok(info)
+}
+
+async fn fetch_info_parts(
+    client: &YfClient,
+    symbol: &str,
+    cache_mode: CacheMode,
+    retry_override: Option<&RetryConfig>,
+) -> Result<
+    (
+        Option<crate::Quote>,
+        Profile,
+        Option<PriceTarget>,
+        Option<RecommendationSummary>,
+        Option<paft::fundamentals::EsgScores>,
+    ),
+    YfError,
+> {
     let (quote_res, profile_res, price_target_res, rec_summary_res, esg_res) = tokio::join!(
         crate::ticker::quote::fetch_quote(client, symbol, cache_mode, retry_override),
         crate::profile::load_profile(client, symbol),
@@ -44,60 +81,108 @@ pub(super) async fn fetch_info(
             .fetch()
     );
 
-    // Profile is essential. If it fails, we can't determine company vs. fund.
     let profile = profile_res?;
-
-    // Use the generic helper for each fallible fetch.
     let quote = log_err_async(quote_res, "quote", symbol);
     let price_target = log_err_async(price_target_res, "price target", symbol);
     let rec_summary = log_err_async(rec_summary_res, "recommendation summary", symbol);
     let esg_scores = log_err_async(esg_res, "esg scores", symbol);
+    Ok((quote, profile, price_target, rec_summary, esg_scores))
+}
 
-    // Extract profile-specific data using a more idiomatic match expression.
-    let (sector, industry, website, summary, address, isin, family, fund_kind) = match profile {
-        Profile::Company(c) => (
-            c.sector, c.industry, c.website, c.summary, c.address, c.isin,
-            None, // No family for a company
-            None, // No fund_kind for a company
-        ),
-        Profile::Fund(f) => (
-            None, // No sector for a fund
-            None, // No industry for a fund
-            None, // No website for a fund
-            None, // No summary for a fund
-            None, // No address for a fund
-            f.isin,
-            f.family,
-            Some(f.kind),
-        ),
-    };
+struct ProfileFields {
+    sector: Option<String>,
+    industry: Option<String>,
+    website: Option<String>,
+    summary: Option<String>,
+    address: Option<paft::fundamentals::Address>,
+    isin: Option<String>,
+    family: Option<String>,
+    fund_kind: Option<paft::fundamentals::FundKind>,
+}
 
-    let info = Info {
-        // From Quote or default to symbol
+fn extract_profile_fields(
+    profile: &Profile,
+) -> ProfileFields {
+    match profile {
+        Profile::Company(c) => ProfileFields {
+            sector: c.sector.clone(),
+            industry: c.industry.clone(),
+            website: c.website.clone(),
+            summary: c.summary.clone(),
+            address: c.address.clone(),
+            isin: c.isin.clone(),
+            family: None,
+            fund_kind: None,
+        },
+        Profile::Fund(f) => ProfileFields {
+            sector: None,
+            industry: None,
+            website: None,
+            summary: None,
+            address: None,
+            isin: f.isin.clone(),
+            family: f.family.clone(),
+            fund_kind: Some(f.kind.clone()),
+        },
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn assemble_info(
+    symbol: &str,
+    quote: Option<&crate::Quote>,
+    sector: Option<String>,
+    industry: Option<String>,
+    website: Option<String>,
+    summary: Option<String>,
+    address: Option<paft::fundamentals::Address>,
+    isin: Option<String>,
+    family: Option<String>,
+    fund_kind: Option<paft::fundamentals::FundKind>,
+    price_target: Option<&PriceTarget>,
+    rec_summary: Option<&RecommendationSummary>,
+    esg_scores: Option<&paft::fundamentals::EsgScores>,
+) -> Info {
+    let currency = quote.and_then(|q| {
+        q.price
+            .as_ref()
+            .and_then(money_to_currency_str)
+            .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str))
+    });
+
+    let total_esg_score = esg_scores.and_then(|esg| {
+        let mut sum = 0.0;
+        let mut count = 0u32;
+        if let Some(v) = esg.environmental {
+            sum += v;
+            count += 1;
+        }
+        if let Some(v) = esg.social {
+            sum += v;
+            count += 1;
+        }
+        if let Some(v) = esg.governance {
+            sum += v;
+            count += 1;
+        }
+        if count > 0 {
+            Some(sum / f64::from(count))
+        } else {
+            None
+        }
+    });
+
+    Info {
         symbol: quote
-            .as_ref()
             .map_or_else(|| symbol.to_string(), |q| q.symbol.clone()),
-        short_name: quote.as_ref().and_then(|q| q.shortname.clone()),
-        regular_market_price: quote
-            .as_ref()
-            .and_then(|q| q.price.as_ref().map(money_to_f64)),
+        short_name: quote.and_then(|q| q.shortname.clone()),
+        regular_market_price: quote.and_then(|q| q.price.as_ref().map(money_to_f64)),
         regular_market_previous_close: quote
-            .as_ref()
             .and_then(|q| q.previous_close.as_ref().map(money_to_f64)),
-        currency: quote.as_ref().and_then(|q| {
-            q.price
-                .as_ref()
-                .and_then(money_to_currency_str)
-                .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str))
-        }),
-        exchange: quote
-            .as_ref()
-            .and_then(|q| exchange_to_string(q.exchange.clone())),
-        market_state: quote
-            .as_ref()
-            .and_then(|q| market_state_to_string(q.market_state.clone())),
+        currency,
+        exchange: quote.and_then(|q| exchange_to_string(q.exchange.clone())),
+        market_state: quote.and_then(|q| market_state_to_string(q.market_state.clone())),
 
-        // From Profile
         sector,
         industry,
         website,
@@ -107,46 +192,16 @@ pub(super) async fn fetch_info(
         family,
         fund_kind: fund_kind_to_string(fund_kind),
 
-        // From Analysis
-        target_mean_price: price_target
-            .as_ref()
-            .and_then(|pt| pt.mean.as_ref().map(money_to_f64)),
-        target_high_price: price_target
-            .as_ref()
-            .and_then(|pt| pt.high.as_ref().map(money_to_f64)),
-        target_low_price: price_target
-            .as_ref()
-            .and_then(|pt| pt.low.as_ref().map(money_to_f64)),
-        number_of_analyst_opinions: price_target.as_ref().and_then(|pt| pt.number_of_analysts),
-        recommendation_mean: rec_summary.as_ref().and_then(|rs| rs.mean),
-        recommendation_key: None, // paft RecommendationSummary doesn't have mean_key field
+        target_mean_price: price_target.and_then(|pt| pt.mean.as_ref().map(money_to_f64)),
+        target_high_price: price_target.and_then(|pt| pt.high.as_ref().map(money_to_f64)),
+        target_low_price: price_target.and_then(|pt| pt.low.as_ref().map(money_to_f64)),
+        number_of_analyst_opinions: price_target.and_then(|pt| pt.number_of_analysts),
+        recommendation_mean: rec_summary.and_then(|rs| rs.mean),
+        recommendation_key: None,
 
-        // From ESG (paft::fundamentals::EsgScores)
-        total_esg_score: esg_scores.as_ref().and_then(|esg| {
-            let mut sum = 0.0;
-            let mut count = 0u32;
-            if let Some(v) = esg.environmental {
-                sum += v;
-                count += 1;
-            }
-            if let Some(v) = esg.social {
-                sum += v;
-                count += 1;
-            }
-            if let Some(v) = esg.governance {
-                sum += v;
-                count += 1;
-            }
-            if count > 0 {
-                Some(sum / f64::from(count))
-            } else {
-                None
-            }
-        }),
-        environment_score: esg_scores.as_ref().and_then(|esg| esg.environmental),
-        social_score: esg_scores.as_ref().and_then(|esg| esg.social),
-        governance_score: esg_scores.as_ref().and_then(|esg| esg.governance),
-    };
-
-    Ok(info)
+        total_esg_score,
+        environment_score: esg_scores.and_then(|esg| esg.environmental),
+        social_score: esg_scores.and_then(|esg| esg.social),
+        governance_score: esg_scores.and_then(|esg| esg.governance),
+    }
 }

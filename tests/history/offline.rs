@@ -4,14 +4,13 @@ use url::Url;
 #[tokio::test]
 async fn offline_history_uses_recorded_fixture() {
     fn fixture_dir() -> std::path::PathBuf {
-        std::env::var("YF_FIXDIR")
-            .map(std::path::PathBuf::from)
-            .unwrap_or_else(|_| {
-                std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
-            })
+        std::env::var("YF_FIXDIR").map_or_else(
+            |_| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures"),
+            std::path::PathBuf::from,
+        )
     }
     fn fixture(endpoint: &str, symbol: &str, ext: &str) -> String {
-        let filename = format!("{}_{}.{}", endpoint, symbol, ext);
+        let filename = format!("{endpoint}_{symbol}.{ext}");
         let path = fixture_dir().join(&filename);
         std::fs::read_to_string(&path)
             .unwrap_or_else(|e| panic!("failed to read fixture {}: {}", path.display(), e))
@@ -21,7 +20,7 @@ async fn offline_history_uses_recorded_fixture() {
     let sym = "AAPL";
 
     let mock = server.mock(|when, then| {
-        when.method(GET).path(format!("/v8/finance/chart/{}", sym));
+        when.method(GET).path(format!("/v8/finance/chart/{sym}"));
         then.status(200)
             .header("content-type", "application/json")
             .body(fixture("history_chart", sym, "json"));

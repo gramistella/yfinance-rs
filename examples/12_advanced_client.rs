@@ -1,5 +1,5 @@
 use std::time::Duration;
-use yfinance_rs::core::conversions::*;
+use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{
     Ticker, YfClientBuilder, YfError,
     core::client::{Backoff, RetryConfig},
@@ -66,10 +66,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match bad_ticker.info().await {
         Ok(_) => println!("Unexpected success fetching bad ticker."),
         Err(YfError::MissingData(msg)) => {
-            println!("Correctly failed with a missing data error: {}", msg);
+            println!("Correctly failed with a missing data error: {msg}");
         }
         Err(e) => {
-            println!("Failed with an unexpected error type: {}", e);
+            println!("Failed with an unexpected error type: {e}");
         }
     }
 

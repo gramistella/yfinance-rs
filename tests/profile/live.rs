@@ -1,7 +1,7 @@
 use paft::fundamentals::Profile;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_profile_company() {
     if !crate::common::live_or_record_enabled() {
         return;
@@ -15,13 +15,13 @@ async fn live_profile_company() {
     if !crate::common::is_recording() {
         match prof {
             Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
-            _ => panic!("expected Company"),
+            Profile::Fund(_) => panic!("expected Company"),
         }
     }
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_profile_fund_for_record() {
     if !crate::common::is_recording() {
         return;
@@ -31,7 +31,7 @@ async fn live_profile_fund_for_record() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_profile_company_scrape_for_record() {
     if !crate::common::is_recording() {
         return;
@@ -44,7 +44,7 @@ async fn live_profile_company_scrape_for_record() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_profile_fund_scrape_for_record() {
     if !crate::common::is_recording() {
         return;

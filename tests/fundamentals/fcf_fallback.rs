@@ -2,6 +2,8 @@ use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
 use yfinance_rs::{Ticker, YfClient};
+use paft::prelude::Currency;
+use yfinance_rs::core::conversions::*;
 
 #[tokio::test]
 async fn cashflow_computes_fcf_when_missing() {
@@ -61,8 +63,6 @@ async fn cashflow_computes_fcf_when_missing() {
     mock.assert();
 
     assert_eq!(rows.len(), 1);
-    use paft::prelude::Currency;
-    use yfinance_rs::core::conversions::*;
     assert_eq!(
         rows[0].operating_cashflow,
         Some(f64_to_money_with_currency(100.0, Currency::USD))

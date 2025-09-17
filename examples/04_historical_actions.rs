@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use yfinance_rs::core::conversions::*;
+use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{DownloadBuilder, Interval, Range, Ticker, YfClient};
 
 #[tokio::main]
@@ -13,13 +13,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dividends = aapl_ticker.dividends(Some(Range::Y5)).await?;
     println!("Found {} dividends in the last 5 years.", dividends.len());
     if let Some((ts, amount)) = dividends.last() {
-        println!("  Latest dividend: ${:.2} on {}", amount, ts);
+        println!("  Latest dividend: ${amount:.2} on {ts}");
     }
 
     let splits = aapl_ticker.splits(Some(Range::Y5)).await?;
     println!("\nFound {} splits in the last 5 years.", splits.len());
     for (ts, num, den) in splits {
-        println!("  - Split of {}:{} on {}", num, den, ts);
+        println!("  - Split of {num}:{den} on {ts}");
     }
     println!("--------------------------------------\n");
 

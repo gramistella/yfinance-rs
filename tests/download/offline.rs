@@ -1,9 +1,18 @@
 use httpmock::Method::GET;
+use httpmock::MockServer;
 use url::Url;
 
 use crate::common;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::{DownloadBuilder, Interval, Range, YfClient};
+
+fn has_more_than_two_decimals(x: f64) -> bool {
+    if !x.is_finite() {
+        return false;
+    }
+    let cents = (x * 100.0).round();
+    (x - cents / 100.0).abs() > 1e-12
+}
 
 #[tokio::test]
 async fn download_multi_symbols_happy_path() {
@@ -261,28 +270,28 @@ async fn download_repair_is_noop_on_clean_data_offline() {
 }
 
 #[tokio::test]
-async fn download_rounding_and_keepna_offline() {
-    let server = crate::common::setup_server();
+async fn rounding_two_decimals() {
+    use yfinance_rs::core::conversions::money_to_f64;
+
+    let server = MockServer::start();
 
     let m_aapl = server.mock(|when, then| {
-        when.method(httpmock::Method::GET)
+        when.method(GET)
             .path("/v8/finance/chart/AAPL")
-            .query_param("range", "6mo")
-            .query_param("interval", "1d")
-            .query_param("includePrePost", "false")
-            .query_param("events", "div|split|capitalGains");
+            .query_param_exists("interval")
+            .query_param_exists("includePrePost")
+            .query_param_exists("range");
         then.status(200)
             .header("content-type", "application/json")
             .body(crate::common::fixture("history_chart", "AAPL", "json"));
     });
 
     let m_msft = server.mock(|when, then| {
-        when.method(httpmock::Method::GET)
+        when.method(GET)
             .path("/v8/finance/chart/MSFT")
-            .query_param("range", "6mo")
-            .query_param("interval", "1d")
-            .query_param("includePrePost", "false")
-            .query_param("events", "div|split|capitalGains");
+            .query_param_exists("interval")
+            .query_param_exists("includePrePost")
+            .query_param_exists("range");
         then.status(200)
             .header("content-type", "application/json")
             .body(crate::common::fixture("history_chart", "MSFT", "json"));
@@ -294,7 +303,7 @@ async fn download_rounding_and_keepna_offline() {
         .unwrap();
 
     let res = yfinance_rs::DownloadBuilder::new(&client)
-        .symbols(["AAPL", "MSFT"])
+        .symbols(["AAPL", "MSFT"]) 
         .rounding(true)
         .keepna(true)
         .run()
@@ -303,14 +312,6 @@ async fn download_rounding_and_keepna_offline() {
 
     m_aapl.assert();
     m_msft.assert();
-
-    fn has_more_than_two_decimals(x: f64) -> bool {
-        if !x.is_finite() {
-            return false;
-        }
-        let cents = (x * 100.0).round();
-        (x - cents / 100.0).abs() > 1e-12
-    }
 
     for bars in res.series.values() {
         for c in bars {

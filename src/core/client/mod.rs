@@ -235,13 +235,13 @@ impl YfClient {
 
         let mut debug_reason: Option<String> = None;
         let currency = match crate::profile::load_profile(self, symbol).await {
-            Ok(profile) => match extract_currency_from_profile(&profile) {
-                Some(currency) => currency,
-                None => {
+            Ok(profile) => extract_currency_from_profile(&profile).map_or_else(
+                || {
                     debug_reason = Some("profile missing country or unsupported currency".into());
                     Currency::USD
-                }
-            },
+                },
+                |currency| currency,
+            ),
             Err(err) => {
                 debug_reason = Some(format!("failed to load profile: {err}"));
                 Currency::USD

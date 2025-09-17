@@ -186,14 +186,12 @@ test +args='':
   just test-full {{args}}
 
 lint:
-  cargo clippy --workspace --lib --bins --tests --benches --examples --all-features -- -D warnings
+  cargo clippy --workspace --all-targets --all-features -- \
+    -W clippy::all -W clippy::cargo -W clippy::pedantic -W clippy::nursery -A clippy::multiple-crate-versions -D warnings
 
 # just lint-fix [optional flags...]
 # Example: just lint-fix --allow-dirty
 #          just lint-fix --allow-dirty --allow-staged
 lint-fix *FLAGS:
-  cargo clippy --workspace --lib --bins --tests --benches --examples --all-features --fix {{FLAGS}} -- -D warnings
-
-lint-strict:
-  cargo clippy --workspace --lib --bins --tests --benches --examples --all-features -- \
-    -W clippy::all -W clippy::cargo -W clippy::pedantic -W clippy::nursery -D warnings
+  cargo clippy --workspace --all-targets --all-features --fix {{FLAGS}} -- \
+    -W clippy::all -W clippy::cargo -W clippy::pedantic -W clippy::nursery -A clippy::multiple-crate-versions -D warnings

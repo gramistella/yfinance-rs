@@ -138,27 +138,10 @@ impl SearchBuilder {
     ///
     /// This method will return an error if the network request fails, the API returns a
     /// non-successful status code, or the response body cannot be parsed as a valid search result.
+    #[allow(clippy::too_many_lines)]
     pub async fn fetch(self) -> Result<SearchResponse, crate::core::YfError> {
         let mut url = self.base.clone();
-        {
-            let mut qp = url.query_pairs_mut();
-            qp.append_pair("q", &self.query);
-            if let Some(n) = self.quotes_count {
-                qp.append_pair("quotesCount", &n.to_string());
-            }
-            if let Some(n) = self.news_count {
-                qp.append_pair("newsCount", &n.to_string());
-            }
-            if let Some(n) = self.lists_count {
-                qp.append_pair("listsCount", &n.to_string());
-            }
-            if let Some(l) = &self.lang {
-                qp.append_pair("lang", l);
-            }
-            if let Some(r) = &self.region {
-                qp.append_pair("region", r);
-            }
-        }
+        Self::append_query_params(&mut url, &self.query, self.quotes_count, self.news_count, self.lists_count, self.lang.as_deref(), self.region.as_deref());
 
         if self.cache_mode == CacheMode::Use
             && let Some(body) = self.client.cache_get(&url).await
@@ -187,26 +170,8 @@ impl SearchBuilder {
                     .ok_or_else(|| crate::core::YfError::Auth("Crumb is not set".into()))?;
 
                 let mut url2 = self.base.clone();
-                {
-                    let mut qp = url2.query_pairs_mut();
-                    qp.append_pair("q", &self.query);
-                    if let Some(n) = self.quotes_count {
-                        qp.append_pair("quotesCount", &n.to_string());
-                    }
-                    if let Some(n) = self.news_count {
-                        qp.append_pair("newsCount", &n.to_string());
-                    }
-                    if let Some(n) = self.lists_count {
-                        qp.append_pair("listsCount", &n.to_string());
-                    }
-                    if let Some(l) = &self.lang {
-                        qp.append_pair("lang", l);
-                    }
-                    if let Some(r) = &self.region {
-                        qp.append_pair("region", r);
-                    }
-                    qp.append_pair("crumb", &crumb);
-                }
+                Self::append_query_params(&mut url2, &self.query, self.quotes_count, self.news_count, self.lists_count, self.lang.as_deref(), self.region.as_deref());
+                url2.query_pairs_mut().append_pair("crumb", &crumb);
 
                 resp = self
                     .client
@@ -261,6 +226,34 @@ impl SearchBuilder {
             self.client.cache_put(&url, &body, None).await;
         }
         parse_search_body(&body)
+    }
+
+    fn append_query_params(
+        url: &mut Url,
+        query: &str,
+        quotes_count: Option<u32>,
+        news_count: Option<u32>,
+        lists_count: Option<u32>,
+        lang: Option<&str>,
+        region: Option<&str>,
+    ) {
+        let mut qp = url.query_pairs_mut();
+        qp.append_pair("q", query);
+        if let Some(n) = quotes_count {
+            qp.append_pair("quotesCount", &n.to_string());
+        }
+        if let Some(n) = news_count {
+            qp.append_pair("newsCount", &n.to_string());
+        }
+        if let Some(n) = lists_count {
+            qp.append_pair("listsCount", &n.to_string());
+        }
+        if let Some(l) = lang {
+            qp.append_pair("lang", l);
+        }
+        if let Some(r) = region {
+            qp.append_pair("region", r);
+        }
     }
 }
 

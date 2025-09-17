@@ -38,7 +38,7 @@ async fn offline_search_uses_recorded_fixture() {
     // Count should reflect the number of quotes in the fixture
     assert_eq!(
         resp.count,
-        Some(resp.quotes.len() as u32),
+        Some(u32::try_from(resp.quotes.len()).unwrap_or(u32::MAX)),
         "record with YF_RECORD=1 first"
     );
     assert!(!resp.quotes.is_empty(), "record with YF_RECORD=1 first");

@@ -3,7 +3,7 @@ use yfinance_rs::core::{Interval, Range};
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_reporting_currency_inference() -> Result<(), Box<dyn std::error::Error>> {
     if !crate::common::live_or_record_enabled() {
         return Ok(());
@@ -65,7 +65,7 @@ async fn live_reporting_currency_inference() -> Result<(), Box<dyn std::error::E
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_gs2c_dual_listing_currency() -> Result<(), Box<dyn std::error::Error>> {
     if !crate::common::live_or_record_enabled() {
         return Ok(());

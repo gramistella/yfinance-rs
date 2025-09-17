@@ -44,7 +44,7 @@ async fn api_fetches_cookie_and_crumb_first() {
 
     match p {
         Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
-        _ => panic!("expected Company"),
+        Profile::Fund(_) => panic!("expected Company"),
     }
 }
 
@@ -103,6 +103,6 @@ async fn api_retries_on_invalid_crumb_then_succeeds() {
 
     match p {
         Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
-        _ => panic!("expected Company"),
+        Profile::Fund(_) => panic!("expected Company"),
     }
 }

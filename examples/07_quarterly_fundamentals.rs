@@ -1,4 +1,4 @@
-use yfinance_rs::core::conversions::*;
+use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
@@ -15,8 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             latest
                 .total_revenue
                 .as_ref()
-                .map(money_to_f64)
-                .unwrap_or(0.0),
+                .map_or(0.0, money_to_f64),
             latest.period
         );
     } else {
@@ -31,8 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             latest
                 .total_assets
                 .as_ref()
-                .map(money_to_f64)
-                .unwrap_or(0.0),
+                .map_or(0.0, money_to_f64),
             latest.period
         );
     } else {
@@ -47,8 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             latest
                 .operating_cashflow
                 .as_ref()
-                .map(money_to_f64)
-                .unwrap_or(0.0),
+                .map_or(0.0, money_to_f64),
             latest.period
         );
     } else {

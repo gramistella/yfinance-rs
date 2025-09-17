@@ -1,32 +1,42 @@
 use chrono::{Duration, Utc};
-use yfinance_rs::core::conversions::*;
+use std::time::Duration as StdDuration;
+use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{
-    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClientBuilder,
+    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClient, YfClientBuilder, YfError,
 };
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 1. Create a customized client with a 5-second timeout and exponential backoff retries.
+async fn main() -> Result<(), YfError> {
     let client = YfClientBuilder::default()
-        .timeout(Duration::seconds(5).to_std()?)
+        .timeout(StdDuration::from_secs(5))
         .build()?;
 
-    // 2. Fetch a comprehensive summary for a ticker.
-    let msft = Ticker::new(&client, "MSFT");
+    section_info(&client).await?;
+    section_fast_info(&client).await?;
+    section_batch_quotes(&client).await?;
+    section_download(&client).await?;
+    section_options(&client).await?;
+    section_stream(&client).await?;
+    section_news(&client).await?;
+    Ok(())
+}
+
+async fn section_info(client: &YfClient) -> Result<(), YfError> {
+    let msft = Ticker::new(client, "MSFT");
     let info = msft.info().await?;
     println!("--- Ticker Info for {} ---", info.symbol);
     println!("Name: {}", info.short_name.unwrap_or_default());
     println!("Industry: {}", info.industry.unwrap_or_default());
     println!("Website: {}", info.website.unwrap_or_default());
-    println!(
-        "Mean Analyst Target: ${:.2}",
-        info.target_mean_price.unwrap_or_default()
-    );
+    println!("Mean Analyst Target: ${:.2}", info.target_mean_price.unwrap_or_default());
     println!("ESG Score: {:.2}", info.total_esg_score.unwrap_or_default());
     println!();
+    Ok(())
+}
 
+async fn section_fast_info(client: &YfClient) -> Result<(), YfError> {
     println!("--- Fast Info for NVDA ---");
-    let nvda = Ticker::new(&client, "NVDA");
+    let nvda = Ticker::new(client, "NVDA");
     let fast_info = nvda.fast_info().await?;
     println!(
         "{} is trading at ${:.2} in {}",
@@ -35,9 +45,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         fast_info.exchange.unwrap_or_default()
     );
     println!();
+    Ok(())
+}
 
+async fn section_batch_quotes(client: &YfClient) -> Result<(), YfError> {
     println!("--- Batch Quotes for Multiple Symbols ---");
-    let quotes = yfinance_rs::quotes(&client, vec!["AMD", "INTC", "QCOM"]).await?;
+    let quotes = yfinance_rs::quotes(client, vec!["AMD", "INTC", "QCOM"]).await?;
     for quote in quotes {
         println!(
             "  {}: ${:.2}",
@@ -46,41 +59,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
     println!();
+    Ok(())
+}
 
-    // 3. Download historical data for multiple tickers at once.
+async fn section_download(client: &YfClient) -> Result<(), YfError> {
     let symbols = vec!["AAPL", "GOOG", "TSLA"];
     let today = Utc::now();
     let three_months_ago = today - Duration::days(90);
     println!("--- Historical Data for Multiple Symbols ---");
-    let results = DownloadBuilder::new(&client)
+    let results = DownloadBuilder::new(client)
         .symbols(symbols)
         .between(three_months_ago, today)
         .interval(Interval::D1)
         .run()
         .await?;
-
     for (symbol, candles) in &results.series {
         println!("{} has {} data points.", symbol, candles.len());
         if let Some(last_candle) = candles.last() {
-            println!(
-                "  Last close price: ${:.2}",
-                money_to_f64(&last_candle.close)
-            );
+            println!("  Last close price: ${:.2}", money_to_f64(&last_candle.close));
         }
     }
     println!();
+    Ok(())
+}
 
-    // 4. Fetch a specific options chain.
-    let aapl = Ticker::new(&client, "AAPL");
+async fn section_options(client: &YfClient) -> Result<(), YfError> {
+    let aapl = Ticker::new(client, "AAPL");
     let expirations = aapl.options().await?;
     if let Some(first_expiry) = expirations.first() {
         println!("--- Options Chain for AAPL ({first_expiry}) ---");
         let chain = aapl.option_chain(Some(*first_expiry)).await?;
-        println!(
-            "  Found {} calls and {} puts.",
-            chain.calls.len(),
-            chain.puts.len()
-        );
+        println!("  Found {} calls and {} puts.", chain.calls.len(), chain.puts.len());
         if let Some(first_call) = chain.calls.first() {
             println!(
                 "  First call option: {} @ ${:.2}",
@@ -90,11 +99,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     println!();
+    Ok(())
+}
 
-    // 5. Stream real-time quotes using a WebSocket (with a fallback to polling if it fails).
+async fn section_stream(client: &YfClient) -> Result<(), YfError> {
     println!("--- Streaming Real-time Quotes for MSFT and GOOG ---");
     println!("(Streaming for 10 seconds or until stopped...)");
-    let (handle, mut receiver) = StreamBuilder::new(&client)
+    let (handle, mut receiver) = StreamBuilder::new(client)
         .symbols(vec!["MSFT", "GOOG"])
         .method(StreamMethod::WebsocketWithFallback)
         .start()?;
@@ -117,9 +128,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Finished streaming after {count} updates.");
     });
 
-    // Stop the stream after 10 seconds, regardless of how many updates were received.
     tokio::select! {
-        () = tokio::time::sleep(Duration::seconds(10).to_std()?) => {
+        () = tokio::time::sleep(StdDuration::from_secs(10)) => {
             println!("Stopping stream due to timeout.");
             handle.stop().await;
         }
@@ -127,9 +137,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Stream task completed on its own.");
         }
     };
+    Ok(())
+}
 
-    // 6. Fetching news articles for a ticker
-    let tesla_news = Ticker::new(&client, "TSLA");
+async fn section_news(client: &YfClient) -> Result<(), YfError> {
+    let tesla_news = Ticker::new(client, "TSLA");
     let articles = tesla_news
         .news_builder()
         .tab(NewsTab::PressReleases)
@@ -141,9 +153,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "- {} by {}",
             article.title,
-            article.publisher.unwrap_or("Unknown".to_string())
+            article.publisher.unwrap_or_else(|| "Unknown".to_string())
         );
     }
-
     Ok(())
 }

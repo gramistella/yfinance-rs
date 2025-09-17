@@ -1,7 +1,7 @@
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
-#[ignore]
+#[ignore = "exercise live Yahoo Finance API"]
 async fn live_info_smoke_and_or_record() {
     if !crate::common::live_or_record_enabled() {
         return;

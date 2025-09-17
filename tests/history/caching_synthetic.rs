@@ -11,7 +11,7 @@ async fn history_serves_from_cache_on_second_call() {
     // This mock only expects to be called ONCE.
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v8/finance/chart/{}", sym))
+            .path(format!("/v8/finance/chart/{sym}"))
             .query_param("range", "6mo")
             .query_param("interval", "1d");
         then.status(200)
@@ -49,7 +49,7 @@ async fn history_cache_refresh_bypasses_cache_get_but_updates_cache() {
     // This mock expects to be called TWICE.
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v8/finance/chart/{}", sym))
+            .path(format!("/v8/finance/chart/{sym}"))
             .query_param("range", "6mo")
             .query_param("interval", "1d");
         then.status(200)

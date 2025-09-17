@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ticker = Ticker::new(&client_with_custom, "AAPL");
     match ticker.quote().await {
         Ok(quote) => println!("   Fetched quote for {} using custom client", quote.symbol),
-        Err(e) => println!("   Rate limited or error fetching quote: {}", e),
+        Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
 
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ticker = Ticker::new(&client_with_timeout, "MSFT");
     match ticker.quote().await {
         Ok(quote) => println!("   Fetched quote for {} with custom timeout", quote.symbol),
-        Err(e) => println!("   Rate limited or error fetching quote: {}", e),
+        Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
 
@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ticker = Ticker::new(&client_with_retry, "GOOGL");
     match ticker.quote().await {
         Ok(quote) => println!("   Fetched quote for {} with retry enabled", quote.symbol),
-        Err(e) => println!("   Rate limited or error fetching quote: {}", e),
+        Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
 
@@ -90,7 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "   Fetched quote for {} with advanced client config",
             quote.symbol
         ),
-        Err(e) => println!("   Rate limited or error fetching quote: {}", e),
+        Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
 
@@ -98,12 +98,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("5. Error Handling for Invalid Proxy URLs:");
     match YfClient::builder().try_proxy("invalid-url") {
         Ok(_) => println!("   Unexpected: Invalid proxy URL was accepted"),
-        Err(e) => println!("   Expected error for invalid proxy URL: {}", e),
+        Err(e) => println!("   Expected error for invalid proxy URL: {e}"),
     }
 
     match YfClient::builder().try_https_proxy("not-a-url") {
         Ok(_) => println!("   Unexpected: Invalid HTTPS proxy URL was accepted"),
-        Err(e) => println!("   Expected error for invalid HTTPS proxy URL: {}", e),
+        Err(e) => println!("   Expected error for invalid HTTPS proxy URL: {e}"),
     }
     println!();
 
