@@ -195,3 +195,6 @@ lint:
 lint-fix *FLAGS:
   cargo clippy --workspace --all-targets --all-features --fix {{FLAGS}} -- \
     -W clippy::all -W clippy::cargo -W clippy::pedantic -W clippy::nursery -A clippy::multiple-crate-versions -D warnings
+
+fmt:
+	cargo fmt --all

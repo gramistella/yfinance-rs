@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde::Deserialize;
 use url::Url;
 
@@ -51,6 +53,8 @@ pub async fn option_chain(
         .and_then(|mut v| v.pop())
         .ok_or_else(|| YfError::MissingData("empty options result".into()))?;
 
+    let currency_from_response = currency_from_result(&first);
+
     let Some(od) = first.options.and_then(|mut v| v.pop()) else {
         return Ok(OptionChain {
             calls: vec![],
@@ -71,7 +75,19 @@ pub async fn option_chain(
         0
     });
 
-    let currency = client.reporting_currency(symbol, None).await;
+    let currency = if let Some(currency) = currency_from_response {
+        currency
+    } else {
+        let quote = super::quote::fetch_quote(client, symbol, cache_mode, retry_override).await?;
+        quote
+            .price
+            .as_ref()
+            .map(|m| m.currency().clone())
+            .or_else(|| quote.previous_close.as_ref().map(|m| m.currency().clone()))
+            .ok_or_else(|| {
+                YfError::MissingData("unable to determine currency from options or quote".into())
+            })?
+    };
 
     let map_side =
         |side: Option<Vec<OptContractNode>>, currency: &Currency| -> Vec<OptionContract> {
@@ -221,7 +237,13 @@ struct OptChainNode {
 struct OptResultNode {
     #[serde(rename = "expirationDates")]
     expiration_dates: Option<Vec<i64>>,
+    quote: Option<OptQuoteNode>,
     options: Option<Vec<OptByDateNode>>,
+}
+
+#[derive(Deserialize)]
+struct OptQuoteNode {
+    currency: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -248,4 +270,11 @@ struct OptContractNode {
     implied_volatility: Option<f64>,
     #[serde(rename = "inTheMoney")]
     in_the_money: Option<bool>,
+}
+
+fn currency_from_result(node: &OptResultNode) -> Option<Currency> {
+    node.quote
+        .as_ref()
+        .and_then(|q| q.currency.as_deref())
+        .and_then(|code| Currency::from_str(code).ok())
 }

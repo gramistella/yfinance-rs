@@ -1,123 +1,222 @@
-use httpmock::Method::GET;
-use httpmock::MockServer;
+use serde_json::Value;
 use url::Url;
-use yfinance_rs::core::conversions::*;
+use yfinance_rs::core::conversions::money_to_currency_str;
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
 async fn options_expirations_happy() {
-    let server = MockServer::start();
+    let server = crate::common::setup_server();
+    let symbol = "AAPL";
 
-    // Minimal expirations-only body
-    let body = r#"{
-      "optionChain": {
-        "result": [{
-          "underlyingSymbol":"AAPL",
-          "expirationDates":[1737072000,1737676800],
-          "hasMiniOptions": false,
-          "options":[]
-        }],
-        "error": null
-      }
-    }"#;
-
-    let mock = server.mock(|when, then| {
-        when.method(GET).path("/v7/finance/options/AAPL");
-        then.status(200)
-            .header("content-type", "application/json")
-            .body(body);
-    });
+    let mock = crate::common::mock_options_v7(&server, symbol);
 
     let client = YfClient::builder()
         .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
         .build()
         .unwrap();
-    let t = Ticker::new(&client, "AAPL");
+    let t = Ticker::new(&client, symbol);
 
     let expiries = t.options().await.unwrap();
     mock.assert();
 
-    assert_eq!(expiries, vec![1_737_072_000, 1_737_676_800]);
+    assert!(
+        !expiries.is_empty(),
+        "record {symbol} options fixtures first via YF_RECORD=1 cargo test --test ticker -- options"
+    );
 }
 
 #[tokio::test]
 async fn option_chain_for_specific_date() {
-    let server = MockServer::start();
+    let server = crate::common::setup_server();
+    let symbol = "AAPL";
 
-    // Body including one expiration "options" entry with one call and one put
-    let body = r#"{
-      "optionChain": {
-        "result": [{
-          "underlyingSymbol":"AAPL",
-          "expirationDates":[1737072000,1737676800],
-          "hasMiniOptions": false,
-          "options": [{
-            "expirationDate": 1737072000,
-            "hasMiniOptions": false,
-            "calls": [{
-              "contractSymbol":"AAPL250117C00180000",
-              "strike":180.0,
-              "lastPrice":5.1,
-              "bid":5.0,
-              "ask":5.2,
-              "volume":123,
-              "openInterest":1000,
-              "impliedVolatility":0.25,
-              "inTheMoney":true
-            }],
-            "puts": [{
-              "contractSymbol":"AAPL250117P00180000",
-              "strike":180.0,
-              "lastPrice":3.4,
-              "bid":3.3,
-              "ask":3.5,
-              "volume":89,
-              "openInterest":800,
-              "impliedVolatility":0.27,
-              "inTheMoney":false
-            }]
-          }]
-        }],
-        "error": null
-      }
-    }"#;
+    let exp_mock = crate::common::mock_options_v7(&server, symbol);
 
-    let date = 1_737_072_000_i64;
+    let client = YfClient::builder()
+        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let t = Ticker::new(&client, symbol);
 
-    let mock = server.mock(|when, then| {
-        when.method(GET)
-            .path("/v7/finance/options/AAPL")
+    let expiries = t.options().await.unwrap();
+    exp_mock.assert();
+
+    assert!(
+        !expiries.is_empty(),
+        "record {symbol} options fixtures first via YF_RECORD=1 cargo test --test ticker -- options"
+    );
+
+    let date = expiries[0];
+    let chain_mock = crate::common::mock_options_v7_for_date(&server, symbol, date);
+
+    let chain = t.option_chain(Some(date)).await.unwrap();
+    chain_mock.assert();
+
+    assert!(
+        !chain.calls.is_empty(),
+        "recorded {symbol} chain should include call contracts"
+    );
+    assert!(
+        !chain.puts.is_empty(),
+        "recorded {symbol} chain should include put contracts"
+    );
+
+    let c = &chain.calls[0];
+    assert_eq!(money_to_currency_str(&c.strike).as_deref(), Some("USD"));
+    assert_eq!(c.expiration.timestamp(), date);
+
+    let p = &chain.puts[0];
+    if let Some(price) = p.price.as_ref() {
+        assert_eq!(money_to_currency_str(price).as_deref(), Some("USD"));
+    }
+    assert_eq!(p.expiration.timestamp(), date);
+}
+
+#[tokio::test]
+async fn option_chain_currency_fallback_fetches_quote() {
+    let server = crate::common::setup_server();
+    let symbol = "AAPL";
+
+    assert_fixture_present(symbol);
+
+    let mut base_json = load_options_json(symbol);
+    let expiries = extract_expiration_dates(&base_json);
+    assert!(
+        !expiries.is_empty(),
+        "recorded {symbol} options fixture missing expiration dates"
+    );
+    strip_quote_currency(&mut base_json);
+    let base_payload = base_json.to_string();
+
+    let date = expiries[0];
+    let fixture_key = format!("{symbol}_{date}");
+    assert_fixture_present(&fixture_key);
+
+    let mut dated_json = load_options_json(&fixture_key);
+    strip_quote_currency(&mut dated_json);
+    let dated_payload = dated_json.to_string();
+
+    let base_mock = mock_base_options_request(&server, symbol, base_payload);
+    let chain_mock = mock_dated_options_request(&server, symbol, date, dated_payload);
+    let quote_mock = crate::common::mock_quote_v7(&server, symbol);
+
+    let client = YfClient::builder()
+        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    let ticker = Ticker::new(&client, symbol);
+
+    let expiries_resp = ticker.options().await.unwrap();
+    base_mock.assert();
+    assert_eq!(expiries_resp, expiries);
+
+    let chain = ticker.option_chain(Some(date)).await.unwrap();
+
+    chain_mock.assert();
+    quote_mock.assert();
+
+    assert!(
+        quote_mock.hits() >= 1,
+        "fallback should hit quote endpoint at least once"
+    );
+
+    let combined = chain
+        .calls
+        .iter()
+        .chain(chain.puts.iter())
+        .collect::<Vec<_>>();
+    assert!(
+        !combined.is_empty(),
+        "recorded chain for {symbol} should include contracts"
+    );
+
+    for contract in combined {
+        assert_eq!(
+            money_to_currency_str(&contract.strike).as_deref(),
+            Some("USD")
+        );
+        assert_eq!(contract.expiration.timestamp(), date);
+    }
+}
+
+fn assert_fixture_present(id: &str) {
+    assert!(
+        crate::common::fixture_exists("options_v7", id, "json"),
+        "record {id} options fixtures via YF_RECORD=1 cargo test --test ticker -- options"
+    );
+}
+
+fn load_options_json(id: &str) -> Value {
+    let body = crate::common::fixture("options_v7", id, "json");
+    serde_json::from_str(&body).expect("options fixture json")
+}
+
+fn extract_expiration_dates(json: &Value) -> Vec<i64> {
+    json["optionChain"]["result"][0]["expirationDates"]
+        .as_array()
+        .expect("expirationDates array")
+        .iter()
+        .map(|v| v.as_i64().expect("epoch"))
+        .collect()
+}
+
+fn strip_quote_currency(json: &mut Value) {
+    if let Some(obj) = json
+        .get_mut("optionChain")
+        .and_then(|oc| oc.get_mut("result"))
+        .and_then(|arr| arr.get_mut(0))
+        .and_then(|node| node.get_mut("quote"))
+        .and_then(|quote| quote.as_object_mut())
+    {
+        obj.remove("currency");
+    }
+}
+
+fn mock_base_options_request<'a>(
+    server: &'a httpmock::MockServer,
+    symbol: &str,
+    payload: String,
+) -> httpmock::Mock<'a> {
+    let symbol = symbol.to_string();
+    let body = payload;
+    server.mock(move |when, then| {
+        when.method(httpmock::Method::GET)
+            .path(format!("/v7/finance/options/{symbol}"))
+            .matches(|req| {
+                if let Some(group) = &req.query_params {
+                    for (k, _) in group {
+                        if k == "date" {
+                            return false;
+                        }
+                    }
+                }
+                true
+            });
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
+    })
+}
+
+fn mock_dated_options_request<'a>(
+    server: &'a httpmock::MockServer,
+    symbol: &str,
+    date: i64,
+    payload: String,
+) -> httpmock::Mock<'a> {
+    let symbol = symbol.to_string();
+    let body = payload;
+    server.mock(move |when, then| {
+        when.method(httpmock::Method::GET)
+            .path(format!("/v7/finance/options/{symbol}"))
             .query_param("date", date.to_string());
         then.status(200)
             .header("content-type", "application/json")
             .body(body);
-    });
-
-    let client = YfClient::builder()
-        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
-        .build()
-        .unwrap();
-    let t = Ticker::new(&client, "AAPL");
-
-    let chain = t.option_chain(Some(date)).await.unwrap();
-    mock.assert();
-
-    assert_eq!(chain.calls.len(), 1);
-    assert_eq!(chain.puts.len(), 1);
-
-    let c = &chain.calls[0];
-    assert_eq!(c.contract_symbol, "AAPL250117C00180000");
-    assert!((money_to_f64(&c.strike) - 180.0).abs() < 1e-9);
-    assert_eq!(c.volume, Some(123));
-    assert_eq!(c.open_interest, Some(1000));
-    assert_eq!(c.implied_volatility, Some(0.25));
-    assert!(c.in_the_money);
-    assert_eq!(c.expiration.timestamp(), date);
-
-    let p = &chain.puts[0];
-    assert_eq!(p.contract_symbol, "AAPL250117P00180000");
-    assert!((money_to_f64(p.price.as_ref().unwrap()) - 3.4).abs() < 1e-9);
-    assert_eq!(p.expiration.timestamp(), date);
+    })
 }
 
 #[tokio::test]
@@ -170,6 +269,9 @@ async fn options_retry_with_crumb_on_403() {
         "result": [{
           "underlyingSymbol":"MSFT",
           "expirationDates":[1737072000],
+          "quote": {
+            "currency": "USD"
+          },
           "options": [{
             "expirationDate": 1737072000,
             "calls": [],

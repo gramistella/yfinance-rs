@@ -26,17 +26,41 @@ async fn live_ticker_options_for_record() {
     }
 
     let client = yfinance_rs::YfClient::builder().build().unwrap();
-    let t = yfinance_rs::Ticker::new(&client, "AAPL");
+
+    let sym = "AAPL";
+    let t = yfinance_rs::Ticker::new(&client, sym);
 
     let expiries = t.options().await.unwrap();
 
+    if crate::common::is_recording() {
+        assert!(
+            crate::common::fixture_exists("options_v7", sym, "json"),
+            "recording pass should persist options_v7 fixture for {sym}"
+        );
+    }
+
     if !crate::common::is_recording() {
         // In live mode (non-recording), we expect Yahoo to return at least one expiry.
-        assert!(!expiries.is_empty());
+        assert!(
+            !expiries.is_empty(),
+            "live options lookup for {sym} should return expirations"
+        );
     }
 
     if let Some(first) = expiries.first().copied() {
         let chain = t.option_chain(Some(first)).await.unwrap();
+
+        if crate::common::is_recording() {
+            let key = format!("{sym}_{first}");
+            assert!(
+                crate::common::fixture_exists("options_v7", &key, "json"),
+                "recording pass should persist dated options_v7 fixture for {key}"
+            );
+            assert!(
+                chain.calls.iter().chain(chain.puts.iter()).next().is_some(),
+                "recorded chain for {sym} should include at least one contract"
+            );
+        }
 
         if !crate::common::is_recording() {
             // Instead of a useless `>= 0` check on usize, ensure the chain is coherent:
@@ -47,7 +71,7 @@ async fn live_ticker_options_for_record() {
                     .iter()
                     .chain(chain.puts.iter())
                     .all(|c| c.expiration.timestamp() == first),
-                "all option contracts should match the requested expiration"
+                "all option contracts should match the requested expiration for {sym}"
             );
         }
     }

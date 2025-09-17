@@ -2,3 +2,4 @@
 .idea
 .stitchworkspace/
 Cargo.lock
+.DS_Store
