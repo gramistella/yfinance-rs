@@ -141,7 +141,15 @@ impl SearchBuilder {
     #[allow(clippy::too_many_lines)]
     pub async fn fetch(self) -> Result<SearchResponse, crate::core::YfError> {
         let mut url = self.base.clone();
-        Self::append_query_params(&mut url, &self.query, self.quotes_count, self.news_count, self.lists_count, self.lang.as_deref(), self.region.as_deref());
+        Self::append_query_params(
+            &mut url,
+            &self.query,
+            self.quotes_count,
+            self.news_count,
+            self.lists_count,
+            self.lang.as_deref(),
+            self.region.as_deref(),
+        );
 
         if self.cache_mode == CacheMode::Use
             && let Some(body) = self.client.cache_get(&url).await
@@ -170,7 +178,15 @@ impl SearchBuilder {
                     .ok_or_else(|| crate::core::YfError::Auth("Crumb is not set".into()))?;
 
                 let mut url2 = self.base.clone();
-                Self::append_query_params(&mut url2, &self.query, self.quotes_count, self.news_count, self.lists_count, self.lang.as_deref(), self.region.as_deref());
+                Self::append_query_params(
+                    &mut url2,
+                    &self.query,
+                    self.quotes_count,
+                    self.news_count,
+                    self.lists_count,
+                    self.lang.as_deref(),
+                    self.region.as_deref(),
+                );
                 url2.query_pairs_mut().append_pair("crumb", &crumb);
 
                 resp = self

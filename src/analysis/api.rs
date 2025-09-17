@@ -3,7 +3,10 @@ use crate::{
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        conversions::{string_to_period, i64_to_datetime, string_to_recommendation_grade, string_to_recommendation_action, f64_to_money_with_currency, i64_to_money_with_currency},
+        conversions::{
+            f64_to_money_with_currency, i64_to_datetime, i64_to_money_with_currency,
+            string_to_period, string_to_recommendation_action, string_to_recommendation_grade,
+        },
         wire::{from_raw, from_raw_u32_round},
     },
 };

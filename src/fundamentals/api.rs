@@ -5,7 +5,7 @@ use crate::{
     core::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
-        conversions::{string_to_period, f64_to_money_with_currency, i64_to_datetime},
+        conversions::{f64_to_money_with_currency, i64_to_datetime, string_to_period},
         wire::from_raw,
     },
     fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},

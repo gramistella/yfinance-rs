@@ -10,7 +10,10 @@ use crate::{
     EsgBuilder, HoldersBuilder, NewsBuilder, YfClient, YfError,
     analysis::AnalysisBuilder,
     core::client::{CacheMode, RetryConfig},
-    core::conversions::{money_to_f64, money_to_currency_str, exchange_to_string, market_state_to_string, datetime_to_i64},
+    core::conversions::{
+        datetime_to_i64, exchange_to_string, market_state_to_string, money_to_currency_str,
+        money_to_f64,
+    },
     fundamentals::FundamentalsBuilder,
     history::HistoryBuilder,
 };

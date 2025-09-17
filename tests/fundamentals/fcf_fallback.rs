@@ -1,9 +1,9 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
-use url::Url;
-use yfinance_rs::{Ticker, YfClient};
 use paft::prelude::Currency;
+use url::Url;
 use yfinance_rs::core::conversions::*;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
 async fn cashflow_computes_fcf_when_missing() {

@@ -12,10 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = income_stmt.first() {
         println!(
             "Latest quarterly revenue: {:.2} (from {})",
-            latest
-                .total_revenue
-                .as_ref()
-                .map_or(0.0, money_to_f64),
+            latest.total_revenue.as_ref().map_or(0.0, money_to_f64),
             latest.period
         );
     } else {
@@ -27,10 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = balance_sheet.first() {
         println!(
             "Latest quarterly total assets: {:.2} (from {})",
-            latest
-                .total_assets
-                .as_ref()
-                .map_or(0.0, money_to_f64),
+            latest.total_assets.as_ref().map_or(0.0, money_to_f64),
             latest.period
         );
     } else {
@@ -42,10 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(latest) = cashflow_stmt.first() {
         println!(
             "Latest quarterly operating cash flow: {:.2} (from {})",
-            latest
-                .operating_cashflow
-                .as_ref()
-                .map_or(0.0, money_to_f64),
+            latest.operating_cashflow.as_ref().map_or(0.0, money_to_f64),
             latest.period
         );
     } else {

@@ -137,10 +137,8 @@ impl DownloadBuilder {
             }
             if c.low.amount().to_f64().is_some_and(f64::is_finite) {
                 c.low = Money::new(
-                    rust_decimal::Decimal::from_f64(round2(
-                        c.low.amount().to_f64().unwrap_or(0.0),
-                    ))
-                    .unwrap_or_default(),
+                    rust_decimal::Decimal::from_f64(round2(c.low.amount().to_f64().unwrap_or(0.0)))
+                        .unwrap_or_default(),
                     c.low.currency().clone(),
                 );
             }

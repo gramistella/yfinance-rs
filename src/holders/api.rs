@@ -8,9 +8,7 @@ use crate::core::{
     YfClient, YfError,
     client::{CacheMode, RetryConfig},
     conversions::{
-        i64_to_datetime,
-        string_to_insider_position,
-        string_to_transaction_type,
+        i64_to_datetime, string_to_insider_position, string_to_transaction_type,
         u64_to_money_with_currency,
     },
     quotesummary,
@@ -20,7 +18,9 @@ use paft::prelude::Currency;
 
 #[inline]
 #[allow(clippy::cast_precision_loss)]
-const fn u64_to_f64(n: u64) -> f64 { n as f64 }
+const fn u64_to_f64(n: u64) -> f64 {
+    n as f64
+}
 
 const MODULES: &str = "institutionOwnership,fundOwnership,majorHoldersBreakdown,insiderTransactions,insiderHolders,netSharePurchaseActivity";
 
@@ -97,8 +97,7 @@ fn map_ownership_list(
                 i64_to_datetime,
             ),
             pct_held: from_raw(h.pct_held),
-            value: from_raw(h.value)
-                .map(|v| u64_to_money_with_currency(v, currency.clone())),
+            value: from_raw(h.value).map(|v| u64_to_money_with_currency(v, currency.clone())),
         })
         .collect()
 }
@@ -145,8 +144,7 @@ pub(super) async fn insider_transactions(
             position: string_to_insider_position(t.position.unwrap_or_default()),
             transaction_type: string_to_transaction_type(t.transaction.unwrap_or_default()),
             shares: from_raw(t.shares),
-            value: from_raw(t.value)
-                .map(|v| u64_to_money_with_currency(v, currency.clone())),
+            value: from_raw(t.value).map(|v| u64_to_money_with_currency(v, currency.clone())),
             transaction_date: from_raw_date(t.start_date).map_or_else(
                 || DateTime::from_timestamp(0, 0).unwrap_or_default(),
                 i64_to_datetime,

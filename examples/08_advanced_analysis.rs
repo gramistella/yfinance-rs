@@ -57,7 +57,10 @@ async fn section_capital_gains() -> Result<(), YfError> {
     let client = YfClient::default();
     let ticker_vfinx = Ticker::new(&client, "VFINX");
     let capital_gains = ticker_vfinx.capital_gains(None).await?;
-    println!("Capital Gains Distributions ({} periods):", capital_gains.len());
+    println!(
+        "Capital Gains Distributions ({} periods):",
+        capital_gains.len()
+    );
     if let Some((date, gain)) = capital_gains.last() {
         println!("  Most Recent Gain: ${gain:.2} on {date}");
     }
@@ -105,7 +108,10 @@ async fn section_recommendations(symbol: &str, ticker: &Ticker) -> Result<(), Yf
 async fn section_isin_calendar(symbol: &str, ticker: &Ticker) -> Result<(), YfError> {
     println!("--- ISIN for {symbol} ---");
     let isin = ticker.isin().await?;
-    println!("  ISIN: {}", isin.unwrap_or_else(|| "Not found".to_string()));
+    println!(
+        "  ISIN: {}",
+        isin.unwrap_or_else(|| "Not found".to_string())
+    );
     println!();
 
     println!("--- Upcoming Calendar Events for {symbol} ---");

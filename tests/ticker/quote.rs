@@ -48,7 +48,9 @@ async fn quote_v7_happy_path() {
         Some("NASDAQ".to_string())
     );
     assert_eq!(
-        q.market_state.as_ref().map(std::string::ToString::to_string),
+        q.market_state
+            .as_ref()
+            .map(std::string::ToString::to_string),
         Some("REGULAR".to_string())
     );
     assert!((money_to_f64(&q.price.unwrap()) - 190.25).abs() < 1e-9);

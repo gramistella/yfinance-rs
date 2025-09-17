@@ -3,7 +3,12 @@ use yfinance_rs::quote::quotes;
 use yfinance_rs::ticker::Ticker;
 use yfinance_rs::{YfClient, YfError};
 
-async fn run_symbol_check(client: &YfClient, symbol: &str, expected_currency: &str, description: &str) -> Result<(), YfError> {
+async fn run_symbol_check(
+    client: &YfClient,
+    symbol: &str,
+    expected_currency: &str,
+    description: &str,
+) -> Result<(), YfError> {
     println!("\n📊 Testing: {symbol} ({description})");
     println!("Expected Currency: {expected_currency}");
     println!("{}", "-".repeat(50));
@@ -21,7 +26,11 @@ async fn run_symbol_check(client: &YfClient, symbol: &str, expected_currency: &s
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
-                if currency_correct { "CORRECT" } else { "INCORRECT" },
+                if currency_correct {
+                    "CORRECT"
+                } else {
+                    "INCORRECT"
+                },
                 fi.currency.as_deref().unwrap_or("None"),
                 expected_currency
             );
@@ -41,7 +50,11 @@ async fn run_symbol_check(client: &YfClient, symbol: &str, expected_currency: &s
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
-                if currency_correct { "CORRECT" } else { "INCORRECT" },
+                if currency_correct {
+                    "CORRECT"
+                } else {
+                    "INCORRECT"
+                },
                 info.currency.as_deref().unwrap_or("None"),
                 expected_currency
             );
@@ -51,16 +64,24 @@ async fn run_symbol_check(client: &YfClient, symbol: &str, expected_currency: &s
 
     // Historical data
     println!("  📊 Historical Data:");
-    match ticker.history(Some(Range::D5), Some(Interval::D1), false).await {
+    match ticker
+        .history(Some(Range::D5), Some(Interval::D1), false)
+        .await
+    {
         Ok(history) => {
             if let Some(last_candle) = history.last() {
                 println!("    Last Close: {:?}", last_candle.close);
                 println!("    Currency: \"{}\"", last_candle.close.currency());
-                let currency_correct = last_candle.close.currency().to_string() == expected_currency;
+                let currency_correct =
+                    last_candle.close.currency().to_string() == expected_currency;
                 println!(
                     "    {} Currency {}: {} (expected {})",
                     if currency_correct { "✅" } else { "❌" },
-                    if currency_correct { "CORRECT" } else { "INCORRECT" },
+                    if currency_correct {
+                        "CORRECT"
+                    } else {
+                        "INCORRECT"
+                    },
                     last_candle.close.currency(),
                     expected_currency
                 );
@@ -82,7 +103,8 @@ async fn run_symbol_check(client: &YfClient, symbol: &str, expected_currency: &s
                     "    Revenue Currency: {} (Note: Financial statements typically in USD)",
                     latest
                         .total_revenue
-                        .as_ref().map_or_else(|| "None".to_string(), |m| m.currency().to_string())
+                        .as_ref()
+                        .map_or_else(|| "None".to_string(), |m| m.currency().to_string())
                 );
                 println!("    ✅ Revenue Currency CORRECT: USD (financial statements standard)");
             } else {
@@ -103,7 +125,8 @@ async fn run_symbol_check(client: &YfClient, symbol: &str, expected_currency: &s
                 "    Target Currency: {} (Note: Analyst targets typically in USD)",
                 target
                     .mean
-                    .as_ref().map_or_else(|| "None".to_string(), |m| m.currency().to_string())
+                    .as_ref()
+                    .map_or_else(|| "None".to_string(), |m| m.currency().to_string())
             );
             println!("    ✅ Target Currency CORRECT: USD (analyst targets standard)");
         }
@@ -137,7 +160,11 @@ async fn test_batch_quotes(client: &YfClient) -> Result<(), YfError> {
                 println!(
                     "    {} Currency {}: {} (expected {})",
                     if currency_correct { "✅" } else { "❌" },
-                    if currency_correct { "CORRECT" } else { "INCORRECT" },
+                    if currency_correct {
+                        "CORRECT"
+                    } else {
+                        "INCORRECT"
+                    },
                     currency.as_deref().unwrap_or("None"),
                     expected
                 );

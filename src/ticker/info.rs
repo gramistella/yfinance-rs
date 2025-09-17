@@ -1,12 +1,15 @@
+use crate::ticker::{PriceTarget, RecommendationSummary};
 use crate::{
     YfClient, YfError, analysis,
     core::client::{CacheMode, RetryConfig},
-    core::conversions::{money_to_f64, money_to_currency_str, exchange_to_string, market_state_to_string, fund_kind_to_string},
+    core::conversions::{
+        exchange_to_string, fund_kind_to_string, market_state_to_string, money_to_currency_str,
+        money_to_f64,
+    },
     esg,
     profile::Profile,
     ticker::model::Info,
 };
-use crate::ticker::{PriceTarget, RecommendationSummary};
 
 /// Private helper to handle optional async results, logging errors in debug mode.
 fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option<T> {
@@ -29,8 +32,16 @@ pub(super) async fn fetch_info(
 ) -> Result<Info, YfError> {
     let (quote, profile, price_target, rec_summary, esg_scores) =
         Box::pin(fetch_info_parts(client, symbol, cache_mode, retry_override)).await?;
-    let ProfileFields { sector, industry, website, summary, address, isin, family, fund_kind } =
-        extract_profile_fields(&profile);
+    let ProfileFields {
+        sector,
+        industry,
+        website,
+        summary,
+        address,
+        isin,
+        family,
+        fund_kind,
+    } = extract_profile_fields(&profile);
     let info = assemble_info(
         symbol,
         quote.as_ref(),
@@ -100,9 +111,7 @@ struct ProfileFields {
     fund_kind: Option<paft::fundamentals::FundKind>,
 }
 
-fn extract_profile_fields(
-    profile: &Profile,
-) -> ProfileFields {
+fn extract_profile_fields(profile: &Profile) -> ProfileFields {
     match profile {
         Profile::Company(c) => ProfileFields {
             sector: c.sector.clone(),
@@ -173,8 +182,7 @@ fn assemble_info(
     });
 
     Info {
-        symbol: quote
-            .map_or_else(|| symbol.to_string(), |q| q.symbol.clone()),
+        symbol: quote.map_or_else(|| symbol.to_string(), |q| q.symbol.clone()),
         short_name: quote.and_then(|q| q.shortname.clone()),
         regular_market_price: quote.and_then(|q| q.price.as_ref().map(money_to_f64)),
         regular_market_previous_close: quote

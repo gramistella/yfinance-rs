@@ -2,7 +2,8 @@ use chrono::{Duration, Utc};
 use std::time::Duration as StdDuration;
 use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{
-    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClient, YfClientBuilder, YfError,
+    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClient,
+    YfClientBuilder, YfError,
 };
 
 #[tokio::main]
@@ -28,7 +29,10 @@ async fn section_info(client: &YfClient) -> Result<(), YfError> {
     println!("Name: {}", info.short_name.unwrap_or_default());
     println!("Industry: {}", info.industry.unwrap_or_default());
     println!("Website: {}", info.website.unwrap_or_default());
-    println!("Mean Analyst Target: ${:.2}", info.target_mean_price.unwrap_or_default());
+    println!(
+        "Mean Analyst Target: ${:.2}",
+        info.target_mean_price.unwrap_or_default()
+    );
     println!("ESG Score: {:.2}", info.total_esg_score.unwrap_or_default());
     println!();
     Ok(())
@@ -76,7 +80,10 @@ async fn section_download(client: &YfClient) -> Result<(), YfError> {
     for (symbol, candles) in &results.series {
         println!("{} has {} data points.", symbol, candles.len());
         if let Some(last_candle) = candles.last() {
-            println!("  Last close price: ${:.2}", money_to_f64(&last_candle.close));
+            println!(
+                "  Last close price: ${:.2}",
+                money_to_f64(&last_candle.close)
+            );
         }
     }
     println!();
@@ -89,7 +96,11 @@ async fn section_options(client: &YfClient) -> Result<(), YfError> {
     if let Some(first_expiry) = expirations.first() {
         println!("--- Options Chain for AAPL ({first_expiry}) ---");
         let chain = aapl.option_chain(Some(*first_expiry)).await?;
-        println!("  Found {} calls and {} puts.", chain.calls.len(), chain.puts.len());
+        println!(
+            "  Found {} calls and {} puts.",
+            chain.calls.len(),
+            chain.puts.len()
+        );
         if let Some(first_call) = chain.calls.first() {
             println!(
                 "  First call option: {} @ ${:.2}",

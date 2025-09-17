@@ -1,5 +1,5 @@
-use yfinance_rs::StreamMethod;
 use tokio::time::{Duration, timeout};
+use yfinance_rs::StreamMethod;
 
 #[tokio::test]
 #[ignore = "exercise live Yahoo Finance API"]
