@@ -26,6 +26,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Minor clippy findings and documentation typos.
 
+### Known Issues
+
+- Due to limitations in the Yahoo Finance API, some endpoints for fundamentals and analysis do not return currency information. In these cases, monetary values now default to **USD**. This may result in incorrect currency labels for non-USD securities.
+
 ## [0.1.3] - 2025-08-31
 
 ### Added
