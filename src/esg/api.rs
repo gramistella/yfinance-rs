@@ -7,14 +7,14 @@ use crate::{
     },
     esg::wire::V10Result,
 };
-use paft::fundamentals::{EsgInvolvement, EsgScores};
+use paft::fundamentals::{EsgInvolvement, EsgScores, EsgSummary};
 
 pub(super) async fn fetch_esg_scores(
     client: &YfClient,
     symbol: &str,
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
-) -> Result<EsgScores, YfError> {
+) -> Result<EsgSummary, YfError> {
     let root: V10Result = quotesummary::fetch_module_result(
         client,
         symbol,
@@ -62,10 +62,9 @@ pub(super) async fn fetch_esg_scores(
     push_flag("thermal_coal", esg.thermal_coal);
     push_flag("tobacco", esg.tobacco);
 
-    // If percentile/controversy are needed later, they can be mapped into an EsgSummary in paft.
-    // For now we return only scores, and tests/examples using booleans will need to be adjusted.
-
-    // Currently the public API returns only scores; suppress unused warning for involvement until used.
-    let _ = involvement;
-    Ok(scores)
+    // Return scores together with involvement in a single summary
+    Ok(EsgSummary {
+        scores: Some(scores),
+        involvement,
+    })
 }

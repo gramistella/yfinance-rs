@@ -3,18 +3,7 @@ use yfinance_rs::quote::quotes;
 use yfinance_rs::ticker::Ticker;
 use yfinance_rs::{YfClient, YfError};
 
-async fn run_symbol_check(
-    client: &YfClient,
-    symbol: &str,
-    expected_currency: &str,
-    description: &str,
-) -> Result<(), YfError> {
-    println!("\n📊 Testing: {symbol} ({description})");
-    println!("Expected Currency: {expected_currency}");
-    println!("{}", "-".repeat(50));
-    let ticker = Ticker::new(client, symbol);
-
-    // Fast info
+async fn check_fast_info(ticker: &Ticker, expected_currency: &str) {
     println!("  📈 Quote/Fast Info:");
     match ticker.fast_info().await {
         Ok(fi) => {
@@ -26,19 +15,16 @@ async fn run_symbol_check(
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
-                if currency_correct {
-                    "CORRECT"
-                } else {
-                    "INCORRECT"
-                },
+                if currency_correct { "CORRECT" } else { "INCORRECT" },
                 fi.currency.as_deref().unwrap_or("None"),
                 expected_currency
             );
         }
         Err(e) => println!("    ❌ Error: {e}"),
     }
+}
 
-    // Comprehensive info
+async fn check_comprehensive_info(ticker: &Ticker, expected_currency: &str) {
     println!("  📋 Comprehensive Info:");
     match ticker.info().await {
         Ok(info) => {
@@ -50,19 +36,16 @@ async fn run_symbol_check(
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
-                if currency_correct {
-                    "CORRECT"
-                } else {
-                    "INCORRECT"
-                },
+                if currency_correct { "CORRECT" } else { "INCORRECT" },
                 info.currency.as_deref().unwrap_or("None"),
                 expected_currency
             );
         }
         Err(e) => println!("    ❌ Error: {e}"),
     }
+}
 
-    // Historical data
+async fn check_history(ticker: &Ticker, expected_currency: &str) {
     println!("  📊 Historical Data:");
     match ticker
         .history(Some(Range::D5), Some(Interval::D1), false)
@@ -77,11 +60,7 @@ async fn run_symbol_check(
                 println!(
                     "    {} Currency {}: {} (expected {})",
                     if currency_correct { "✅" } else { "❌" },
-                    if currency_correct {
-                        "CORRECT"
-                    } else {
-                        "INCORRECT"
-                    },
+                    if currency_correct { "CORRECT" } else { "INCORRECT" },
                     last_candle.close.currency(),
                     expected_currency
                 );
@@ -91,8 +70,9 @@ async fn run_symbol_check(
         }
         Err(e) => println!("    ❌ Error: {e}"),
     }
+}
 
-    // Fundamentals
+async fn check_fundamentals(ticker: &Ticker) {
     println!("  💰 Fundamentals:");
     match ticker.income_stmt(None).await {
         Ok(income_stmt) => {
@@ -113,8 +93,9 @@ async fn run_symbol_check(
         }
         Err(e) => println!("    ❌ Error: {e}"),
     }
+}
 
-    // Analysis
+async fn check_analysis(ticker: &Ticker) {
     println!("  📊 Analysis:");
     match ticker.analyst_price_target(None).await {
         Ok(target) => {
@@ -132,11 +113,29 @@ async fn run_symbol_check(
         }
         Err(e) => println!("    ❌ Error: {e}"),
     }
+}
+
+async fn run_symbol_check(
+    client: &YfClient,
+    symbol: &str,
+    expected_currency: &str,
+    description: &str,
+) -> Result<(), YfError> {
+    println!("\n📊 Testing: {symbol} ({description})");
+    println!("Expected Currency: {expected_currency}");
+    println!("{}", "-".repeat(50));
+    let ticker = Ticker::new(client, symbol);
+
+    check_fast_info(&ticker, expected_currency).await;
+    check_comprehensive_info(&ticker, expected_currency).await;
+    check_history(&ticker, expected_currency).await;
+    check_fundamentals(&ticker).await;
+    check_analysis(&ticker).await;
 
     Ok(())
 }
 
-async fn test_batch_quotes(client: &YfClient) -> Result<(), YfError> {
+async fn run_batch_quotes(client: &YfClient) -> Result<(), YfError> {
     println!("\n📊 Batch Quotes Currency Test:");
     println!("{}", "-".repeat(50));
     let symbols = vec!["AAPL", "TSCO.L", "7203.T"];
@@ -190,7 +189,7 @@ async fn test_currency_verification() -> Result<(), YfError> {
     for (symbol, expected, desc) in cases {
         run_symbol_check(&client, symbol, expected, desc).await?;
     }
-    test_batch_quotes(&client).await?;
+    run_batch_quotes(&client).await?;
     println!("\n✅ Currency verification test completed!");
     Ok(())
 }

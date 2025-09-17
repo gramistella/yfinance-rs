@@ -17,8 +17,11 @@ async fn live_esg_smoke_and_or_record() {
     if !crate::common::is_recording() {
         // Basic sanity checks when running in live-only mode.
         // ESG data can sometimes be unavailable, so we check that at least one score is present.
+        let has_any = esg.scores.as_ref().is_some_and(|s| {
+            s.environmental.is_some() || s.social.is_some() || s.governance.is_some()
+        });
         assert!(
-            esg.environmental.is_some() || esg.social.is_some() || esg.governance.is_some(),
+            has_any,
             "Expected at least one ESG score to be present for MSFT"
         );
     }

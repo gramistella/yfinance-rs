@@ -18,8 +18,8 @@ use crate::{
     history::HistoryBuilder,
 };
 use paft::fundamentals::{
-    BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsTrendRow, EsgScores,
-    IncomeStatementRow, InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
+    BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsTrendRow, IncomeStatementRow,
+    InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
     NetSharePurchaseActivity, PriceTarget, RecommendationRow, RecommendationSummary, ShareCount,
     UpgradeDowngradeRow,
 };
@@ -537,7 +537,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn sustainability(&self) -> Result<EsgScores, YfError> {
+    pub async fn sustainability(&self) -> Result<paft::fundamentals::EsgSummary, YfError> {
         self.esg_builder().fetch().await
     }
     /* ---------------- Fundamentals convenience ---------------- */

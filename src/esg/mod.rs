@@ -2,7 +2,7 @@ mod api;
 mod model;
 mod wire;
 
-pub use model::{EsgInvolvement, EsgScores};
+pub use model::{EsgInvolvement, EsgScores, EsgSummary};
 
 use crate::{
     YfClient, YfError,
@@ -47,7 +47,7 @@ impl EsgBuilder {
     /// # Errors
     ///
     /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
-    pub async fn fetch(self) -> Result<EsgScores, YfError> {
+    pub async fn fetch(self) -> Result<EsgSummary, YfError> {
         api::fetch_esg_scores(
             &self.client,
             &self.symbol,

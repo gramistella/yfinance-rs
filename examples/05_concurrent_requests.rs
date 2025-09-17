@@ -55,15 +55,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("--- Fetching ESG and holder data for MSFT ---");
     let msft_ticker = Ticker::new(&client, "MSFT");
-    let esg_scores = msft_ticker.sustainability().await?;
-    let parts = [
-        esg_scores.environmental,
-        esg_scores.social,
-        esg_scores.governance,
-    ]
-    .into_iter()
-    .flatten()
-    .collect::<Vec<_>>();
+    let esg_summary = msft_ticker.sustainability().await?;
+    let parts = esg_summary
+        .scores
+        .map_or([None, None, None], |s| {
+            [s.environmental, s.social, s.governance]
+        })
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
     let total_esg = if parts.is_empty() {
         0.0
     } else {

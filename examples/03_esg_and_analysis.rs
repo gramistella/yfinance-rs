@@ -7,13 +7,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .timeout(Duration::seconds(5).to_std()?)
         .build()?;
 
-    // --- Part 1: Fetching ESG Scores ---
-    let msft_ticker = Ticker::new(&client, "MSFT");
-    let esg_scores = msft_ticker.sustainability().await;
+    section_esg(&client).await?;
+    section_analysis(&client).await?;
+    section_search(&client).await?;
+    Ok(())
+}
 
+async fn section_esg(client: &yfinance_rs::YfClient) -> Result<(), Box<dyn std::error::Error>> {
+    let msft_ticker = Ticker::new(client, "MSFT");
+    let esg_scores = msft_ticker.sustainability().await;
     println!("--- ESG Scores for MSFT ---");
     match esg_scores {
-        Ok(scores) => {
+        Ok(summary) => {
+            let scores = summary.scores.unwrap_or_default();
             let total_esg = [scores.environmental, scores.social, scores.governance]
                 .into_iter()
                 .flatten()
@@ -34,17 +40,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "Governance Score: {:.2}",
                 scores.governance.unwrap_or_default()
             );
+            if !summary.involvement.is_empty() {
+                println!("Involvement categories ({}):", summary.involvement.len());
+                for inv in summary.involvement.iter().take(5) {
+                    println!("  - {}", inv.category);
+                }
+            }
         }
-        Err(e) => {
-            eprintln!("Failed to fetch ESG scores: {e}");
-        }
+        Err(e) => eprintln!("Failed to fetch ESG scores: {e}"),
     }
     println!("--------------------------------------\n");
+    Ok(())
+}
 
-    // --- Part 2: Fetching Analyst Ratings ---
-    let tsla_ticker = Ticker::new(&client, "TSLA");
+async fn section_analysis(
+    client: &yfinance_rs::YfClient,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let tsla_ticker = Ticker::new(client, "TSLA");
     let recommendations = tsla_ticker.recommendations().await;
-
     println!("--- Analyst Recommendations for TSLA ---");
     match recommendations {
         Ok(recs) => {
@@ -60,11 +73,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
         }
-        Err(e) => {
-            eprintln!("Failed to fetch recommendations: {e}");
-        }
+        Err(e) => eprintln!("Failed to fetch recommendations: {e}"),
     }
-
     let upgrades = tsla_ticker.upgrades_downgrades().await;
     if let Ok(upgrades_list) = upgrades {
         println!("\nRecent Upgrades/Downgrades:");
@@ -88,11 +98,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     println!("--------------------------------------\n");
+    Ok(())
+}
 
-    // --- Part 3: Using the Search API ---
+async fn section_search(client: &yfinance_rs::YfClient) -> Result<(), Box<dyn std::error::Error>> {
     let query = "Apple Inc.";
-    let search_results = SearchBuilder::new(&client, query).fetch().await;
-
+    let search_results = SearchBuilder::new(client, query).fetch().await;
     println!("--- Searching for '{query}' ---");
     match search_results {
         Ok(results) => {
@@ -106,11 +117,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
         }
-        Err(e) => {
-            eprintln!("Search failed: {e}");
-        }
+        Err(e) => eprintln!("Search failed: {e}"),
     }
     println!("--------------------------------------");
-
     Ok(())
 }

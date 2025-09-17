@@ -117,10 +117,20 @@ async fn section_income_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::Er
 async fn section_esg(ticker: &Ticker) -> Result<(), Box<dyn std::error::Error>> {
     println!("🌱 5. ESG Scores");
     match ticker.sustainability().await {
-        Ok(esg) => {
-            println!("   Environmental: {:?}", esg.environmental);
-            println!("   Social: {:?}", esg.social);
-            println!("   Governance: {:?}", esg.governance);
+        Ok(summary) => {
+            if let Some(scores) = summary.scores {
+                println!("   Environmental: {:?}", scores.environmental);
+                println!("   Social: {:?}", scores.social);
+                println!("   Governance: {:?}", scores.governance);
+            } else {
+                println!("   No ESG component scores available");
+            }
+            if !summary.involvement.is_empty() {
+                println!("   Involvement flags ({}):", summary.involvement.len());
+                for inv in summary.involvement.iter().take(5) {
+                    println!("     - {}", inv.category);
+                }
+            }
         }
         Err(e) => println!("   ESG data not available for this ticker: {e}"),
     }

@@ -34,11 +34,13 @@ async fn offline_esg_uses_recorded_fixture() {
 
     mock.assert();
 
-    // These assertions depend on the contents of the recorded fixture.
-    // If you re-record the fixture, you may need to update these values.
-    // paft::EsgScores has no total_esg; ensure at least one component exists
+    // Ensure at least one ESG component exists in the summary
+    let has_any = esg
+        .scores
+        .as_ref()
+        .is_some_and(|s| s.environmental.is_some() || s.social.is_some() || s.governance.is_some());
     assert!(
-        esg.environmental.is_some() || esg.social.is_some() || esg.governance.is_some(),
+        has_any,
         "At least one ESG component score should be present. Did you run `just test-record esg`?"
     );
 }

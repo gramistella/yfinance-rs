@@ -71,7 +71,7 @@ async fn fetch_info_parts(
         Profile,
         Option<PriceTarget>,
         Option<RecommendationSummary>,
-        Option<paft::fundamentals::EsgScores>,
+        Option<paft::fundamentals::EsgSummary>,
     ),
     YfError,
 > {
@@ -150,7 +150,7 @@ fn assemble_info(
     fund_kind: Option<paft::fundamentals::FundKind>,
     price_target: Option<&PriceTarget>,
     rec_summary: Option<&RecommendationSummary>,
-    esg_scores: Option<&paft::fundamentals::EsgScores>,
+    esg_scores: Option<&paft::fundamentals::EsgSummary>,
 ) -> Info {
     let currency = quote.and_then(|q| {
         q.price
@@ -159,7 +159,8 @@ fn assemble_info(
             .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str))
     });
 
-    let total_esg_score = esg_scores.and_then(|esg| {
+    let total_esg_score = esg_scores.and_then(|summary| {
+        let esg = summary.scores.as_ref()?;
         let mut sum = 0.0;
         let mut count = 0u32;
         if let Some(v) = esg.environmental {
@@ -208,8 +209,8 @@ fn assemble_info(
         recommendation_key: None,
 
         total_esg_score,
-        environment_score: esg_scores.and_then(|esg| esg.environmental),
-        social_score: esg_scores.and_then(|esg| esg.social),
-        governance_score: esg_scores.and_then(|esg| esg.governance),
+        environment_score: esg_scores.and_then(|s| s.scores.as_ref().and_then(|x| x.environmental)),
+        social_score: esg_scores.and_then(|s| s.scores.as_ref().and_then(|x| x.social)),
+        governance_score: esg_scores.and_then(|s| s.scores.as_ref().and_then(|x| x.governance)),
     }
 }
