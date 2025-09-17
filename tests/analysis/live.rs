@@ -26,7 +26,7 @@ async fn live_analysis_smoke_and_or_record() {
     // Earnings Trend
     {
         let t = yfinance_rs::Ticker::new(&client, "AAPL");
-        let _ = t.earnings_trend().await.unwrap();
+        let _ = t.earnings_trend(None).await.unwrap();
     }
 
     // If not recording, at least assert the calls returned something sane.

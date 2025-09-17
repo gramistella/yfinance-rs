@@ -8,6 +8,7 @@
 
 /// The main client (`YfClient`), builder, and configuration.
 pub mod client;
+pub(crate) mod currency;
 /// The primary error type (`YfError`) for the crate.
 pub mod error;
 /// Shared data models used across multiple API modules (e.g., `Quote`, `Candle`).

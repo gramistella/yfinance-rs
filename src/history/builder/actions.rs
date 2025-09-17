@@ -3,7 +3,10 @@ use crate::history::wire::Events;
 use paft::prelude::*;
 
 #[allow(clippy::cast_possible_truncation)]
-pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>) {
+pub fn extract_actions(
+    events: Option<&Events>,
+    currency: Currency,
+) -> (Vec<Action>, Vec<(i64, f64)>) {
     let mut out: Vec<Action> = Vec::new();
     let mut split_events: Vec<(i64, f64)> = Vec::new();
 
@@ -17,7 +20,7 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
             if let Some(amount) = d.amount {
                 out.push(Action::Dividend {
                     ts: i64_to_datetime(ts),
-                    amount: f64_to_money_usd(amount),
+                    amount: f64_to_money_with_currency(amount, currency.clone()),
                 });
             }
         }
@@ -29,7 +32,7 @@ pub fn extract_actions(events: Option<&Events>) -> (Vec<Action>, Vec<(i64, f64)>
             if let Some(gain) = g.amount {
                 out.push(Action::CapitalGain {
                     ts: i64_to_datetime(ts),
-                    gain: f64_to_money_usd(gain),
+                    gain: f64_to_money_with_currency(gain, currency.clone()),
                 });
             }
         }

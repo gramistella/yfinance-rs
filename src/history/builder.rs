@@ -172,7 +172,10 @@ impl HistoryBuilder {
         .await?;
 
         // 2) Corporate actions & split ratios
-        let (mut actions_out, split_events) = extract_actions(fetched.events.as_ref());
+        let reporting_currency = self.client.reporting_currency(&self.symbol, None).await;
+
+        let (mut actions_out, split_events) =
+            extract_actions(fetched.events.as_ref(), reporting_currency.clone());
 
         // 3) Cumulative split factors after each bar
         let cum_split_after = cumulative_split_after(&fetched.ts, &split_events);

@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Fetching Advanced Analysis for AAPL ---");
     let ticker_aapl = Ticker::new(&client, "AAPL");
 
-    let earnings_trend = ticker_aapl.earnings_trend().await?;
+    let earnings_trend = ticker_aapl.earnings_trend(None).await?;
     println!("Earnings Trend ({} periods):", earnings_trend.len());
     if let Some(trend) = earnings_trend.iter().find(|t| t.period.to_string() == "0y") {
         println!(
@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("--- Analyst Price Target for AAPL ---");
-    let price_target = ticker_aapl.analyst_price_target().await?;
+    let price_target = ticker_aapl.analyst_price_target(None).await?;
     println!(
         "  Target: avg=${:.2}, high=${:.2}, low=${:.2} (from {} analysts)",
         price_target

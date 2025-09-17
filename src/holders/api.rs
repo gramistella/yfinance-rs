@@ -11,6 +11,7 @@ use crate::core::{
     quotesummary,
 };
 use chrono::DateTime;
+use paft::prelude::Currency;
 
 const MODULES: &str = "institutionOwnership,fundOwnership,majorHoldersBreakdown,insiderTransactions,insiderHolders,netSharePurchaseActivity";
 
@@ -72,7 +73,10 @@ pub(super) async fn major_holders(
     Ok(result)
 }
 
-fn map_ownership_list(node: Option<super::wire::OwnershipNode>) -> Vec<InstitutionalHolder> {
+fn map_ownership_list(
+    node: Option<super::wire::OwnershipNode>,
+    currency: Currency,
+) -> Vec<InstitutionalHolder> {
     node.and_then(|n| n.ownership_list)
         .unwrap_or_default()
         .into_iter()
@@ -84,7 +88,8 @@ fn map_ownership_list(node: Option<super::wire::OwnershipNode>) -> Vec<Instituti
                 i64_to_datetime,
             ),
             pct_held: from_raw(h.pct_held),
-            value: from_raw(h.value).map(|v| f64_to_money_usd(v as f64)),
+            value: from_raw(h.value)
+                .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
         })
         .collect()
 }
@@ -96,7 +101,8 @@ pub(super) async fn institutional_holders(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<InstitutionalHolder>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
-    Ok(map_ownership_list(root.institution_ownership))
+    let currency = client.reporting_currency(symbol, None).await;
+    Ok(map_ownership_list(root.institution_ownership, currency))
 }
 
 pub(super) async fn mutual_fund_holders(
@@ -106,7 +112,8 @@ pub(super) async fn mutual_fund_holders(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<InstitutionalHolder>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
-    Ok(map_ownership_list(root.fund_ownership))
+    let currency = client.reporting_currency(symbol, None).await;
+    Ok(map_ownership_list(root.fund_ownership, currency))
 }
 
 pub(super) async fn insider_transactions(
@@ -116,6 +123,7 @@ pub(super) async fn insider_transactions(
     retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<InsiderTransaction>, YfError> {
     let root = fetch_holders_modules(client, symbol, cache_mode, retry_override).await?;
+    let currency = client.reporting_currency(symbol, None).await;
     let transactions = root
         .insider_transactions
         .and_then(|it| it.transactions)
@@ -128,7 +136,8 @@ pub(super) async fn insider_transactions(
             position: string_to_insider_position(t.position.unwrap_or_default()),
             transaction_type: string_to_transaction_type(t.transaction.unwrap_or_default()),
             shares: from_raw(t.shares),
-            value: from_raw(t.value).map(|v| f64_to_money_usd(v as f64)),
+            value: from_raw(t.value)
+                .map(|v| f64_to_money_with_currency(v as f64, currency.clone())),
             transaction_date: from_raw_date(t.start_date).map_or_else(
                 || DateTime::from_timestamp(0, 0).unwrap_or_default(),
                 i64_to_datetime,

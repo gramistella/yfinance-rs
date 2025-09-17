@@ -85,7 +85,11 @@ async fn offline_info_uses_recorded_fixtures() {
 
     // Assert all mocks were hit
     quote_mock.assert();
-    profile_mock.assert();
+    assert_eq!(
+        profile_mock.hits(),
+        2,
+        "profile fetch should occur twice (currency + info)"
+    );
     price_target_mock.assert();
     rec_summary_mock.assert();
     esg_mock.assert();

@@ -86,7 +86,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 4: Financial Fundamentals
     println!("💰 4. Financial Statements to DataFrame");
-    match ticker.income_stmt().await {
+    match ticker.income_stmt(None).await {
         Ok(financials) => {
             if !financials.is_empty() {
                 println!(

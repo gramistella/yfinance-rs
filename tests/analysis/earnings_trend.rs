@@ -31,7 +31,7 @@ async fn offline_earnings_trend_uses_recorded_fixture() {
         .unwrap();
 
     let t = Ticker::new(&client, sym);
-    let rows = t.earnings_trend().await.unwrap();
+    let rows = t.earnings_trend(None).await.unwrap();
 
     mock.assert();
     assert_eq!(rows.len(), 4, "record with YF_RECORD=1 first");

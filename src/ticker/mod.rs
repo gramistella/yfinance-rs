@@ -487,22 +487,38 @@ impl Ticker {
 
     /// Fetches the analyst price target.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn analyst_price_target(&self) -> Result<PriceTarget, YfError> {
-        self.analysis_builder().analyst_price_target().await
+    pub async fn analyst_price_target(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<PriceTarget, YfError> {
+        self.analysis_builder()
+            .analyst_price_target(override_currency)
+            .await
     }
 
     /// Fetches earnings trend data for the ticker.
     ///
-    /// This includes earnings estimates, revenue estimates, EPS trends, and EPS revisions for various periods
+    /// This includes earnings estimates, revenue estimates, EPS trends, and EPS revisions for various periods.
+    ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
     ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn earnings_trend(&self) -> Result<Vec<EarningsTrendRow>, YfError> {
-        self.analysis_builder().earnings_trend().await
+    pub async fn earnings_trend(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<EarningsTrendRow>, YfError> {
+        self.analysis_builder()
+            .earnings_trend(override_currency)
+            .await
     }
 
     /* ---------------- ESG / Sustainability ---------------- */
@@ -531,65 +547,118 @@ impl Ticker {
 
     /// Fetches the annual income statement.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn income_stmt(&self) -> Result<Vec<IncomeStatementRow>, YfError> {
-        self.fundamentals_builder().income_statement(false).await
+    pub async fn income_stmt(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<IncomeStatementRow>, YfError> {
+        self.fundamentals_builder()
+            .income_statement(false, override_currency)
+            .await
     }
 
     /// Fetches the quarterly income statement.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn quarterly_income_stmt(&self) -> Result<Vec<IncomeStatementRow>, YfError> {
-        self.fundamentals_builder().income_statement(true).await
+    pub async fn quarterly_income_stmt(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<IncomeStatementRow>, YfError> {
+        self.fundamentals_builder()
+            .income_statement(true, override_currency)
+            .await
     }
 
     /// Fetches the annual balance sheet.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn balance_sheet(&self) -> Result<Vec<BalanceSheetRow>, YfError> {
-        self.fundamentals_builder().balance_sheet(false).await
+    pub async fn balance_sheet(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<BalanceSheetRow>, YfError> {
+        self.fundamentals_builder()
+            .balance_sheet(false, override_currency)
+            .await
     }
 
     /// Fetches the quarterly balance sheet.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn quarterly_balance_sheet(&self) -> Result<Vec<BalanceSheetRow>, YfError> {
-        self.fundamentals_builder().balance_sheet(true).await
+    pub async fn quarterly_balance_sheet(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<BalanceSheetRow>, YfError> {
+        self.fundamentals_builder()
+            .balance_sheet(true, override_currency)
+            .await
     }
 
     /// Fetches the annual cash flow statement.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn cashflow(&self) -> Result<Vec<CashflowRow>, YfError> {
-        self.fundamentals_builder().cashflow(false).await
+    pub async fn cashflow(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<CashflowRow>, YfError> {
+        self.fundamentals_builder()
+            .cashflow(false, override_currency)
+            .await
     }
 
     /// Fetches the quarterly cash flow statement.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn quarterly_cashflow(&self) -> Result<Vec<CashflowRow>, YfError> {
-        self.fundamentals_builder().cashflow(true).await
+    pub async fn quarterly_cashflow(
+        &self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<CashflowRow>, YfError> {
+        self.fundamentals_builder()
+            .cashflow(true, override_currency)
+            .await
     }
 
     /// Fetches earnings history and estimates.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn earnings(&self) -> Result<Earnings, YfError> {
-        self.fundamentals_builder().earnings().await
+    pub async fn earnings(&self, override_currency: Option<Currency>) -> Result<Earnings, YfError> {
+        self.fundamentals_builder()
+            .earnings(override_currency)
+            .await
     }
 
     /// Fetches corporate calendar events like earnings dates.

@@ -33,7 +33,7 @@ pub(super) async fn fetch_info(
         analysis::AnalysisBuilder::new(client, symbol)
             .cache_mode(cache_mode)
             .retry_policy(retry_override.cloned())
-            .analyst_price_target(),
+            .analyst_price_target(None),
         analysis::AnalysisBuilder::new(client, symbol)
             .cache_mode(cache_mode)
             .retry_policy(retry_override.cloned())

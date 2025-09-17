@@ -109,7 +109,7 @@ async fn test_currency_verification() -> Result<(), YfError> {
 
         // Test 4: Fundamentals
         println!("  💰 Fundamentals:");
-        match ticker.income_stmt().await {
+        match ticker.income_stmt(None).await {
             Ok(income_stmt) => {
                 if let Some(latest) = income_stmt.first() {
                     println!("    Total Revenue: {:?}", latest.total_revenue);
@@ -134,7 +134,7 @@ async fn test_currency_verification() -> Result<(), YfError> {
 
         // Test 5: Analysis
         println!("  📊 Analysis:");
-        match ticker.analyst_price_target().await {
+        match ticker.analyst_price_target(None).await {
             Ok(target) => {
                 println!("    Mean Target: {:?}", target.mean);
                 println!("    High Target: {:?}", target.high);

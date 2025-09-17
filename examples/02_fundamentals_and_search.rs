@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Fetching Fundamentals for {} ---", symbol);
     let fundamentals = FundamentalsBuilder::new(&client, symbol);
 
-    let annual_income_stmt = fundamentals.income_statement(false).await?;
+    let annual_income_stmt = fundamentals.income_statement(false, None).await?;
     println!(
         "Latest Annual Income Statement ({} periods):",
         annual_income_stmt.len()
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let quarterly_balance_sheet = fundamentals.balance_sheet(true).await?;
+    let quarterly_balance_sheet = fundamentals.balance_sheet(true, None).await?;
     println!(
         "Latest Quarterly Balance Sheet ({} periods):",
         quarterly_balance_sheet.len()
@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let earnings = fundamentals.earnings().await?;
+    let earnings = fundamentals.earnings(None).await?;
     println!("Latest Earnings Summary:");
     if let Some(e) = earnings.quarterly.first() {
         println!(

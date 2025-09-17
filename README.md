@@ -90,7 +90,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.2.0"
+yfinance-rs = "0.2.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -98,7 +98,7 @@ To enable DataFrame conversions backed by Polars, turn on the optional `datafram
 
 ```toml
 [dependencies]
-yfinance-rs = { version = "0.2.0", features = ["dataframe"] }
+yfinance-rs = { version = "0.2.1", features = ["dataframe"] }
 polars = "0.50"
 ```
 
@@ -128,7 +128,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dividends = ticker.dividends(Some(Range::Y1)).await?;
     println!("Found {} dividend payments in the last year", dividends.len());
 
-    let trends = ticker.earnings_trend().await?;
+    let trends = ticker.earnings_trend(None).await?;
     if let Some(latest_trend) = trends.first() {
         println!("Latest earnings estimate: ${:.2}", latest_trend.earnings_estimate_avg.unwrap_or(0.0));
     }
@@ -232,9 +232,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
     let ticker = Ticker::new(&client, "AAPL");
 
-    let income_stmt = ticker.quarterly_income_stmt().await?;
-    let balance_sheet = ticker.quarterly_balance_sheet().await?;
-    let cashflow = ticker.quarterly_cashflow().await?;
+    let income_stmt = ticker.quarterly_income_stmt(None).await?;
+    let balance_sheet = ticker.quarterly_balance_sheet(None).await?;
+    let cashflow = ticker.quarterly_cashflow(None).await?;
 
     println!("Found {} quarterly income statements.", income_stmt.len());
     println!("Found {} quarterly balance sheet statements.", balance_sheet.len());
@@ -247,6 +247,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+> 💡 Need to force a specific reporting currency? Pass `Some(Currency::USD)` (or any other `paft::prelude::Currency`) instead of `None` when calling the fundamentals/analysis helpers.
 
 ### Options Trading
 
@@ -288,10 +290,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = YfClient::default();
     let ticker = Ticker::new(&client, "AAPL");
 
-    let price_target = ticker.analyst_price_target().await?;
+    let price_target = ticker.analyst_price_target(None).await?;
     let recs_summary = ticker.recommendations_summary().await?;
     let upgrades = ticker.upgrades_downgrades().await?;
-    let earnings_trends = ticker.earnings_trend().await?;
+    let earnings_trends = ticker.earnings_trend(None).await?;
 
     println!("Price Target: ${:.2}", price_target.mean.unwrap_or(0.0));
     println!("Recommendation: {}", recs_summary.mean_key.as_deref().unwrap_or("N/A"));

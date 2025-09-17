@@ -20,10 +20,19 @@ fn fixture_dir() -> PathBuf {
 
 #[must_use]
 pub fn fixture(endpoint: &str, symbol: &str, ext: &str) -> String {
-    let filename = format!("{endpoint}_{symbol}.{ext}");
-    let path = fixture_dir().join(&filename);
+    let path = fixture_path(endpoint, symbol, ext);
     fs::read_to_string(&path)
         .unwrap_or_else(|e| panic!("failed to read fixture {}: {}", path.display(), e))
+}
+
+#[must_use]
+pub fn fixture_path(endpoint: &str, symbol: &str, ext: &str) -> PathBuf {
+    fixture_dir().join(format!("{endpoint}_{symbol}.{ext}"))
+}
+
+#[must_use]
+pub fn fixture_exists(endpoint: &str, symbol: &str, ext: &str) -> bool {
+    fixture_path(endpoint, symbol, ext).exists()
 }
 
 #[must_use]

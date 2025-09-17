@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("--- Fetching annual fundamentals for a single ticker (AAPL) ---");
     let aapl_fundamentals = FundamentalsBuilder::new(&client, "AAPL");
-    let annual_income_stmt = aapl_fundamentals.income_statement(false).await?;
+    let annual_income_stmt = aapl_fundamentals.income_statement(false, None).await?;
     if let Some(stmt) = annual_income_stmt.first() {
         println!(
             "AAPL Latest Annual Revenue: {:.2} (from {})",
@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             stmt.period
         );
     }
-    let annual_cashflow = aapl_fundamentals.cashflow(false).await?;
+    let annual_cashflow = aapl_fundamentals.cashflow(false, None).await?;
     if let Some(cf) = annual_cashflow.first() {
         println!(
             "AAPL Latest Annual Free Cash Flow: {:.2}",

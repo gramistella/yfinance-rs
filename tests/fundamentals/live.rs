@@ -13,22 +13,22 @@ async fn live_fundamentals_smoke() {
     // income (quarterly)
     {
         let t = yfinance_rs::Ticker::new(&client, "AAPL");
-        let _ = t.quarterly_income_stmt().await.unwrap();
+        let _ = t.quarterly_income_stmt(None).await.unwrap();
     }
     // balance (annual)
     {
         let t = yfinance_rs::Ticker::new(&client, "MSFT");
-        let _ = t.balance_sheet().await.unwrap();
+        let _ = t.balance_sheet(None).await.unwrap();
     }
     // cashflow (annual)
     {
         let t = yfinance_rs::Ticker::new(&client, "GOOGL");
-        let _ = t.cashflow().await.unwrap();
+        let _ = t.cashflow(None).await.unwrap();
     }
     // earnings
     {
         let t = yfinance_rs::Ticker::new(&client, "AMZN");
-        let _ = t.earnings().await.unwrap();
+        let _ = t.earnings(None).await.unwrap();
     }
     // calendar
     {
@@ -40,13 +40,13 @@ async fn live_fundamentals_smoke() {
         // If not recording, at least assert we got *some* data from live
         // (No strict expectations; shapes vary by company)
         let t = yfinance_rs::Ticker::new(&client, "AAPL");
-        let income = t.quarterly_income_stmt().await.unwrap();
+        let income = t.quarterly_income_stmt(None).await.unwrap();
         assert!(!income.is_empty());
     }
 
     if !crate::common::is_recording() {
         let t = yfinance_rs::Ticker::new(&client, "MSFT");
-        let balance_sheet = t.balance_sheet().await.unwrap();
+        let balance_sheet = t.balance_sheet(None).await.unwrap();
         assert!(!balance_sheet.is_empty());
         assert!(balance_sheet[0].shares_outstanding.is_some());
     }
@@ -63,16 +63,16 @@ async fn live_fundamentals_for_record() {
     let client = yfinance_rs::YfClient::builder().build().unwrap();
 
     let t1 = yfinance_rs::Ticker::new(&client, "AAPL");
-    let _ = t1.quarterly_income_stmt().await;
+    let _ = t1.quarterly_income_stmt(None).await;
 
     let t2 = yfinance_rs::Ticker::new(&client, "MSFT");
-    let _ = t2.balance_sheet().await;
+    let _ = t2.balance_sheet(None).await;
 
     let t3 = yfinance_rs::Ticker::new(&client, "GOOGL");
-    let _ = t3.cashflow().await;
+    let _ = t3.cashflow(None).await;
 
     let t4 = yfinance_rs::Ticker::new(&client, "AMZN");
-    let _ = t4.earnings().await;
+    let _ = t4.earnings(None).await;
 
     let t5 = yfinance_rs::Ticker::new(&client, "META");
     let _ = t5.calendar().await;

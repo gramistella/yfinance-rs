@@ -13,7 +13,7 @@ async fn live_price_target_smoke() {
 
     // Pick a very liquid name that usually has coverage.
     let t = Ticker::new(&client, "AAPL");
-    let pt = t.analyst_price_target().await.unwrap();
+    let pt = t.analyst_price_target(None).await.unwrap();
 
     // Basic sanity: at least one of the fields should show up.
     assert!(

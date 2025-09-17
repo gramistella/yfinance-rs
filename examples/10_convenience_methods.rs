@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- Annual Financials (Convenience) ---");
-    let annual_income = ticker.income_stmt().await?;
+    let annual_income = ticker.income_stmt(None).await?;
     if let Some(stmt) = annual_income.first() {
         println!(
             "  Latest annual revenue: {:.2}",
@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let annual_balance = ticker.balance_sheet().await?;
+    let annual_balance = ticker.balance_sheet(None).await?;
     if let Some(stmt) = annual_balance.first() {
         println!(
             "  Latest annual assets: {:.2}",
@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let annual_cashflow = ticker.cashflow().await?;
+    let annual_cashflow = ticker.cashflow(None).await?;
     if let Some(stmt) = annual_cashflow.first() {
         println!(
             "  Latest annual free cash flow: {:.2}",

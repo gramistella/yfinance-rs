@@ -72,7 +72,7 @@ async fn fundamentals_invalid_crumb_then_retry_succeeds() {
         .unwrap();
 
     let t = Ticker::new(&client, sym);
-    let e = t.earnings().await.unwrap();
+    let e = t.earnings(None).await.unwrap();
 
     first.assert();
     cookie.assert();

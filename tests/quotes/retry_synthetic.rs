@@ -1,5 +1,6 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use paft::prelude::Currency;
 use url::Url;
 use yfinance_rs::core::conversions::*;
 
@@ -69,8 +70,14 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
     assert_eq!(quotes.len(), 2);
     let aapl = quotes.iter().find(|q| q.symbol == "AAPL").unwrap();
     let msft = quotes.iter().find(|q| q.symbol == "MSFT").unwrap();
-    assert_eq!(aapl.price, Some(f64_to_money_usd(123.0)));
-    assert_eq!(msft.price, Some(f64_to_money_usd(456.0)));
+    assert_eq!(
+        aapl.price,
+        Some(f64_to_money_with_currency(123.0, Currency::USD))
+    );
+    assert_eq!(
+        msft.price,
+        Some(f64_to_money_with_currency(456.0, Currency::USD))
+    );
     assert_eq!(
         aapl.exchange.as_ref().map(|e| e.to_string()),
         Some("NASDAQ".to_string())

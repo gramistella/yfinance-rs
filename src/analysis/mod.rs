@@ -12,6 +12,7 @@ use crate::{
     YfClient, YfError,
     core::client::{CacheMode, RetryConfig},
 };
+use paft::prelude::Currency;
 
 /// A builder for fetching analyst-related data for a specific symbol.
 pub struct AnalysisBuilder {
@@ -93,13 +94,25 @@ impl AnalysisBuilder {
 
     /// Fetches the analyst price target summary.
     ///
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
+    ///
     /// # Errors
     ///
     /// Returns an error if the request fails or the data is malformed.
-    pub async fn analyst_price_target(self) -> Result<PriceTarget, YfError> {
+    pub async fn analyst_price_target(
+        self,
+        override_currency: Option<Currency>,
+    ) -> Result<PriceTarget, YfError> {
+        let currency = self
+            .client
+            .reporting_currency(&self.symbol, override_currency)
+            .await;
+
         api::analyst_price_target(
             &self.client,
             &self.symbol,
+            currency,
             self.cache_mode,
             self.retry_override.as_ref(),
         )
@@ -109,14 +122,25 @@ impl AnalysisBuilder {
     /// Fetches earnings trend data.
     ///
     /// This includes earnings estimates, revenue estimates, EPS trends, and EPS revisions.
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
     ///
     /// # Errors
     ///
     /// Returns an error if the request fails or the data is malformed.
-    pub async fn earnings_trend(self) -> Result<Vec<EarningsTrendRow>, YfError> {
+    pub async fn earnings_trend(
+        self,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<EarningsTrendRow>, YfError> {
+        let currency = self
+            .client
+            .reporting_currency(&self.symbol, override_currency)
+            .await;
+
         api::earnings_trend(
             &self.client,
             &self.symbol,
+            currency,
             self.cache_mode,
             self.retry_override.as_ref(),
         )

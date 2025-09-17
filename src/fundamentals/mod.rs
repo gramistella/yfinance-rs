@@ -13,6 +13,7 @@ use crate::{
     YfClient, YfError,
     core::client::{CacheMode, RetryConfig},
 };
+use paft::prelude::Currency;
 
 /// A builder for fetching fundamental financial data (statements, earnings, etc.).
 pub struct FundamentalsBuilder {
@@ -50,6 +51,8 @@ impl FundamentalsBuilder {
     /// Fetches the income statement.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
     ///
     /// # Errors
     ///
@@ -57,11 +60,18 @@ impl FundamentalsBuilder {
     pub async fn income_statement(
         &self,
         quarterly: bool,
+        override_currency: Option<Currency>,
     ) -> Result<Vec<IncomeStatementRow>, YfError> {
+        let currency = self
+            .client
+            .reporting_currency(&self.symbol, override_currency)
+            .await;
+
         api::income_statement(
             &self.client,
             &self.symbol,
             quarterly,
+            currency,
             self.cache_mode,
             self.retry_override.as_ref(),
         )
@@ -71,15 +81,27 @@ impl FundamentalsBuilder {
     /// Fetches the balance sheet.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
     ///
     /// # Errors
     ///
     /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
-    pub async fn balance_sheet(&self, quarterly: bool) -> Result<Vec<BalanceSheetRow>, YfError> {
+    pub async fn balance_sheet(
+        &self,
+        quarterly: bool,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<BalanceSheetRow>, YfError> {
+        let currency = self
+            .client
+            .reporting_currency(&self.symbol, override_currency)
+            .await;
+
         api::balance_sheet(
             &self.client,
             &self.symbol,
             quarterly,
+            currency,
             self.cache_mode,
             self.retry_override.as_ref(),
         )
@@ -89,15 +111,27 @@ impl FundamentalsBuilder {
     /// Fetches the cash flow statement.
     ///
     /// Set `quarterly` to `true` to get quarterly reports, or `false` for annual reports.
+    /// Provide `Some(currency)` to override the inferred reporting currency; pass `None`
+    /// to use the cached profile-based heuristic.
     ///
     /// # Errors
     ///
     /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
-    pub async fn cashflow(&self, quarterly: bool) -> Result<Vec<CashflowRow>, YfError> {
+    pub async fn cashflow(
+        &self,
+        quarterly: bool,
+        override_currency: Option<Currency>,
+    ) -> Result<Vec<CashflowRow>, YfError> {
+        let currency = self
+            .client
+            .reporting_currency(&self.symbol, override_currency)
+            .await;
+
         api::cashflow(
             &self.client,
             &self.symbol,
             quarterly,
+            currency,
             self.cache_mode,
             self.retry_override.as_ref(),
         )
@@ -109,10 +143,16 @@ impl FundamentalsBuilder {
     /// # Errors
     ///
     /// Returns a `YfError` if the network request fails or the API response cannot be parsed.
-    pub async fn earnings(&self) -> Result<Earnings, YfError> {
+    pub async fn earnings(&self, override_currency: Option<Currency>) -> Result<Earnings, YfError> {
+        let currency = self
+            .client
+            .reporting_currency(&self.symbol, override_currency)
+            .await;
+
         api::earnings(
             &self.client,
             &self.symbol,
+            currency,
             self.cache_mode,
             self.retry_override.as_ref(),
         )

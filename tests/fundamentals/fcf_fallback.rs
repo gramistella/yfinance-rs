@@ -56,18 +56,28 @@ async fn cashflow_computes_fcf_when_missing() {
         .unwrap();
 
     let t = Ticker::new(&client, sym);
-    let rows = t.cashflow().await.unwrap();
+    let rows = t.cashflow(None).await.unwrap();
 
     mock.assert();
 
     assert_eq!(rows.len(), 1);
+    use paft::prelude::Currency;
     use yfinance_rs::core::conversions::*;
-    assert_eq!(rows[0].operating_cashflow, Some(f64_to_money_usd(100.0)));
-    assert_eq!(rows[0].capital_expenditures, Some(f64_to_money_usd(-30.0)));
+    assert_eq!(
+        rows[0].operating_cashflow,
+        Some(f64_to_money_with_currency(100.0, Currency::USD))
+    );
+    assert_eq!(
+        rows[0].capital_expenditures,
+        Some(f64_to_money_with_currency(-30.0, Currency::USD))
+    );
     assert_eq!(
         rows[0].free_cash_flow,
-        Some(f64_to_money_usd(70.0)),
+        Some(f64_to_money_with_currency(70.0, Currency::USD)),
         "fcf = ocf + capex (where capex is negative)"
     );
-    assert_eq!(rows[0].net_income, Some(f64_to_money_usd(65.0)));
+    assert_eq!(
+        rows[0].net_income,
+        Some(f64_to_money_with_currency(65.0, Currency::USD))
+    );
 }

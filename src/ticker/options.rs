@@ -9,6 +9,7 @@ use crate::{
         net,
     },
 };
+use paft::prelude::Currency;
 
 use super::model::{OptionChain, OptionContract};
 
@@ -70,27 +71,36 @@ pub async fn option_chain(
         0
     });
 
-    let map_side = |side: Option<Vec<OptContractNode>>| -> Vec<OptionContract> {
-        side.unwrap_or_default()
-            .into_iter()
-            .map(|c| OptionContract {
-                contract_symbol: c.contract_symbol.unwrap_or_default(),
-                strike: f64_to_money_usd(c.strike.unwrap_or(0.0)),
-                price: c.last_price.map(f64_to_money_usd),
-                bid: c.bid.map(f64_to_money_usd),
-                ask: c.ask.map(f64_to_money_usd),
-                volume: c.volume,
-                open_interest: c.open_interest,
-                implied_volatility: c.implied_volatility,
-                in_the_money: c.in_the_money.unwrap_or(false),
-                expiration: i64_to_datetime(expiration),
-            })
-            .collect()
-    };
+    let currency = client.reporting_currency(symbol, None).await;
+
+    let map_side =
+        |side: Option<Vec<OptContractNode>>, currency: &Currency| -> Vec<OptionContract> {
+            side.unwrap_or_default()
+                .into_iter()
+                .map(|c| OptionContract {
+                    contract_symbol: c.contract_symbol.unwrap_or_default(),
+                    strike: f64_to_money_with_currency(c.strike.unwrap_or(0.0), currency.clone()),
+                    price: c
+                        .last_price
+                        .map(|v| f64_to_money_with_currency(v, currency.clone())),
+                    bid: c
+                        .bid
+                        .map(|v| f64_to_money_with_currency(v, currency.clone())),
+                    ask: c
+                        .ask
+                        .map(|v| f64_to_money_with_currency(v, currency.clone())),
+                    volume: c.volume,
+                    open_interest: c.open_interest,
+                    implied_volatility: c.implied_volatility,
+                    in_the_money: c.in_the_money.unwrap_or(false),
+                    expiration: i64_to_datetime(expiration),
+                })
+                .collect()
+        };
 
     Ok(OptionChain {
-        calls: map_side(od.calls),
-        puts: map_side(od.puts),
+        calls: map_side(od.calls, &currency),
+        puts: map_side(od.puts, &currency),
     })
 }
 

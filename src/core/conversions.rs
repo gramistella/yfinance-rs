@@ -20,13 +20,6 @@ pub fn f64_to_money_with_currency(value: f64, currency: Currency) -> Money {
     Money::new(decimal, currency)
 }
 
-/// Convert f64 to Money with USD currency (for cases where USD is explicitly intended)
-pub fn f64_to_money_usd(value: f64) -> Money {
-    // Use string formatting to avoid f64 precision issues; coerce non-finite to zero
-    let decimal = f64_to_decimal_safely(value);
-    Money::new(decimal, Currency::USD)
-}
-
 /// Convert f64 to Money with currency string (parses currency string to Currency enum)
 pub fn f64_to_money_with_currency_str(value: f64, currency_str: Option<&str>) -> Money {
     let currency = currency_str
