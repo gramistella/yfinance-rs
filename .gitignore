@@ -1,4 +1,4 @@
 /target
 .idea
-.stitchworkspace/local
+.stitchworkspace/
 Cargo.lock
