@@ -15,7 +15,11 @@ async fn check_fast_info(ticker: &Ticker, expected_currency: &str) {
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
-                if currency_correct { "CORRECT" } else { "INCORRECT" },
+                if currency_correct {
+                    "CORRECT"
+                } else {
+                    "INCORRECT"
+                },
                 fi.currency.as_deref().unwrap_or("None"),
                 expected_currency
             );
@@ -36,7 +40,11 @@ async fn check_comprehensive_info(ticker: &Ticker, expected_currency: &str) {
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
-                if currency_correct { "CORRECT" } else { "INCORRECT" },
+                if currency_correct {
+                    "CORRECT"
+                } else {
+                    "INCORRECT"
+                },
                 info.currency.as_deref().unwrap_or("None"),
                 expected_currency
             );
@@ -60,7 +68,11 @@ async fn check_history(ticker: &Ticker, expected_currency: &str) {
                 println!(
                     "    {} Currency {}: {} (expected {})",
                     if currency_correct { "✅" } else { "❌" },
-                    if currency_correct { "CORRECT" } else { "INCORRECT" },
+                    if currency_correct {
+                        "CORRECT"
+                    } else {
+                        "INCORRECT"
+                    },
                     last_candle.close.currency(),
                     expected_currency
                 );
