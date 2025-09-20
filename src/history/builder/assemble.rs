@@ -1,6 +1,6 @@
 use crate::core::conversions::{f64_to_money_with_currency_str, i64_to_datetime};
 use crate::history::wire::QuoteBlock;
-use paft::prelude::*;
+use paft::market::responses::history::Candle;
 
 use super::adjust::price_factor_for_row;
 

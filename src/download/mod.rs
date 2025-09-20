@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use futures::future::try_join_all;
 
 use crate::{
-    Action, Candle, HistoryMeta, HistoryResponse, Interval, Range, YfClient, YfError,
     core::client::{CacheMode, RetryConfig},
+    core::{Action, Candle, HistoryMeta, HistoryResponse, Interval, Range, YfClient, YfError},
     history::HistoryBuilder,
 };
-use paft::prelude::Money;
+use paft::core::domain::Money;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 type DateRange = (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>);
 type MaybeDateRange = Option<DateRange>;

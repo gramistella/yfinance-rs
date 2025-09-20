@@ -328,14 +328,13 @@ async fn run_websocket_stream(
                     }
                     Some(Ok(WsMessage::Binary(bin))) => {
                         // Try to interpret as UTF-8 JSON-wrapped base64 first
-                        let mut handled = false;
-                        if let Ok(as_text) = std::str::from_utf8(&bin)
+                        let handled = if let Ok(as_text) = std::str::from_utf8(&bin)
                             && let Ok(update) = decode_and_map_message(as_text) {
                                 if tx.send(update).await.is_err() {
                                     break; // Receiver was dropped
                                 }
-                                handled = true;
-                            }
+                                true
+                            } else { false };
                         // If not handled, treat as raw protobuf bytes
                         if !handled {
                             match wire_ws::PricingData::decode(&*bin) {

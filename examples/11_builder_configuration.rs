@@ -1,6 +1,7 @@
 use std::time;
 
 use chrono::{Duration, Utc};
+use yfinance_rs::core::Interval;
 use yfinance_rs::{
     DownloadBuilder, QuotesBuilder, SearchBuilder, Ticker, YfClient,
     core::client::{Backoff, CacheMode, RetryConfig},
@@ -54,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let download = DownloadBuilder::new(&client)
         .symbols(vec!["TSLA"])
         .between(yesterday, today)
-        .interval(yfinance_rs::Interval::I15m)
+        .interval(Interval::I15m)
         .prepost(true)
         .keepna(true)
         .run()

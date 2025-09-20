@@ -1,6 +1,6 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 use url::Url;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::{ApiPreference, Ticker, YfClient};

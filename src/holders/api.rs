@@ -14,7 +14,7 @@ use crate::core::{
     quotesummary,
 };
 use chrono::DateTime;
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 
 #[inline]
 #[allow(clippy::cast_precision_loss)]
@@ -141,8 +141,8 @@ pub(super) async fn insider_transactions(
         .into_iter()
         .map(|t| InsiderTransaction {
             insider: t.insider.unwrap_or_default(),
-            position: string_to_insider_position(t.position.unwrap_or_default()),
-            transaction_type: string_to_transaction_type(t.transaction.unwrap_or_default()),
+            position: string_to_insider_position(&t.position.unwrap_or_default()),
+            transaction_type: string_to_transaction_type(&t.transaction.unwrap_or_default()),
             shares: from_raw(t.shares),
             value: from_raw(t.value).map(|v| u64_to_money_with_currency(v, currency.clone())),
             transaction_date: from_raw_date(t.start_date).map_or_else(
@@ -170,9 +170,9 @@ pub(super) async fn insider_roster_holders(
         .into_iter()
         .map(|h| InsiderRosterHolder {
             name: h.name.unwrap_or_default(),
-            position: string_to_insider_position(h.relation.unwrap_or_default()),
+            position: string_to_insider_position(&h.relation.unwrap_or_default()),
             most_recent_transaction: string_to_transaction_type(
-                h.most_recent_transaction.unwrap_or_default(),
+                &h.most_recent_transaction.unwrap_or_default(),
             ),
             latest_transaction_date: from_raw_date(h.latest_transaction_date).map_or_else(
                 || DateTime::from_timestamp(0, 0).unwrap_or_default(),
@@ -197,7 +197,7 @@ pub(super) async fn net_share_purchase_activity(
     Ok(root
         .net_share_purchase_activity
         .map(|n| NetSharePurchaseActivity {
-            period: n.period.unwrap_or_default(),
+            period: crate::core::conversions::string_to_period(&n.period.unwrap_or_default()),
             buy_shares: from_raw(n.buy_info_shares),
             buy_count: from_raw(n.buy_info_count),
             sell_shares: from_raw(n.sell_info_shares),

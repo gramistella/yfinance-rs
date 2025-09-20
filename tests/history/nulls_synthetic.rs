@@ -1,5 +1,5 @@
 use httpmock::{Method::GET, MockServer};
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 use url::Url;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::{HistoryBuilder, YfClient};

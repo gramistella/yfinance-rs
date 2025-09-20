@@ -1,7 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Range, Ticker, YfClient};
+use yfinance_rs::core::Range;
+use yfinance_rs::{Ticker, YfClient};
 
 fn meta_body() -> String {
     r#"{

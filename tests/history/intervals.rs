@@ -1,7 +1,8 @@
 use crate::common;
 use httpmock::Method::GET;
 use url::Url;
-use yfinance_rs::{HistoryBuilder, Interval, YfClient};
+use yfinance_rs::core::Interval;
+use yfinance_rs::{HistoryBuilder, YfClient};
 
 #[tokio::test]
 async fn history_allows_intraday_interval() {

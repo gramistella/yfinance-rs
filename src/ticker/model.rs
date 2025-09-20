@@ -1,24 +1,24 @@
-use paft::fundamentals::Address;
+use paft::fundamentals::profile::Address;
 use serde::{Deserialize, Serialize};
 
-// Re-export types from paft
-pub use paft::market::{OptionChain, OptionContract};
+// Re-export types from paft without using prelude
+pub use paft::market::options::{OptionChain, OptionContract};
 
 /// Fast info structure containing essential quote data
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FastInfo {
-    /// Ticker symbol.
+    /// The ticker symbol.
     pub symbol: String,
-    /// Last traded price.
+    /// The last traded price (or previous close if last is missing).
     pub last_price: f64,
-    /// Previous close price.
+    /// Previous session's closing price.
     pub previous_close: Option<f64>,
-    /// ISO currency code of prices.
+    /// ISO currency code of the instrument.
     pub currency: Option<String>,
+    /// Market state string (e.g., "REGULAR", "PRE", "POST").
+    pub market_state: Option<String>,
     /// Primary exchange name.
     pub exchange: Option<String>,
-    /// Market state as a string.
-    pub market_state: Option<String>,
 }
 
 /// Comprehensive info structure containing quote, profile, analysis, and ESG data

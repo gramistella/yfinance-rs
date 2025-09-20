@@ -1,6 +1,6 @@
 use crate::common;
 use httpmock::Method::GET;
-use paft::fundamentals::Profile;
+use paft::fundamentals::profile::Profile;
 use url::Url;
 use yfinance_rs::{ApiPreference, YfClient};
 

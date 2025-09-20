@@ -1,9 +1,8 @@
-use crate::{
-    Quote, YfClient, YfError,
-    core::{
-        client::{CacheMode, RetryConfig},
-        quotes,
-    },
+use crate::core::{
+    YfClient, YfError,
+    client::{CacheMode, RetryConfig},
+    models::Quote,
+    quotes,
 };
 
 pub async fn fetch_quote(

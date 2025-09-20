@@ -14,10 +14,11 @@ use crate::{
 use super::fetch::fetch_modules;
 use super::model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 use chrono::DateTime;
+use paft::core::domain::Currency;
 use paft::fundamentals::analysis::{
     EarningsEstimate, EpsRevisions, EpsTrend, RevenueEstimate, RevisionPoint, TrendPoint,
 };
-use paft::prelude::Currency;
+// Period is available via prelude or directly; we use string_to_period for parsing, so import not needed
 
 /* ---------- Public entry points (mapping wire → public models) ---------- */
 
@@ -44,7 +45,7 @@ pub(super) async fn recommendation_trend(
     let rows = trend
         .into_iter()
         .map(|n| RecommendationRow {
-            period: string_to_period(n.period.unwrap_or_default()),
+            period: string_to_period(&n.period.unwrap_or_default()),
             strong_buy: n.strong_buy.and_then(|v| u32::try_from(v).ok()),
             buy: n.buy.and_then(|v| u32::try_from(v).ok()),
             hold: n.hold.and_then(|v| u32::try_from(v).ok()),
@@ -81,7 +82,7 @@ pub(super) async fn recommendation_summary(
     let (latest_period, sb, b, h, s, ss) =
         latest.map_or((None, None, None, None, None, None), |t| {
             (
-                Some(string_to_period(t.period.clone().unwrap_or_default())),
+                Some(string_to_period(&t.period.clone().unwrap_or_default())),
                 t.strong_buy.and_then(|v| u32::try_from(v).ok()),
                 t.buy.and_then(|v| u32::try_from(v).ok()),
                 t.hold.and_then(|v| u32::try_from(v).ok()),
@@ -134,11 +135,12 @@ pub(super) async fn upgrades_downgrades(
                 i64_to_datetime,
             ),
             firm: h.firm,
-            from_grade: h.from_grade.map(string_to_recommendation_grade),
-            to_grade: h.to_grade.map(string_to_recommendation_grade),
+            from_grade: h.from_grade.as_deref().map(string_to_recommendation_grade),
+            to_grade: h.to_grade.as_deref().map(string_to_recommendation_grade),
             action: h
                 .action
                 .or(h.grade_change)
+                .as_deref()
                 .map(string_to_recommendation_action),
         })
         .collect();
@@ -266,7 +268,7 @@ pub(super) async fn earnings_trend(
                 .unwrap_or_default();
 
             EarningsTrendRow {
-                period: string_to_period(n.period.unwrap_or_default()),
+                period: string_to_period(&n.period.unwrap_or_default()),
                 growth: from_raw(n.growth),
                 earnings_estimate: EarningsEstimate {
                     avg: earnings_estimate_avg
@@ -295,36 +297,61 @@ pub(super) async fn earnings_trend(
                 eps_trend: EpsTrend {
                     current: eps_trend_current
                         .map(|v| f64_to_money_with_currency(v, currency.clone())),
-                    historical: [
-                        eps_trend_7_days_ago.map(|v| {
-                            TrendPoint::new("7d", f64_to_money_with_currency(v, currency.clone()))
-                        }),
-                        eps_trend_30_days_ago.map(|v| {
-                            TrendPoint::new("30d", f64_to_money_with_currency(v, currency.clone()))
-                        }),
-                        eps_trend_60_days_ago.map(|v| {
-                            TrendPoint::new("60d", f64_to_money_with_currency(v, currency.clone()))
-                        }),
-                        eps_trend_90_days_ago.map(|v| {
-                            TrendPoint::new("90d", f64_to_money_with_currency(v, currency.clone()))
-                        }),
-                    ]
-                    .into_iter()
-                    .flatten()
-                    .collect(),
+                    historical: {
+                        let mut hist = Vec::new();
+                        if let Some(v) = eps_trend_7_days_ago
+                            && let Ok(tp) = TrendPoint::try_new_str(
+                                "7d",
+                                f64_to_money_with_currency(v, currency.clone()),
+                            )
+                        {
+                            hist.push(tp);
+                        }
+                        if let Some(v) = eps_trend_30_days_ago
+                            && let Ok(tp) = TrendPoint::try_new_str(
+                                "30d",
+                                f64_to_money_with_currency(v, currency.clone()),
+                            )
+                        {
+                            hist.push(tp);
+                        }
+                        if let Some(v) = eps_trend_60_days_ago
+                            && let Ok(tp) = TrendPoint::try_new_str(
+                                "60d",
+                                f64_to_money_with_currency(v, currency.clone()),
+                            )
+                        {
+                            hist.push(tp);
+                        }
+                        if let Some(v) = eps_trend_90_days_ago
+                            && let Ok(tp) = TrendPoint::try_new_str(
+                                "90d",
+                                f64_to_money_with_currency(v, currency.clone()),
+                            )
+                        {
+                            hist.push(tp);
+                        }
+                        hist
+                    },
                 },
                 eps_revisions: EpsRevisions {
-                    historical: [
-                        eps_revisions_up_last_7_days
-                            .zip(eps_revisions_down_last_7_days)
-                            .map(|(up, down)| RevisionPoint::new("7d", up, down)),
-                        eps_revisions_up_last_30_days
-                            .zip(eps_revisions_down_last_30_days)
-                            .map(|(up, down)| RevisionPoint::new("30d", up, down)),
-                    ]
-                    .into_iter()
-                    .flatten()
-                    .collect(),
+                    historical: {
+                        let mut hist = Vec::new();
+                        if let (Some(up), Some(down)) =
+                            (eps_revisions_up_last_7_days, eps_revisions_down_last_7_days)
+                            && let Ok(rp) = RevisionPoint::try_new_str("7d", up, down)
+                        {
+                            hist.push(rp);
+                        }
+                        if let (Some(up), Some(down)) = (
+                            eps_revisions_up_last_30_days,
+                            eps_revisions_down_last_30_days,
+                        ) && let Ok(rp) = RevisionPoint::try_new_str("30d", up, down)
+                        {
+                            hist.push(rp);
+                        }
+                        hist
+                    },
                 },
             }
         })

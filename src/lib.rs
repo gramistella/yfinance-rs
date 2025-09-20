@@ -164,5 +164,6 @@ pub use search::{SearchBuilder, search};
 pub use stream::{StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
 pub use ticker::{FastInfo, Info, Ticker};
 
-// Re-export paft types for convenience (includes most data types)
-pub use paft::prelude::*;
+// Explicitly re-export selected paft core types commonly used by users of this crate
+pub use crate::core::{Action, Candle, HistoryMeta, HistoryResponse, Quote};
+pub use crate::core::{Interval, Range};

@@ -1,7 +1,10 @@
-//! Conversion utilities between old valuta types and new paft types
+//! Conversion utilities
 
 use chrono::{DateTime, Utc};
-use paft::prelude::*;
+use paft::core::domain::{Currency, Exchange, MarketState, Money, Period};
+use paft::fundamentals::analysis::{RecommendationAction, RecommendationGrade};
+use paft::fundamentals::holders::{InsiderPosition, TransactionType};
+use paft::fundamentals::profile::FundKind;
 use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
 
@@ -72,50 +75,50 @@ pub const fn datetime_to_i64(dt: DateTime<Utc>) -> i64 {
 #[allow(clippy::single_option_map)]
 #[must_use]
 pub fn string_to_exchange(s: Option<String>) -> Option<Exchange> {
-    s.map(|s| {
+    s.and_then(|s| {
         // Map Yahoo Finance exchange names to paft Exchange values
         match s.as_str() {
-            "NasdaqGS" | "NasdaqCM" | "NasdaqGM" => Exchange::NASDAQ,
-            "NYSE" => Exchange::NYSE,
-            "AMEX" => Exchange::AMEX,
-            "BATS" => Exchange::BATS,
-            "OTC" => Exchange::OTC,
-            "LSE" => Exchange::LSE,
-            "TSE" => Exchange::TSE,
-            "HKEX" => Exchange::HKEX,
-            "SSE" => Exchange::SSE,
-            "SZSE" => Exchange::SZSE,
-            "TSX" => Exchange::TSX,
-            "ASX" => Exchange::ASX,
-            "Euronext" => Exchange::Euronext,
-            "XETRA" => Exchange::XETRA,
-            "SIX" => Exchange::SIX,
-            "BIT" => Exchange::BIT,
-            "BME" => Exchange::BME,
-            "AEX" => Exchange::AEX,
-            "BRU" => Exchange::BRU,
-            "LIS" => Exchange::LIS,
-            "EPA" => Exchange::EPA,
-            "OSL" => Exchange::OSL,
-            "STO" => Exchange::STO,
-            "CPH" => Exchange::CPH,
-            "WSE" => Exchange::WSE,
-            "PSE" => Exchange::PSE,
-            "BSE" => Exchange::BSE,
-            "MOEX" => Exchange::MOEX,
-            "BIST" => Exchange::BIST,
-            "JSE" => Exchange::JSE,
-            "TASE" => Exchange::TASE,
-            "BseIndia" => Exchange::BseIndia,
-            "NSE" => Exchange::NSE,
-            "KRX" => Exchange::KRX,
-            "SGX" => Exchange::SGX,
-            "SET" => Exchange::SET,
-            "KLSE" => Exchange::KLSE,
-            "PsePhil" => Exchange::PsePhil,
-            "IDX" => Exchange::IDX,
-            "HOSE" => Exchange::HOSE,
-            _ => Exchange::from(s), // Fallback to paft's parsing
+            "NasdaqGS" | "NasdaqCM" | "NasdaqGM" => Some(Exchange::NASDAQ),
+            "NYSE" => Some(Exchange::NYSE),
+            "AMEX" => Some(Exchange::AMEX),
+            "BATS" => Some(Exchange::BATS),
+            "OTC" => Some(Exchange::OTC),
+            "LSE" => Some(Exchange::LSE),
+            "TSE" => Some(Exchange::TSE),
+            "HKEX" => Some(Exchange::HKEX),
+            "SSE" => Some(Exchange::SSE),
+            "SZSE" => Some(Exchange::SZSE),
+            "TSX" => Some(Exchange::TSX),
+            "ASX" => Some(Exchange::ASX),
+            "Euronext" => Some(Exchange::Euronext),
+            "XETRA" => Some(Exchange::XETRA),
+            "SIX" => Some(Exchange::SIX),
+            "BIT" => Some(Exchange::BIT),
+            "BME" => Some(Exchange::BME),
+            "AEX" => Some(Exchange::AEX),
+            "BRU" => Some(Exchange::BRU),
+            "LIS" => Some(Exchange::LIS),
+            "EPA" => Some(Exchange::EPA),
+            "OSL" => Some(Exchange::OSL),
+            "STO" => Some(Exchange::STO),
+            "CPH" => Some(Exchange::CPH),
+            "WSE" => Some(Exchange::WSE),
+            "PSE" => Some(Exchange::PSE),
+            "BSE" => Some(Exchange::BSE),
+            "MOEX" => Some(Exchange::MOEX),
+            "BIST" => Some(Exchange::BIST),
+            "JSE" => Some(Exchange::JSE),
+            "TASE" => Some(Exchange::TASE),
+            "BseIndia" => Some(Exchange::BseIndia),
+            "NSE" => Some(Exchange::NSE),
+            "KRX" => Some(Exchange::KRX),
+            "SGX" => Some(Exchange::SGX),
+            "SET" => Some(Exchange::SET),
+            "KLSE" => Some(Exchange::KLSE),
+            "PsePhil" => Some(Exchange::PsePhil),
+            "IDX" => Some(Exchange::IDX),
+            "HOSE" => Some(Exchange::HOSE),
+            _ => Exchange::try_from(s).ok(),
         }
     })
 }
@@ -127,8 +130,9 @@ pub fn exchange_to_string(exchange: Option<Exchange>) -> Option<String> {
 }
 
 /// Convert String to `MarketState` enum
+#[must_use]
 pub fn string_to_market_state(s: Option<String>) -> Option<MarketState> {
-    s.map(MarketState::from)
+    s.and_then(|s| s.parse().ok())
 }
 
 /// Convert `MarketState` to String
@@ -141,18 +145,18 @@ pub fn market_state_to_string(state: Option<MarketState>) -> Option<String> {
 #[allow(clippy::single_option_map)]
 #[must_use]
 pub fn string_to_fund_kind(s: Option<String>) -> Option<FundKind> {
-    s.map(|s| {
+    s.and_then(|s| {
         // Map Yahoo Finance legal types to paft FundKind values
         match s.as_str() {
-            "Exchange Traded Fund" => FundKind::Etf,
-            "Mutual Fund" => FundKind::MutualFund,
-            "Index Fund" => FundKind::IndexFund,
-            "Closed-End Fund" => FundKind::ClosedEndFund,
-            "Money Market Fund" => FundKind::MoneyMarketFund,
-            "Hedge Fund" => FundKind::HedgeFund,
-            "Real Estate Investment Trust" => FundKind::Reit,
-            "Unit Investment Trust" => FundKind::UnitInvestmentTrust,
-            _ => FundKind::from(s), // Fallback to paft's parsing
+            "Exchange Traded Fund" => Some(FundKind::Etf),
+            "Mutual Fund" => Some(FundKind::MutualFund),
+            "Index Fund" => Some(FundKind::IndexFund),
+            "Closed-End Fund" => Some(FundKind::ClosedEndFund),
+            "Money Market Fund" => Some(FundKind::MoneyMarketFund),
+            "Hedge Fund" => Some(FundKind::HedgeFund),
+            "Real Estate Investment Trust" => Some(FundKind::Reit),
+            "Unit Investment Trust" => Some(FundKind::UnitInvestmentTrust),
+            _ => FundKind::try_from(s).ok(),
         }
     })
 }
@@ -165,30 +169,44 @@ pub fn fund_kind_to_string(kind: Option<FundKind>) -> Option<String> {
 
 /// Convert String to `InsiderPosition` enum
 #[must_use]
-pub fn string_to_insider_position(s: String) -> InsiderPosition {
-    InsiderPosition::from(s)
+pub fn string_to_insider_position(s: &str) -> InsiderPosition {
+    let token = s.trim();
+    let token_nonempty = if token.is_empty() { "UNKNOWN" } else { token };
+    token_nonempty.parse().unwrap_or(InsiderPosition::Officer)
 }
 
 /// Convert String to `TransactionType` enum
 #[must_use]
-pub fn string_to_transaction_type(s: String) -> TransactionType {
-    TransactionType::from(s)
+pub fn string_to_transaction_type(s: &str) -> TransactionType {
+    let token = s.trim();
+    let token_nonempty = if token.is_empty() { "UNKNOWN" } else { token };
+    token_nonempty.parse().unwrap_or(TransactionType::Buy)
 }
 
 /// Convert String to Period
 #[must_use]
-pub fn string_to_period(s: String) -> Period {
-    Period::try_from(s.clone()).unwrap_or(Period::Other(s))
+pub fn string_to_period(s: &str) -> Period {
+    if s.trim().is_empty() {
+        return "UNKNOWN".parse().map_or(Period::Year { year: 1970 }, |p| p);
+    }
+    s.parse()
+        .unwrap_or_else(|_| "UNKNOWN".parse().map_or(Period::Year { year: 1970 }, |p| p))
 }
 
 /// Convert String to `RecommendationGrade` enum
 #[must_use]
-pub fn string_to_recommendation_grade(s: String) -> RecommendationGrade {
-    RecommendationGrade::from(s)
+pub fn string_to_recommendation_grade(s: &str) -> RecommendationGrade {
+    let token = s.trim();
+    let token_nonempty = if token.is_empty() { "UNKNOWN" } else { token };
+    token_nonempty.parse().unwrap_or(RecommendationGrade::Hold)
 }
 
 /// Convert String to `RecommendationAction` enum
 #[must_use]
-pub fn string_to_recommendation_action(s: String) -> RecommendationAction {
-    RecommendationAction::from(s)
+pub fn string_to_recommendation_action(s: &str) -> RecommendationAction {
+    let token = s.trim();
+    let token_nonempty = if token.is_empty() { "UNKNOWN" } else { token };
+    token_nonempty
+        .parse()
+        .unwrap_or(RecommendationAction::Maintain)
 }

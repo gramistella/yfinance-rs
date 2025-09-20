@@ -31,6 +31,7 @@ async fn option_chain_for_specific_date() {
     let symbol = "AAPL";
 
     let exp_mock = crate::common::mock_options_v7(&server, symbol);
+    let quote_mock = crate::common::mock_quote_v7(&server, symbol);
 
     let client = YfClient::builder()
         .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
@@ -52,6 +53,11 @@ async fn option_chain_for_specific_date() {
 
     let chain = t.option_chain(Some(date)).await.unwrap();
     chain_mock.assert();
+    assert_eq!(
+        quote_mock.hits(),
+        0,
+        "options currency should prevent quote fallback"
+    );
 
     assert!(
         !chain.calls.is_empty(),

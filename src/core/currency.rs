@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, sync::LazyLock};
 
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 
 /// Normalized country → currency code pairs.
 ///
@@ -219,7 +219,8 @@ const COUNTRY_TO_CURRENCY_RAW: &[(&str, &str)] = &[
 static COUNTRY_TO_CURRENCY: LazyLock<HashMap<&'static str, Currency>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     for (country, code) in COUNTRY_TO_CURRENCY_RAW {
-        map.insert(*country, Currency::from((*code).to_string()));
+        let parsed = (*code).parse().unwrap_or(Currency::USD);
+        map.insert(*country, parsed);
     }
     map
 });
@@ -306,52 +307,52 @@ fn match_americas(s: &str) -> Option<Currency> {
         return Some(Currency::BRL);
     }
     if c("ARGENTINA") {
-        return Some(Currency::from("ARS".to_string()));
+        return "ARS".parse().ok();
     }
     if c("CHILE") {
-        return Some(Currency::from("CLP".to_string()));
+        return "CLP".parse().ok();
     }
     if c("COLOMBIA") {
-        return Some(Currency::from("COP".to_string()));
+        return "COP".parse().ok();
     }
     if c("PERU") {
-        return Some(Currency::from("PEN".to_string()));
+        return "PEN".parse().ok();
     }
     if c("URUGUAY") {
-        return Some(Currency::from("UYU".to_string()));
+        return "UYU".parse().ok();
     }
     if c("PARAGUAY") {
-        return Some(Currency::from("PYG".to_string()));
+        return "PYG".parse().ok();
     }
     if c("BOLIVIA") {
-        return Some(Currency::from("BOB".to_string()));
+        return "BOB".parse().ok();
     }
     if c("VENEZUELA") {
-        return Some(Currency::from("VES".to_string()));
+        return "VES".parse().ok();
     }
     if c("PANAMA") || c("ECUADOR") || c("EL SALVADOR") {
         return Some(Currency::USD);
     }
     if c("BAHAMAS") {
-        return Some(Currency::from("BSD".to_string()));
+        return "BSD".parse().ok();
     }
     if c("CAYMAN") {
-        return Some(Currency::from("KYD".to_string()));
+        return "KYD".parse().ok();
     }
     if c("BERMUDA") {
-        return Some(Currency::from("BMD".to_string()));
+        return "BMD".parse().ok();
     }
     if c("TRINIDAD") {
-        return Some(Currency::from("TTD".to_string()));
+        return "TTD".parse().ok();
     }
     if c("JAMAICA") {
-        return Some(Currency::from("JMD".to_string()));
+        return "JMD".parse().ok();
     }
     if c("BARBADOS") {
-        return Some(Currency::from("BBD".to_string()));
+        return "BBD".parse().ok();
     }
     if c("DOMINICAN") {
-        return Some(Currency::from("DOP".to_string()));
+        return "DOP".parse().ok();
     }
     Some(None?).or(None)
 }
@@ -377,7 +378,7 @@ fn match_europe(s: &str) -> Option<Currency> {
         return Some(Currency::DKK);
     }
     if c("ICELAND") {
-        return Some(Currency::from("ISK".to_string()));
+        return "ISK".parse().ok();
     }
     if c("POLAND") {
         return Some(Currency::PLN);
@@ -389,19 +390,19 @@ fn match_europe(s: &str) -> Option<Currency> {
         return Some(Currency::HUF);
     }
     if c("ROMANIA") {
-        return Some(Currency::from("RON".to_string()));
+        return "RON".parse().ok();
     }
     if c("BULGARIA") {
-        return Some(Currency::from("BGN".to_string()));
+        return "BGN".parse().ok();
     }
     if c("UKRAINE") {
-        return Some(Currency::from("UAH".to_string()));
+        return "UAH".parse().ok();
     }
     if c("BELARUS") {
-        return Some(Currency::from("BYN".to_string()));
+        return "BYN".parse().ok();
     }
     if c("SERBIA") {
-        return Some(Currency::from("RSD".to_string()));
+        return "RSD".parse().ok();
     }
     if c("TURKEY") {
         return Some(Currency::TRY);
@@ -415,10 +416,10 @@ fn match_asia_pacific(s: &str) -> Option<Currency> {
         return Some(Currency::HKD);
     }
     if c("MACAU") {
-        return Some(Currency::from("MOP".to_string()));
+        return "MOP".parse().ok();
     }
     if c("TAIWAN") {
-        return Some(Currency::from("TWD".to_string()));
+        return "TWD".parse().ok();
     }
     if c("KOREA") {
         return Some(Currency::KRW);
@@ -451,16 +452,16 @@ fn match_asia_pacific(s: &str) -> Option<Currency> {
         return Some(Currency::THB);
     }
     if c("LAOS") {
-        return Some(Currency::from("LAK".to_string()));
+        return "LAK".parse().ok();
     }
     if c("CAMBODIA") {
-        return Some(Currency::from("KHR".to_string()));
+        return "KHR".parse().ok();
     }
     if c("BRUNEI") {
-        return Some(Currency::from("BND".to_string()));
+        return "BND".parse().ok();
     }
     if c("MONGOLIA") {
-        return Some(Currency::from("MNT".to_string()));
+        return "MNT".parse().ok();
     }
     if c("AUSTRALIA") {
         return Some(Currency::AUD);
@@ -469,22 +470,22 @@ fn match_asia_pacific(s: &str) -> Option<Currency> {
         return Some(Currency::NZD);
     }
     if c("FIJI") {
-        return Some(Currency::from("FJD".to_string()));
+        return "FJD".parse().ok();
     }
     if c("SAMOA") {
-        return Some(Currency::from("WST".to_string()));
+        return "WST".parse().ok();
     }
     if c("TONGA") {
-        return Some(Currency::from("TOP".to_string()));
+        return "TOP".parse().ok();
     }
     if c("VANUATU") {
-        return Some(Currency::from("VUV".to_string()));
+        return "VUV".parse().ok();
     }
     if c("SOLOMON") {
-        return Some(Currency::from("SBD".to_string()));
+        return "SBD".parse().ok();
     }
     if c("PAPUA") {
-        return Some(Currency::from("PGK".to_string()));
+        return "PGK".parse().ok();
     }
     Some(None?).or(None)
 }
@@ -495,46 +496,46 @@ fn match_mena(s: &str) -> Option<Currency> {
         return Some(Currency::ILS);
     }
     if c("SAUDI ARABIA") {
-        return Some(Currency::from("SAR".to_string()));
+        return "SAR".parse().ok();
     }
     if c("UNITED ARAB EMIRATES") {
-        return Some(Currency::from("AED".to_string()));
+        return "AED".parse().ok();
     }
     if c("QATAR") {
-        return Some(Currency::from("QAR".to_string()));
+        return "QAR".parse().ok();
     }
     if c("KUWAIT") {
-        return Some(Currency::from("KWD".to_string()));
+        return "KWD".parse().ok();
     }
     if c("BAHRAIN") {
-        return Some(Currency::from("BHD".to_string()));
+        return "BHD".parse().ok();
     }
     if c("OMAN") {
-        return Some(Currency::from("OMR".to_string()));
+        return "OMR".parse().ok();
     }
     if c("EGYPT") {
-        return Some(Currency::from("EGP".to_string()));
+        return "EGP".parse().ok();
     }
     if c("JORDAN") {
-        return Some(Currency::from("JOD".to_string()));
+        return "JOD".parse().ok();
     }
     if c("LEBANON") {
-        return Some(Currency::from("LBP".to_string()));
+        return "LBP".parse().ok();
     }
     if c("IRAQ") {
-        return Some(Currency::from("IQD".to_string()));
+        return "IQD".parse().ok();
     }
     if c("IRAN") {
-        return Some(Currency::from("IRR".to_string()));
+        return "IRR".parse().ok();
     }
     if c("AFGHANISTAN") {
-        return Some(Currency::from("AFN".to_string()));
+        return "AFN".parse().ok();
     }
     if c("SYRIA") {
-        return Some(Currency::from("SYP".to_string()));
+        return "SYP".parse().ok();
     }
     if c("YEMEN") {
-        return Some(Currency::from("YER".to_string()));
+        return "YER".parse().ok();
     }
     Some(None?).or(None)
 }
@@ -542,28 +543,28 @@ fn match_mena(s: &str) -> Option<Currency> {
 fn match_caucasus_central_asia(s: &str) -> Option<Currency> {
     let c = |n| s.contains(n);
     if c("GEORGIA") {
-        return Some(Currency::from("GEL".to_string()));
+        return "GEL".parse().ok();
     }
     if c("ARMENIA") {
-        return Some(Currency::from("AMD".to_string()));
+        return "AMD".parse().ok();
     }
     if c("AZERBAIJAN") {
-        return Some(Currency::from("AZN".to_string()));
+        return "AZN".parse().ok();
     }
     if c("KAZAKHSTAN") {
-        return Some(Currency::from("KZT".to_string()));
+        return "KZT".parse().ok();
     }
     if c("UZBEKISTAN") {
-        return Some(Currency::from("UZS".to_string()));
+        return "UZS".parse().ok();
     }
     if c("TURKMENISTAN") {
-        return Some(Currency::from("TMT".to_string()));
+        return "TMT".parse().ok();
     }
     if c("KYRGYZSTAN") {
-        return Some(Currency::from("KGS".to_string()));
+        return "KGS".parse().ok();
     }
     if c("TAJIKISTAN") {
-        return Some(Currency::from("TJS".to_string()));
+        return "TJS".parse().ok();
     }
     Some(None?).or(None)
 }
@@ -574,85 +575,85 @@ fn match_africa(s: &str) -> Option<Currency> {
         return Some(Currency::ZAR);
     }
     if c("NIGERIA") {
-        return Some(Currency::from("NGN".to_string()));
+        return "NGN".parse().ok();
     }
     if c("GHANA") {
-        return Some(Currency::from("GHS".to_string()));
+        return "GHS".parse().ok();
     }
     if c("KENYA") {
-        return Some(Currency::from("KES".to_string()));
+        return "KES".parse().ok();
     }
     if c("MOROCCO") {
-        return Some(Currency::from("MAD".to_string()));
+        return "MAD".parse().ok();
     }
     if c("ALGERIA") {
-        return Some(Currency::from("DZD".to_string()));
+        return "DZD".parse().ok();
     }
     if c("TUNISIA") {
-        return Some(Currency::from("TND".to_string()));
+        return "TND".parse().ok();
     }
     if c("ZAMBIA") {
-        return Some(Currency::from("ZMW".to_string()));
+        return "ZMW".parse().ok();
     }
     if c("ZIMBABWE") {
-        return Some(Currency::from("ZWL".to_string()));
+        return "ZWL".parse().ok();
     }
     if c("ANGOLA") {
-        return Some(Currency::from("AOA".to_string()));
+        return "AOA".parse().ok();
     }
     if c("NAMIBIA") {
-        return Some(Currency::from("NAD".to_string()));
+        return "NAD".parse().ok();
     }
     if c("BOTSWANA") {
-        return Some(Currency::from("BWP".to_string()));
+        return "BWP".parse().ok();
     }
     if c("LESOTHO") {
-        return Some(Currency::from("LSL".to_string()));
+        return "LSL".parse().ok();
     }
     if c("ESWATINI") || c("SWAZILAND") {
-        return Some(Currency::from("SZL".to_string()));
+        return "SZL".parse().ok();
     }
     if c("MOZAMBIQUE") {
-        return Some(Currency::from("MZN".to_string()));
+        return "MZN".parse().ok();
     }
     if c("MADAGASCAR") {
-        return Some(Currency::from("MGA".to_string()));
+        return "MGA".parse().ok();
     }
     if c("MAURITIUS") {
-        return Some(Currency::from("MUR".to_string()));
+        return "MUR".parse().ok();
     }
     if c("MALAWI") {
-        return Some(Currency::from("MWK".to_string()));
+        return "MWK".parse().ok();
     }
     if c("SEYCHELLES") {
-        return Some(Currency::from("SCR".to_string()));
+        return "SCR".parse().ok();
     }
     if c("RWANDA") {
-        return Some(Currency::from("RWF".to_string()));
+        return "RWF".parse().ok();
     }
     if c("BURUNDI") {
-        return Some(Currency::from("BIF".to_string()));
+        return "BIF".parse().ok();
     }
     if c("UGANDA") {
-        return Some(Currency::from("UGX".to_string()));
+        return "UGX".parse().ok();
     }
     if c("TANZANIA") {
-        return Some(Currency::from("TZS".to_string()));
+        return "TZS".parse().ok();
     }
     if c("SOMALIA") {
-        return Some(Currency::from("SOS".to_string()));
+        return "SOS".parse().ok();
     }
     if c("DJIBOUTI") {
-        return Some(Currency::from("DJF".to_string()));
+        return "DJF".parse().ok();
     }
     if c("ERITREA") {
-        return Some(Currency::from("ERN".to_string()));
+        return "ERN".parse().ok();
     }
     if c("NIGER") || c("SENEGAL") || c("IVORY COAST") || c("COTE DIVOIRE") {
-        return Some(Currency::from("XOF".to_string()));
+        return "XOF".parse().ok();
     }
     if c("CAMEROON") {
-        return Some(Currency::from("XAF".to_string()));
+        return "XAF".parse().ok();
     }
     Some(None?).or(None)
 }

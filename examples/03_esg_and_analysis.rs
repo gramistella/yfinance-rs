@@ -85,15 +85,15 @@ async fn section_analysis(
                 upgrade
                     .action
                     .as_ref()
-                    .map_or("N/A".to_string(), std::string::ToString::to_string),
+                    .map_or_else(|| "N/A".to_string(), std::string::ToString::to_string),
                 upgrade
                     .from_grade
                     .as_ref()
-                    .map_or("N/A".to_string(), std::string::ToString::to_string),
+                    .map_or_else(|| "N/A".to_string(), std::string::ToString::to_string),
                 upgrade
                     .to_grade
                     .as_ref()
-                    .map_or("N/A".to_string(), std::string::ToString::to_string)
+                    .map_or_else(|| "N/A".to_string(), std::string::ToString::to_string)
             );
         }
     }

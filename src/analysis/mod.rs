@@ -8,11 +8,11 @@ pub use model::{
     EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow,
 };
 
-use crate::{
+use crate::core::{
     YfClient, YfError,
-    core::client::{CacheMode, RetryConfig},
+    client::{CacheMode, RetryConfig},
 };
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 
 /// A builder for fetching analyst-related data for a specific symbol.
 pub struct AnalysisBuilder {

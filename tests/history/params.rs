@@ -1,7 +1,8 @@
 use crate::common;
 use httpmock::Method::GET;
 use url::Url;
-use yfinance_rs::{HistoryBuilder, Range, YfClient};
+use yfinance_rs::core::Range;
+use yfinance_rs::{HistoryBuilder, YfClient};
 
 #[tokio::test]
 async fn history_has_expected_query_params() {

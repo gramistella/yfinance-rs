@@ -8,7 +8,9 @@ use crate::core::conversions::f64_to_money_with_currency_str;
 use crate::core::{YfClient, YfError};
 use crate::history::wire::MetaNode;
 use chrono_tz::Tz;
-use paft::prelude::*;
+use paft::market::action::Action;
+use paft::market::requests::history::{Interval, Range};
+use paft::market::responses::history::{Candle, HistoryMeta, HistoryResponse};
 
 use actions::extract_actions;
 use adjust::cumulative_split_after;

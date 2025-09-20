@@ -4,7 +4,8 @@ use url::Url;
 
 use crate::common;
 use yfinance_rs::core::conversions::*;
-use yfinance_rs::{DownloadBuilder, Interval, Range, YfClient};
+use yfinance_rs::core::{Interval, Range};
+use yfinance_rs::{DownloadBuilder, YfClient};
 
 fn has_more_than_two_decimals(x: f64) -> bool {
     if !x.is_finite() {

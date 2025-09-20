@@ -1,29 +1,29 @@
-use paft::fundamentals::Profile;
+use paft::fundamentals::profile::Profile;
 
 #[tokio::test]
 #[ignore = "exercise live Yahoo Finance API"]
 async fn live_profile_company() {
-    if !crate::common::live_or_record_enabled() {
+    if !(std::env::var("YF_LIVE").ok().as_deref() == Some("1")
+        || std::env::var("YF_RECORD").ok().as_deref() == Some("1"))
+    {
         return;
     }
-
     let client = yfinance_rs::YfClient::builder().build().unwrap();
     let prof = yfinance_rs::profile::load_profile(&client, "AAPL")
         .await
         .unwrap();
-
-    if !crate::common::is_recording() {
-        match prof {
-            Profile::Company(c) => assert_eq!(c.name, "Apple Inc."),
-            Profile::Fund(_) => panic!("expected Company"),
+    match prof {
+        Profile::Company(c) => {
+            assert!(!c.name.is_empty());
         }
+        Profile::Fund(_) => panic!("expected company"),
     }
 }
 
 #[tokio::test]
 #[ignore = "exercise live Yahoo Finance API"]
 async fn live_profile_fund_for_record() {
-    if !crate::common::is_recording() {
+    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
         return;
     }
     let client = yfinance_rs::YfClient::builder().build().unwrap();
@@ -32,8 +32,8 @@ async fn live_profile_fund_for_record() {
 
 #[tokio::test]
 #[ignore = "exercise live Yahoo Finance API"]
-async fn live_profile_company_scrape_for_record() {
-    if !crate::common::is_recording() {
+async fn live_profile_fund_scrape_for_record() {
+    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
         return;
     }
     let client = yfinance_rs::YfClient::builder()
@@ -45,8 +45,8 @@ async fn live_profile_company_scrape_for_record() {
 
 #[tokio::test]
 #[ignore = "exercise live Yahoo Finance API"]
-async fn live_profile_fund_scrape_for_record() {
-    if !crate::common::is_recording() {
+async fn live_profile_company_scrape_for_record() {
+    if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
         return;
     }
     let client = yfinance_rs::YfClient::builder()

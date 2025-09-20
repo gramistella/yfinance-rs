@@ -1,6 +1,7 @@
 use httpmock::{Method::GET, MockServer};
 use url::Url;
-use yfinance_rs::{Range, Ticker, YfClient};
+use yfinance_rs::core::Range;
+use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::test]
 async fn offline_capital_gains_from_history() {

@@ -6,24 +6,33 @@ mod quote;
 
 pub use model::{FastInfo, Info, OptionChain, OptionContract};
 
+use crate::core::{Action, Candle, HistoryMeta, Interval, Quote, Range};
+use crate::fundamentals::{Calendar, ShareCount};
+use crate::holders::{
+    InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
+    NetSharePurchaseActivity,
+};
+use crate::news::NewsArticle;
 use crate::{
-    EsgBuilder, HoldersBuilder, NewsBuilder, YfClient, YfError,
-    analysis::AnalysisBuilder,
-    core::client::{CacheMode, RetryConfig},
+    EsgBuilder,
+    core::client::RetryConfig,
     core::conversions::{
         datetime_to_i64, exchange_to_string, market_state_to_string, money_to_currency_str,
         money_to_f64,
     },
-    fundamentals::FundamentalsBuilder,
-    history::HistoryBuilder,
+    core::{CacheMode, YfClient, YfError},
+    holders::HoldersBuilder,
+    news::NewsBuilder,
 };
-use paft::fundamentals::{
-    BalanceSheetRow, Calendar, CashflowRow, Earnings, EarningsTrendRow, IncomeStatementRow,
-    InsiderRosterHolder, InsiderTransaction, InstitutionalHolder, MajorHolder,
-    NetSharePurchaseActivity, PriceTarget, RecommendationRow, RecommendationSummary, ShareCount,
+use crate::{
+    analysis::AnalysisBuilder, fundamentals::FundamentalsBuilder, history::HistoryBuilder,
+};
+use paft::core::domain::Currency;
+use paft::fundamentals::analysis::{
+    Earnings, EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary,
     UpgradeDowngradeRow,
 };
-use paft::prelude::*;
+use paft::fundamentals::statements::{BalanceSheetRow, CashflowRow, IncomeStatementRow};
 
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
 ///
@@ -179,7 +188,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn news(&self) -> Result<Vec<crate::NewsArticle>, YfError> {
+    pub async fn news(&self) -> Result<Vec<NewsArticle>, YfError> {
         self.news_builder().fetch().await
     }
 
@@ -205,10 +214,10 @@ impl Ticker {
     /// This method will return an error if the request fails or the response cannot be parsed.
     pub async fn history(
         &self,
-        range: Option<crate::Range>,
-        interval: Option<crate::Interval>,
+        range: Option<Range>,
+        interval: Option<Interval>,
         prepost: bool,
-    ) -> Result<Vec<crate::Candle>, crate::core::YfError> {
+    ) -> Result<Vec<Candle>, crate::core::YfError> {
         let mut hb = self.history_builder();
         if let Some(r) = range {
             hb = hb.range(r);
@@ -232,18 +241,15 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn actions(
-        &self,
-        range: Option<crate::Range>,
-    ) -> Result<Vec<crate::Action>, YfError> {
+    pub async fn actions(&self, range: Option<Range>) -> Result<Vec<Action>, YfError> {
         let mut hb = self.history_builder();
-        hb = hb.range(range.unwrap_or(crate::Range::Max));
+        hb = hb.range(range.unwrap_or(Range::Max));
         let resp = hb.auto_adjust(true).actions(true).fetch_full().await?;
         let mut actions = resp.actions;
         actions.sort_by_key(|a| match *a {
-            crate::Action::Dividend { ts, .. }
-            | crate::Action::Split { ts, .. }
-            | crate::Action::CapitalGain { ts, .. } => ts,
+            Action::Dividend { ts, .. }
+            | Action::Split { ts, .. }
+            | Action::CapitalGain { ts, .. } => ts,
         });
         Ok(actions)
     }
@@ -256,12 +262,12 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn dividends(&self, range: Option<crate::Range>) -> Result<Vec<(i64, f64)>, YfError> {
+    pub async fn dividends(&self, range: Option<Range>) -> Result<Vec<(i64, f64)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::Dividend { ts, amount } => {
+                Action::Dividend { ts, amount } => {
                     Some((datetime_to_i64(ts), money_to_f64(&amount)))
                 }
                 _ => None,
@@ -277,15 +283,12 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn splits(
-        &self,
-        range: Option<crate::Range>,
-    ) -> Result<Vec<(i64, u32, u32)>, YfError> {
+    pub async fn splits(&self, range: Option<Range>) -> Result<Vec<(i64, u32, u32)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::Split {
+                Action::Split {
                     ts,
                     numerator,
                     denominator,
@@ -302,8 +305,8 @@ impl Ticker {
     /// This method will return an error if the request fails or the response cannot be parsed.
     pub async fn get_history_metadata(
         &self,
-        range: Option<crate::Range>,
-    ) -> Result<Option<crate::HistoryMeta>, crate::core::YfError> {
+        range: Option<Range>,
+    ) -> Result<Option<HistoryMeta>, crate::core::YfError> {
         let mut hb = self
             .history_builder()
             .cache_mode(self.cache_mode)
@@ -338,15 +341,12 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn capital_gains(
-        &self,
-        range: Option<crate::Range>,
-    ) -> Result<Vec<(i64, f64)>, YfError> {
+    pub async fn capital_gains(&self, range: Option<Range>) -> Result<Vec<(i64, f64)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
             .into_iter()
             .filter_map(|a| match a {
-                crate::Action::CapitalGain { ts, gain } => {
+                Action::CapitalGain { ts, gain } => {
                     Some((datetime_to_i64(ts), money_to_f64(&gain)))
                 }
                 _ => None,
@@ -537,7 +537,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
-    pub async fn sustainability(&self) -> Result<paft::fundamentals::EsgSummary, YfError> {
+    pub async fn sustainability(&self) -> Result<paft::fundamentals::esg::EsgSummary, YfError> {
         self.esg_builder().fetch().await
     }
     /* ---------------- Fundamentals convenience ---------------- */

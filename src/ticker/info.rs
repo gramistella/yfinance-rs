@@ -71,7 +71,7 @@ async fn fetch_info_parts(
         Profile,
         Option<PriceTarget>,
         Option<RecommendationSummary>,
-        Option<paft::fundamentals::EsgSummary>,
+        Option<paft::fundamentals::esg::EsgSummary>,
     ),
     YfError,
 > {
@@ -105,10 +105,10 @@ struct ProfileFields {
     industry: Option<String>,
     website: Option<String>,
     summary: Option<String>,
-    address: Option<paft::fundamentals::Address>,
+    address: Option<paft::fundamentals::profile::Address>,
     isin: Option<String>,
     family: Option<String>,
-    fund_kind: Option<paft::fundamentals::FundKind>,
+    fund_kind: Option<paft::fundamentals::profile::FundKind>,
 }
 
 fn extract_profile_fields(profile: &Profile) -> ProfileFields {
@@ -144,13 +144,13 @@ fn assemble_info(
     industry: Option<String>,
     website: Option<String>,
     summary: Option<String>,
-    address: Option<paft::fundamentals::Address>,
+    address: Option<paft::fundamentals::profile::Address>,
     isin: Option<String>,
     family: Option<String>,
-    fund_kind: Option<paft::fundamentals::FundKind>,
+    fund_kind: Option<paft::fundamentals::profile::FundKind>,
     price_target: Option<&PriceTarget>,
     rec_summary: Option<&RecommendationSummary>,
-    esg_scores: Option<&paft::fundamentals::EsgSummary>,
+    esg_scores: Option<&paft::fundamentals::esg::EsgSummary>,
 ) -> Info {
     let currency = quote.and_then(|q| {
         q.price

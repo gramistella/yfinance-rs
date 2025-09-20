@@ -1,4 +1,4 @@
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 use yfinance_rs::core::{Interval, Range};
 use yfinance_rs::{Ticker, YfClient};
 

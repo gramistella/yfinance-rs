@@ -9,11 +9,11 @@ pub use model::{
     EarningsYear, IncomeStatementRow, ShareCount,
 };
 
-use crate::{
+use crate::core::{
     YfClient, YfError,
-    core::client::{CacheMode, RetryConfig},
+    client::{CacheMode, RetryConfig},
 };
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 
 /// A builder for fetching fundamental financial data (statements, earnings, etc.).
 pub struct FundamentalsBuilder {

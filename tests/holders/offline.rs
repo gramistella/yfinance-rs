@@ -81,7 +81,7 @@ async fn offline_all_holders_from_fixture() {
 
     // Net Share Purchase Activity
     let net_purchase = t.net_share_purchase_activity().await.unwrap().unwrap();
-    assert!(!net_purchase.period.is_empty());
+    assert!(!net_purchase.period.to_string().is_empty());
     assert!(net_purchase.total_insider_shares.unwrap_or(0) > 0);
 
     // Insider Transactions (can be empty)

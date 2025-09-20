@@ -10,7 +10,7 @@ use crate::{
         net,
     },
 };
-use paft::prelude::*;
+use paft::market::quote::Quote;
 
 // Centralized wire model for the v7 quote API
 #[derive(Deserialize)]
@@ -177,7 +177,7 @@ impl From<V7QuoteNode> for Quote {
                     .or(n.market)
                     .or(n.market_cap_figure_exchange),
             ),
-            market_state: n.market_state.map(MarketState::from),
+            market_state: n.market_state.and_then(|s| s.parse().ok()),
         }
     }
 }

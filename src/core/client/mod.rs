@@ -8,7 +8,7 @@ mod retry;
 use crate::core::YfError;
 use crate::core::client::constants::DEFAULT_BASE_INSIDER_SEARCH;
 use crate::core::currency::currency_for_country;
-use paft::prelude::Currency;
+use paft::core::domain::Currency;
 pub use retry::{Backoff, CacheMode, RetryConfig};
 
 use constants::{
@@ -831,8 +831,8 @@ async fn sleep_backoff(b: &Backoff, attempt: u32) {
                 let j = u64::try_from(nanos / 2).unwrap_or(0)
                     * ((u64::from(attempt) % 5 + 1) * 13 % 100)
                     / 100;
-                let sign = attempt % 2 == 0;
-                d = if sign {
+                let add = attempt.is_multiple_of(2);
+                d = if add {
                     d.saturating_add(Duration::from_nanos(j))
                 } else {
                     d.saturating_sub(Duration::from_nanos(j))

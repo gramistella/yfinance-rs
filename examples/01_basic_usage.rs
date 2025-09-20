@@ -1,9 +1,10 @@
 use chrono::{Duration, Utc};
 use std::time::Duration as StdDuration;
+use yfinance_rs::core::Interval;
 use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{
-    DownloadBuilder, Interval, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClient,
-    YfClientBuilder, YfError,
+    DownloadBuilder, NewsTab, StreamBuilder, StreamMethod, Ticker, YfClient, YfClientBuilder,
+    YfError,
 };
 
 #[tokio::main]

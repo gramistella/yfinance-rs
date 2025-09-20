@@ -7,7 +7,7 @@ use crate::{
     },
     esg::wire::V10Result,
 };
-use paft::fundamentals::{EsgInvolvement, EsgScores, EsgSummary};
+use paft::fundamentals::esg::{EsgInvolvement, EsgScores, EsgSummary};
 
 pub(super) async fn fetch_esg_scores(
     client: &YfClient,

@@ -1,6 +1,6 @@
 [package]
 name = "yfinance-rs"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
 description = "Ergonomic Rust client for Yahoo Finance, supporting historical prices, real-time streaming, options, fundamentals, and more."
 license = "MIT"
@@ -26,8 +26,8 @@ tokio-tungstenite = { version = "0.27", features = ["rustls-tls-native-roots"] }
 futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
-polars = { version = "0.50", features = ["lazy", "strings", "temporal", "serde", "regex", "timezones", "diagonal_concat", "json", "rolling_window", "temporal"], optional = true }
-paft = { version = "0.1.0" , features = ["core", "market", "fundamentals"]}
+polars = { version = "0.51", features = ["lazy", "strings", "temporal", "serde", "regex", "timezones", "diagonal_concat", "json", "rolling_window", "temporal"], optional = true }
+paft = { version = "0.2.0" , features = ["market", "fundamentals"]}
 rust_decimal = "1.36"
 
 [dev-dependencies]

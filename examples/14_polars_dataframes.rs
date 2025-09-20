@@ -1,18 +1,18 @@
 //! Example demonstrating Polars `DataFrame` integration with yfinance-rs.
 //!
-//! This example shows how to convert various financial data structures
-//! into Polars `DataFrames` for advanced data analysis and manipulation.
-//!
-//! Run with: cargo run --example `14_polars_dataframes` --features dataframe
+//! Run with: cargo run --example 14_polars_dataframes --features dataframe
 
 #[cfg(feature = "dataframe")]
 use polars::prelude::*;
 
 #[cfg(feature = "dataframe")]
-use yfinance_rs::{Interval, Range, Ticker, YfClient};
+use paft::core::dataframe::{ToDataFrame, ToDataFrameVec};
 
 #[cfg(feature = "dataframe")]
-use yfinance_rs::{ToDataFrame, ToDataFrameVec};
+use yfinance_rs::{Ticker, YfClient};
+
+#[cfg(feature = "dataframe")]
+use yfinance_rs::core::{Interval, Range};
 
 #[cfg(feature = "dataframe")]
 #[tokio::main]
@@ -31,14 +31,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     section_analysis_df(&ticker).await?;
 
     println!("\n=== DataFrame Integration Complete ===");
-    println!("💡 Tip: Use Polars' powerful DataFrame operations for advanced financial analysis!");
-    println!("   - Filter data: df.filter(col(\"close\").gt(100))");
-    println!("   - Sort data: df.sort([\"ts\"], Default::default())");
-    println!("   - Group by: df.group_by([\"symbol\"]).agg([col(\"close\").mean()])");
-    println!(
-        "   - Join DataFrames: df1.join(&df2, [\"symbol\"], [\"symbol\"], JoinArgs::new(JoinType::Inner))"
-    );
-
     Ok(())
 }
 
@@ -50,11 +42,11 @@ async fn section_history_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::E
         .await?;
 
     if !history.is_empty() {
-        println!("   Converting {} candles to DataFrame...", history.len());
-        if let Ok(df) = history.to_dataframe() {
-            println!("   DataFrame shape: {:?}", df.shape());
-            println!("   Sample data:\n{}", df.head(Some(5)));
-        }
+        let df = history.to_dataframe()?;
+        println!("   DataFrame shape: {:?}", df.shape());
+        println!("   Sample data:\n{}", df.head(Some(5)));
+    } else {
+        println!("   No history returned.");
     }
     println!();
     Ok(())
@@ -64,13 +56,11 @@ async fn section_history_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::E
 async fn section_quote_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::Error>> {
     println!("📊 2. Current Quote to DataFrame");
     match ticker.quote().await {
-        Ok(quote) => match quote.to_dataframe() {
-            Ok(df) => {
-                println!("   DataFrame shape: {:?}", df.shape());
-                println!("   Quote data:\n{df}");
-            }
-            Err(e) => println!("   Error creating DataFrame: {e}"),
-        },
+        Ok(quote) => {
+            let df = quote.to_dataframe()?;
+            println!("   DataFrame shape: {:?}", df.shape());
+            println!("   Quote data:\n{df}");
+        }
         Err(e) => println!("   Error fetching quote: {e}"),
     }
     println!();
@@ -79,12 +69,13 @@ async fn section_quote_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::Err
 
 #[cfg(feature = "dataframe")]
 async fn section_recommendations_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::Error>> {
-    println!("📈 3. Analyst Recommendations to DataFrame");
+    println!("🧾 3. Analyst Recommendations to DataFrame");
     match ticker.recommendations().await {
         Ok(recommendations) => {
             if recommendations.is_empty() {
                 println!("   No recommendation data available");
-            } else if let Ok(df) = recommendations.to_dataframe() {
+            } else {
+                let df = recommendations.to_dataframe()?;
                 println!("   DataFrame shape: {:?}", df.shape());
                 println!("   Recommendation data:\n{}", df.head(Some(5)));
             }
@@ -102,7 +93,8 @@ async fn section_income_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::Er
         Ok(financials) => {
             if financials.is_empty() {
                 println!("   No financial data available");
-            } else if let Ok(df) = financials.to_dataframe() {
+            } else {
+                let df = financials.to_dataframe()?;
                 println!("   DataFrame shape: {:?}", df.shape());
                 println!("   Income statement data:\n{}", df.head(Some(3)));
             }
@@ -125,12 +117,6 @@ async fn section_esg(ticker: &Ticker) -> Result<(), Box<dyn std::error::Error>> 
             } else {
                 println!("   No ESG component scores available");
             }
-            if !summary.involvement.is_empty() {
-                println!("   Involvement flags ({}):", summary.involvement.len());
-                for inv in summary.involvement.iter().take(5) {
-                    println!("     - {}", inv.category);
-                }
-            }
         }
         Err(e) => println!("   ESG data not available for this ticker: {e}"),
     }
@@ -145,7 +131,8 @@ async fn section_holders_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::E
         Ok(holders) => {
             if holders.is_empty() {
                 println!("   No institutional holders data available");
-            } else if let Ok(df) = holders.to_dataframe() {
+            } else {
+                let df = holders.to_dataframe()?;
                 println!("   DataFrame shape: {:?}", df.shape());
                 println!("   Top institutional holders:\n{}", df.head(Some(5)));
             }
@@ -158,48 +145,44 @@ async fn section_holders_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::E
 
 #[cfg(feature = "dataframe")]
 async fn section_analysis_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔍 7. Advanced Data Analysis Example");
+    println!("🔍 7. Simple Analysis with Polars");
     let history = ticker
         .history(Some(Range::M6), Some(Interval::D1), false)
         .await?;
     if history.is_empty() {
+        println!("   No history for analysis.");
         return Ok(());
     }
-    if let Ok(df) = history.to_dataframe() {
-        let full_lf = df.lazy();
-        let analysis_result = full_lf
-            .clone()
-            .select([
-                col("close").mean().alias("avg_close"),
-                col("close").min().alias("min_close"),
-                col("close").max().alias("max_close"),
-                col("volume").sum().alias("total_volume"),
-                (col("high") - col("low")).mean().alias("avg_daily_range"),
-            ])
-            .collect();
-        if let Ok(stats_df) = analysis_result {
-            println!("   Price Analysis Results:");
-            println!("{stats_df}");
-        }
-        let moving_avg_result = full_lf
-            .sort(["ts"], SortMultipleOptions::default())
-            .with_column(
-                col("close")
-                    .rolling_mean(RollingOptionsFixedWindow {
-                        window_size: 5,
-                        min_periods: 1,
-                        ..Default::default()
-                    })
-                    .alias("5d_moving_avg"),
-            )
-            .select([col("ts"), col("close"), col("5d_moving_avg"), col("volume")])
-            .limit(10)
-            .collect();
-        if let Ok(moving_avg_df) = moving_avg_result {
-            println!("\n   Price Analysis (first 10 days with 5-day moving average):");
-            println!("{moving_avg_df}");
-        }
-    }
+    let df = history.to_dataframe()?;
+
+    // Lazily compute a few stats
+    let lf = df.lazy();
+    let stats = lf
+        .clone()
+        .select([
+            col("close.amount").mean().alias("avg_close"),
+            col("close.amount").min().alias("min_close"),
+            col("close.amount").max().alias("max_close"),
+            col("volume").sum().alias("total_volume"),
+        ])
+        .collect()?;
+    println!("   6M Close/Volume Stats:\n{stats}");
+
+    let with_ma = lf
+        .sort(["ts"], SortMultipleOptions::default())
+        .with_column(
+            col("close.amount")
+                .rolling_mean(RollingOptionsFixedWindow {
+                    window_size: 5,
+                    min_periods: 1,
+                    ..Default::default()
+                })
+                .alias("ma_5d"),
+        )
+        .select([col("ts"), col("close.amount"), col("ma_5d"), col("volume")])
+        .limit(10)
+        .collect()?;
+    println!("   First 10 rows with 5-day moving average:\n{with_ma}");
     Ok(())
 }
 

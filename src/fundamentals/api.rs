@@ -10,7 +10,8 @@ use crate::{
     },
     fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
-use paft::{fundamentals::ShareCount, prelude::Currency};
+use paft::core::domain::Currency;
+use paft::fundamentals::profile::ShareCount;
 
 use super::fetch::fetch_modules;
 use super::{
@@ -143,7 +144,7 @@ pub(super) async fn income_statement(
         .into_iter()
         .map(|n| IncomeStatementRow {
             period: string_to_period(
-                n.end_date
+                &n.end_date
                     .map(|d| d.raw.unwrap_or_default().to_string())
                     .unwrap_or_default(),
             ),
@@ -195,7 +196,7 @@ pub(super) async fn balance_sheet(
     let endpoint_name = "balance_sheet";
 
     let create_default_row = |period_end: i64| BalanceSheetRow {
-        period: string_to_period(period_end.to_string()),
+        period: string_to_period(&period_end.to_string()),
         total_assets: None,
         total_liabilities: None,
         total_equity: None,
@@ -297,7 +298,7 @@ pub(super) async fn cashflow(
     let endpoint_name = "cash_flow";
 
     let create_default_row = |period_end: i64| CashflowRow {
-        period: string_to_period(period_end.to_string()),
+        period: string_to_period(&period_end.to_string()),
         operating_cashflow: None,
         capital_expenditures: None,
         free_cash_flow: None,
@@ -359,7 +360,7 @@ pub(super) async fn cashflow(
             )
         {
             // In timeseries API, capex is negative for cash outflow.
-            row.free_cash_flow = Some(ocf.add(&capex).unwrap_or(ocf));
+            row.free_cash_flow = ocf.try_add(&capex).ok();
         }
     }
 
@@ -410,7 +411,7 @@ pub(super) async fn earnings(
         .map(|v| {
             v.iter()
                 .map(|q| EarningsQuarter {
-                    period: string_to_period(q.date.clone().unwrap_or_default()),
+                    period: string_to_period(&q.date.clone().unwrap_or_default()),
                     revenue: q.revenue.as_ref().and_then(|x| {
                         x.raw
                             .map(|v| f64_to_money_with_currency(v, currency.clone()))
@@ -431,7 +432,7 @@ pub(super) async fn earnings(
         .map(|v| {
             v.iter()
                 .map(|q| EarningsQuarterEps {
-                    period: string_to_period(q.date.clone().unwrap_or_default()),
+                    period: string_to_period(&q.date.clone().unwrap_or_default()),
                     actual: q.actual.as_ref().and_then(|x| {
                         x.raw
                             .map(|v| f64_to_money_with_currency(v, currency.clone()))

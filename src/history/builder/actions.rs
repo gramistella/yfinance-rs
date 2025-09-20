@@ -1,6 +1,7 @@
 use crate::core::conversions::{f64_to_money_with_currency, i64_to_datetime};
 use crate::history::wire::Events;
-use paft::prelude::*;
+use paft::core::domain::Currency;
+use paft::market::action::Action;
 
 #[allow(clippy::cast_possible_truncation)]
 pub fn extract_actions(
