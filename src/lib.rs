@@ -83,7 +83,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! yfinance-rs = "0.2.1"
+//! yfinance-rs = "0.3.0"
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!
@@ -95,7 +95,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let client = YfClient::default();
-//!     let ticker = Ticker::new(&client, "AAPL".to_string());
+//!     let ticker = Ticker::new(&client, "AAPL");
 //!
 //!     // Get the latest quote
 //!     let quote = ticker.quote().await?;
