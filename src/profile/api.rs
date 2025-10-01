@@ -4,6 +4,7 @@ use crate::{
     YfClient, YfError,
     core::{client::CacheMode, conversions::string_to_fund_kind, quotesummary},
 };
+use paft::domain::Isin;
 use serde::Deserialize;
 
 use super::{Address, Company, Fund, Profile};
@@ -47,6 +48,9 @@ pub async fn load_from_quote_summary_api(
                 country: sp.country,
                 zip: sp.zip,
             };
+            // Validate ISIN if present, return None if invalid
+            let validated_isin = sp.isin.and_then(|isin_str| Isin::new(&isin_str).ok());
+
             Ok(Profile::Company(Company {
                 name,
                 sector: sp.sector,
@@ -54,18 +58,22 @@ pub async fn load_from_quote_summary_api(
                 website: sp.website,
                 summary: sp.long_business_summary,
                 address: Some(address),
-                isin: sp.isin,
+                isin: validated_isin,
             }))
         }
         "ETF" => {
             let fp = first
                 .fund_profile
                 .ok_or_else(|| YfError::MissingData("fundProfile missing".into()))?;
+
+            // Validate ISIN if present, return None if invalid
+            let validated_isin = fp.isin.and_then(|isin_str| Isin::new(&isin_str).ok());
+
             Ok(Profile::Fund(Fund {
                 name,
                 family: fp.family,
                 kind: string_to_fund_kind(fp.legal_type).unwrap_or_default(),
-                isin: fp.isin,
+                isin: validated_isin,
             }))
         }
         other => Err(YfError::InvalidParams(format!(

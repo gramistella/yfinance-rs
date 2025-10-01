@@ -8,7 +8,7 @@ mod retry;
 use crate::core::YfError;
 use crate::core::client::constants::DEFAULT_BASE_INSIDER_SEARCH;
 use crate::core::currency::currency_for_country;
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 pub use retry::{Backoff, CacheMode, RetryConfig};
 
 use constants::{
@@ -238,13 +238,13 @@ impl YfClient {
             Ok(profile) => extract_currency_from_profile(&profile).map_or_else(
                 || {
                     debug_reason = Some("profile missing country or unsupported currency".into());
-                    Currency::USD
+                    Currency::Iso(IsoCurrency::USD)
                 },
                 |currency| currency,
             ),
             Err(err) => {
                 debug_reason = Some(format!("failed to load profile: {err}"));
-                Currency::USD
+                Currency::Iso(IsoCurrency::USD)
             }
         };
 

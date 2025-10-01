@@ -27,12 +27,12 @@ use crate::{
 use crate::{
     analysis::AnalysisBuilder, fundamentals::FundamentalsBuilder, history::HistoryBuilder,
 };
-use paft::core::domain::Currency;
 use paft::fundamentals::analysis::{
     Earnings, EarningsTrendRow, PriceTarget, RecommendationRow, RecommendationSummary,
     UpgradeDowngradeRow,
 };
 use paft::fundamentals::statements::{BalanceSheetRow, CashflowRow, IncomeStatementRow};
+use paft::money::Currency;
 
 /// A high-level interface for a single ticker symbol, providing convenient access to all available data.
 ///

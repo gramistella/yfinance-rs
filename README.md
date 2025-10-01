@@ -99,7 +99,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.3.0"
+yfinance-rs = "0.3.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -107,7 +107,7 @@ To enable DataFrame conversions backed by Polars, turn on the optional `datafram
 
 ```toml
 [dependencies]
-yfinance-rs = { version = "0.3.0", features = ["dataframe"] }
+yfinance-rs = { version = "0.3.1", features = ["dataframe"] }
 polars = "0.51"
 ```
 
@@ -175,7 +175,7 @@ Enable the `dataframe` feature to convert paft models into a Polars `DataFrame` 
 
 ```rust
 use yfinance_rs::{Interval, Range, Ticker, YfClient};
-use paft::core::dataframe::{ToDataFrame, ToDataFrameVec};
+use paft::prelude::{ToDataFrame, ToDataFrameVec};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -277,7 +277,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-> 💡 Need to force a specific reporting currency? Pass `Some(paft::core::domain::Currency::USD)` (or another currency) instead of `None` when calling the fundamentals/analysis helpers.
+> 💡 Need to force a specific reporting currency? Pass `Some(paft::money::Currency::USD)` (or another currency) instead of `None` when calling the fundamentals/analysis helpers.
 
 ### Options Trading
 

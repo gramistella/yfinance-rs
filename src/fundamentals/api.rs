@@ -10,8 +10,8 @@ use crate::{
     },
     fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
-use paft::core::domain::Currency;
 use paft::fundamentals::profile::ShareCount;
+use paft::money::Currency;
 
 use super::fetch::fetch_modules;
 use super::{

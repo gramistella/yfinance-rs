@@ -1,6 +1,6 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 use url::Url;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::{ApiPreference, Ticker, YfClient};
@@ -50,15 +50,24 @@ async fn offline_price_target_happy() {
 
     assert_eq!(
         pt.mean,
-        Some(f64_to_money_with_currency(200.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            200.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(
         pt.high,
-        Some(f64_to_money_with_currency(250.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            250.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(
         pt.low,
-        Some(f64_to_money_with_currency(150.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            150.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(pt.number_of_analysts, Some(31));
 }
@@ -136,15 +145,24 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
 
     assert_eq!(
         pt.mean,
-        Some(f64_to_money_with_currency(123.45, Currency::USD))
+        Some(f64_to_money_with_currency(
+            123.45,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(
         pt.high,
-        Some(f64_to_money_with_currency(150.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            150.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(
         pt.low,
-        Some(f64_to_money_with_currency(100.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            100.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(pt.number_of_analysts, Some(20));
 }

@@ -12,7 +12,7 @@ use crate::core::{
     YfClient, YfError,
     client::{CacheMode, RetryConfig},
 };
-use paft::core::domain::Currency;
+use paft::money::Currency;
 
 /// A builder for fetching analyst-related data for a specific symbol.
 pub struct AnalysisBuilder {

@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, sync::LazyLock};
 
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 
 /// Normalized country → currency code pairs.
 ///
@@ -219,7 +219,7 @@ const COUNTRY_TO_CURRENCY_RAW: &[(&str, &str)] = &[
 static COUNTRY_TO_CURRENCY: LazyLock<HashMap<&'static str, Currency>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     for (country, code) in COUNTRY_TO_CURRENCY_RAW {
-        let parsed = (*code).parse().unwrap_or(Currency::USD);
+        let parsed = (*code).parse().unwrap_or(Currency::Iso(IsoCurrency::USD));
         map.insert(*country, parsed);
     }
     map
@@ -295,16 +295,16 @@ fn heuristic_currency_match(normalized: &str) -> Option<Currency> {
 fn match_americas(s: &str) -> Option<Currency> {
     let c = |n| s.contains(n);
     if c("UNITED STATES") {
-        return Some(Currency::USD);
+        return Some(Currency::Iso(IsoCurrency::USD));
     }
     if c("CANADA") {
-        return Some(Currency::CAD);
+        return Some(Currency::Iso(IsoCurrency::CAD));
     }
     if c("MEXICO") {
-        return Some(Currency::MXN);
+        return Some(Currency::Iso(IsoCurrency::MXN));
     }
     if c("BRAZIL") {
-        return Some(Currency::BRL);
+        return Some(Currency::Iso(IsoCurrency::BRL));
     }
     if c("ARGENTINA") {
         return "ARS".parse().ok();
@@ -331,7 +331,7 @@ fn match_americas(s: &str) -> Option<Currency> {
         return "VES".parse().ok();
     }
     if c("PANAMA") || c("ECUADOR") || c("EL SALVADOR") {
-        return Some(Currency::USD);
+        return Some(Currency::Iso(IsoCurrency::USD));
     }
     if c("BAHAMAS") {
         return "BSD".parse().ok();
@@ -360,34 +360,34 @@ fn match_americas(s: &str) -> Option<Currency> {
 fn match_europe(s: &str) -> Option<Currency> {
     let c = |n| s.contains(n);
     if c("UNITED KINGDOM") || c("ENGLAND") || c("SCOTLAND") {
-        return Some(Currency::GBP);
+        return Some(Currency::Iso(IsoCurrency::GBP));
     }
     if c("EUROPEAN UNION") || c("EURO AREA") {
-        return Some(Currency::EUR);
+        return Some(Currency::Iso(IsoCurrency::EUR));
     }
     if c("SWITZERLAND") {
-        return Some(Currency::CHF);
+        return Some(Currency::Iso(IsoCurrency::CHF));
     }
     if c("NORWAY") {
-        return Some(Currency::NOK);
+        return Some(Currency::Iso(IsoCurrency::NOK));
     }
     if c("SWEDEN") {
-        return Some(Currency::SEK);
+        return Some(Currency::Iso(IsoCurrency::SEK));
     }
     if c("DENMARK") {
-        return Some(Currency::DKK);
+        return Some(Currency::Iso(IsoCurrency::DKK));
     }
     if c("ICELAND") {
         return "ISK".parse().ok();
     }
     if c("POLAND") {
-        return Some(Currency::PLN);
+        return Some(Currency::Iso(IsoCurrency::PLN));
     }
     if c("CZECH") {
-        return Some(Currency::CZK);
+        return Some(Currency::Iso(IsoCurrency::CZK));
     }
     if c("HUNGARY") {
-        return Some(Currency::HUF);
+        return Some(Currency::Iso(IsoCurrency::HUF));
     }
     if c("ROMANIA") {
         return "RON".parse().ok();
@@ -405,7 +405,7 @@ fn match_europe(s: &str) -> Option<Currency> {
         return "RSD".parse().ok();
     }
     if c("TURKEY") {
-        return Some(Currency::TRY);
+        return Some(Currency::Iso(IsoCurrency::TRY));
     }
     Some(None?).or(None)
 }
@@ -413,7 +413,7 @@ fn match_europe(s: &str) -> Option<Currency> {
 fn match_asia_pacific(s: &str) -> Option<Currency> {
     let c = |n| s.contains(n);
     if c("HONG KONG") {
-        return Some(Currency::HKD);
+        return Some(Currency::Iso(IsoCurrency::HKD));
     }
     if c("MACAU") {
         return "MOP".parse().ok();
@@ -422,34 +422,34 @@ fn match_asia_pacific(s: &str) -> Option<Currency> {
         return "TWD".parse().ok();
     }
     if c("KOREA") {
-        return Some(Currency::KRW);
+        return Some(Currency::Iso(IsoCurrency::KRW));
     }
     if c("JAPAN") {
-        return Some(Currency::JPY);
+        return Some(Currency::Iso(IsoCurrency::JPY));
     }
     if c("CHINA") {
-        return Some(Currency::CNY);
+        return Some(Currency::Iso(IsoCurrency::CNY));
     }
     if c("INDIA") {
-        return Some(Currency::INR);
+        return Some(Currency::Iso(IsoCurrency::INR));
     }
     if c("SINGAPORE") {
-        return Some(Currency::SGD);
+        return Some(Currency::Iso(IsoCurrency::SGD));
     }
     if c("MALAYSIA") {
-        return Some(Currency::MYR);
+        return Some(Currency::Iso(IsoCurrency::MYR));
     }
     if c("INDONESIA") {
-        return Some(Currency::IDR);
+        return Some(Currency::Iso(IsoCurrency::IDR));
     }
     if c("PHILIPPINES") {
-        return Some(Currency::PHP);
+        return Some(Currency::Iso(IsoCurrency::PHP));
     }
     if c("VIETNAM") {
-        return Some(Currency::VND);
+        return Some(Currency::Iso(IsoCurrency::VND));
     }
     if c("THAILAND") {
-        return Some(Currency::THB);
+        return Some(Currency::Iso(IsoCurrency::THB));
     }
     if c("LAOS") {
         return "LAK".parse().ok();
@@ -464,10 +464,10 @@ fn match_asia_pacific(s: &str) -> Option<Currency> {
         return "MNT".parse().ok();
     }
     if c("AUSTRALIA") {
-        return Some(Currency::AUD);
+        return Some(Currency::Iso(IsoCurrency::AUD));
     }
     if c("NEW ZEALAND") {
-        return Some(Currency::NZD);
+        return Some(Currency::Iso(IsoCurrency::NZD));
     }
     if c("FIJI") {
         return "FJD".parse().ok();
@@ -493,7 +493,7 @@ fn match_asia_pacific(s: &str) -> Option<Currency> {
 fn match_mena(s: &str) -> Option<Currency> {
     let c = |n| s.contains(n);
     if c("ISRAEL") {
-        return Some(Currency::ILS);
+        return Some(Currency::Iso(IsoCurrency::ILS));
     }
     if c("SAUDI ARABIA") {
         return "SAR".parse().ok();
@@ -572,7 +572,7 @@ fn match_caucasus_central_asia(s: &str) -> Option<Currency> {
 fn match_africa(s: &str) -> Option<Currency> {
     let c = |n| s.contains(n);
     if c("SOUTH AFRICA") {
-        return Some(Currency::ZAR);
+        return Some(Currency::Iso(IsoCurrency::ZAR));
     }
     if c("NIGERIA") {
         return "NGN".parse().ok();

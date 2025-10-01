@@ -1,6 +1,6 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 use url::Url;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::{Ticker, YfClient};
@@ -65,19 +65,31 @@ async fn cashflow_computes_fcf_when_missing() {
     assert_eq!(rows.len(), 1);
     assert_eq!(
         rows[0].operating_cashflow,
-        Some(f64_to_money_with_currency(100.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            100.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(
         rows[0].capital_expenditures,
-        Some(f64_to_money_with_currency(-30.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            -30.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
     assert_eq!(
         rows[0].free_cash_flow,
-        Some(f64_to_money_with_currency(70.0, Currency::USD)),
+        Some(f64_to_money_with_currency(
+            70.0,
+            Currency::Iso(IsoCurrency::USD)
+        )),
         "fcf = ocf + capex (where capex is negative)"
     );
     assert_eq!(
         rows[0].net_income,
-        Some(f64_to_money_with_currency(65.0, Currency::USD))
+        Some(f64_to_money_with_currency(
+            65.0,
+            Currency::Iso(IsoCurrency::USD)
+        ))
     );
 }

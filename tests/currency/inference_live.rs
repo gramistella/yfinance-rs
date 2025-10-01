@@ -1,4 +1,4 @@
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 use yfinance_rs::core::{Interval, Range};
 use yfinance_rs::{Ticker, YfClient};
 
@@ -12,9 +12,9 @@ async fn live_reporting_currency_inference() -> Result<(), Box<dyn std::error::E
     let client = YfClient::builder().build()?;
 
     let cases = vec![
-        ("AAPL", Currency::USD),
-        ("SAP", Currency::EUR),
-        ("7203.T", Currency::JPY),
+        ("AAPL", Currency::Iso(IsoCurrency::USD)),
+        ("SAP", Currency::Iso(IsoCurrency::EUR)),
+        ("7203.T", Currency::Iso(IsoCurrency::JPY)),
     ];
 
     for (symbol, expected) in cases {
@@ -40,13 +40,15 @@ async fn live_reporting_currency_inference() -> Result<(), Box<dyn std::error::E
             "{symbol} cache should retain inferred currency before override"
         );
 
-        let override_rows = ticker.income_stmt(Some(Currency::USD)).await?;
+        let override_rows = ticker
+            .income_stmt(Some(Currency::Iso(IsoCurrency::USD)))
+            .await?;
         let override_currency = override_rows
             .first()
             .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
         assert_eq!(
             override_currency,
-            Some(Currency::USD),
+            Some(Currency::Iso(IsoCurrency::USD)),
             "{symbol} override should force USD"
         );
 
@@ -56,7 +58,7 @@ async fn live_reporting_currency_inference() -> Result<(), Box<dyn std::error::E
             .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
         assert_eq!(
             cached_currency,
-            Some(Currency::USD),
+            Some(Currency::Iso(IsoCurrency::USD)),
             "{symbol} cache should reflect last override"
         );
     }
@@ -81,13 +83,13 @@ async fn live_gs2c_dual_listing_currency() -> Result<(), Box<dyn std::error::Err
         .history(Some(Range::D5), Some(Interval::D1), false)
         .await?;
     let history_currency = history.first().map(|bar| bar.close.currency().clone());
-    assert_eq!(history_currency, Some(Currency::EUR));
+    assert_eq!(history_currency, Some(Currency::Iso(IsoCurrency::EUR)));
 
     let fundamentals = ticker.income_stmt(None).await?;
     let fundamentals_currency = fundamentals
         .first()
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
-    assert_eq!(fundamentals_currency, Some(Currency::USD));
+    assert_eq!(fundamentals_currency, Some(Currency::Iso(IsoCurrency::USD)));
 
     Ok(())
 }

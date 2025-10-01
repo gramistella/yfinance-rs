@@ -14,7 +14,7 @@ use crate::core::{
     quotesummary,
 };
 use chrono::DateTime;
-use paft::core::domain::Currency;
+use paft::money::Currency;
 
 #[inline]
 #[allow(clippy::cast_precision_loss)]

@@ -14,10 +14,10 @@ use crate::{
 use super::fetch::fetch_modules;
 use super::model::{PriceTarget, RecommendationRow, RecommendationSummary, UpgradeDowngradeRow};
 use chrono::DateTime;
-use paft::core::domain::Currency;
 use paft::fundamentals::analysis::{
     EarningsEstimate, EpsRevisions, EpsTrend, RevenueEstimate, RevisionPoint, TrendPoint,
 };
+use paft::money::Currency;
 // Period is available via prelude or directly; we use string_to_period for parsing, so import not needed
 
 /* ---------- Public entry points (mapping wire → public models) ---------- */

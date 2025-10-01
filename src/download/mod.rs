@@ -7,7 +7,7 @@ use crate::{
     core::{Action, Candle, HistoryMeta, HistoryResponse, Interval, Range, YfClient, YfError},
     history::HistoryBuilder,
 };
-use paft::core::domain::Money;
+use paft::money::Money;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 type DateRange = (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>);
 type MaybeDateRange = Option<DateRange>;
@@ -124,7 +124,8 @@ impl DownloadBuilder {
                     ))
                     .unwrap_or_default(),
                     c.open.currency().clone(),
-                );
+                )
+                .expect("currency metadata available");
             }
             if c.high.amount().to_f64().is_some_and(f64::is_finite) {
                 c.high = Money::new(
@@ -133,14 +134,16 @@ impl DownloadBuilder {
                     ))
                     .unwrap_or_default(),
                     c.high.currency().clone(),
-                );
+                )
+                .expect("currency metadata available");
             }
             if c.low.amount().to_f64().is_some_and(f64::is_finite) {
                 c.low = Money::new(
                     rust_decimal::Decimal::from_f64(round2(c.low.amount().to_f64().unwrap_or(0.0)))
                         .unwrap_or_default(),
                     c.low.currency().clone(),
-                );
+                )
+                .expect("currency metadata available");
             }
             if c.close.amount().to_f64().is_some_and(f64::is_finite) {
                 c.close = Money::new(
@@ -149,7 +152,8 @@ impl DownloadBuilder {
                     ))
                     .unwrap_or_default(),
                     c.close.currency().clone(),
-                );
+                )
+                .expect("currency metadata available");
             }
         }
     }
@@ -429,21 +433,25 @@ fn scale_row_prices(c: &mut Candle, scale: f64) {
     if c.open.amount().to_f64().is_some_and(f64::is_finite) {
         c.open = c
             .open
-            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+            .try_mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default())
+            .expect("currency metadata available");
     }
     if c.high.amount().to_f64().is_some_and(f64::is_finite) {
         c.high = c
             .high
-            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+            .try_mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default())
+            .expect("currency metadata available");
     }
     if c.low.amount().to_f64().is_some_and(f64::is_finite) {
         c.low = c
             .low
-            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+            .try_mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default())
+            .expect("currency metadata available");
     }
     if c.close.amount().to_f64().is_some_and(f64::is_finite) {
         c.close = c
             .close
-            .mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default());
+            .try_mul(rust_decimal::Decimal::from_f64_retain(scale).unwrap_or_default())
+            .expect("currency metadata available");
     }
 }

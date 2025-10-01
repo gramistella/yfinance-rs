@@ -1,6 +1,6 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 use url::Url;
 use yfinance_rs::core::{Interval, Range};
 use yfinance_rs::{ApiPreference, Ticker, YfClient};
@@ -64,25 +64,31 @@ async fn offline_currency_inference_uses_profile_country() {
     let inferred_currency = rows
         .first()
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
-    assert_eq!(inferred_currency, Some(Currency::GBP));
+    assert_eq!(inferred_currency, Some(Currency::Iso(IsoCurrency::GBP)));
 
     let cached_before_override = ticker.income_stmt(None).await.unwrap();
     let cached_before_currency = cached_before_override
         .first()
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
-    assert_eq!(cached_before_currency, Some(Currency::GBP));
+    assert_eq!(
+        cached_before_currency,
+        Some(Currency::Iso(IsoCurrency::GBP))
+    );
 
-    let rows_override = ticker.income_stmt(Some(Currency::USD)).await.unwrap();
+    let rows_override = ticker
+        .income_stmt(Some(Currency::Iso(IsoCurrency::USD)))
+        .await
+        .unwrap();
     let override_currency = rows_override
         .first()
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
-    assert_eq!(override_currency, Some(Currency::USD));
+    assert_eq!(override_currency, Some(Currency::Iso(IsoCurrency::USD)));
 
     let rows_cached = ticker.income_stmt(None).await.unwrap();
     let cached_currency = rows_cached
         .first()
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
-    assert_eq!(cached_currency, Some(Currency::USD));
+    assert_eq!(cached_currency, Some(Currency::Iso(IsoCurrency::USD)));
 
     assert_eq!(profile_mock.hits(), 1, "profile should be fetched once");
     assert_eq!(
@@ -168,20 +174,20 @@ async fn offline_gs2c_dual_listing_currency() {
     let ticker = Ticker::new(&client, symbol);
 
     let fast = ticker.fast_info().await.unwrap();
-    assert_eq!(fast.currency.as_deref(), Some("EUR"));
+    assert_eq!(fast.currency.as_deref(), Some("EUR".to_string()).as_deref());
 
     let fundamentals = ticker.income_stmt(None).await.unwrap();
     let fundamentals_currency = fundamentals
         .first()
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
-    assert_eq!(fundamentals_currency, Some(Currency::USD));
+    assert_eq!(fundamentals_currency, Some(Currency::Iso(IsoCurrency::USD)));
 
     let history = ticker
         .history(Some(Range::D5), Some(Interval::D1), false)
         .await
         .unwrap();
     let history_currency = history.first().map(|bar| bar.close.currency().clone());
-    assert_eq!(history_currency, Some(Currency::EUR));
+    assert_eq!(history_currency, Some(Currency::Iso(IsoCurrency::EUR)));
 
     assert_eq!(quote_mock.hits(), 1);
     assert_eq!(profile_mock.hits(), 1);

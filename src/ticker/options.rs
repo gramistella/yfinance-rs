@@ -11,7 +11,7 @@ use crate::{
         net,
     },
 };
-use paft::core::domain::Currency;
+use paft::money::Currency;
 
 use super::model::{OptionChain, OptionContract};
 

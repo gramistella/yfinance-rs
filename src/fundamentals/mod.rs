@@ -13,7 +13,7 @@ use crate::core::{
     YfClient, YfError,
     client::{CacheMode, RetryConfig},
 };
-use paft::core::domain::Currency;
+use paft::money::Currency;
 
 /// A builder for fetching fundamental financial data (statements, earnings, etc.).
 pub struct FundamentalsBuilder {

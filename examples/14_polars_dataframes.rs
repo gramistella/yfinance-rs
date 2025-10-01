@@ -1,12 +1,12 @@
 //! Example demonstrating Polars `DataFrame` integration with yfinance-rs.
 //!
-//! Run with: cargo run --example 14_polars_dataframes --features dataframe
+//! Run with: cargo run --example `14_polars_dataframes` --features dataframe
 
 #[cfg(feature = "dataframe")]
 use polars::prelude::*;
 
 #[cfg(feature = "dataframe")]
-use paft::core::dataframe::{ToDataFrame, ToDataFrameVec};
+use paft::prelude::{ToDataFrame, ToDataFrameVec};
 
 #[cfg(feature = "dataframe")]
 use yfinance_rs::{Ticker, YfClient};
@@ -41,12 +41,12 @@ async fn section_history_df(ticker: &Ticker) -> Result<(), Box<dyn std::error::E
         .history(Some(Range::M6), Some(Interval::D1), false)
         .await?;
 
-    if !history.is_empty() {
+    if history.is_empty() {
+        println!("   No history returned.");
+    } else {
         let df = history.to_dataframe()?;
         println!("   DataFrame shape: {:?}", df.shape());
         println!("   Sample data:\n{}", df.head(Some(5)));
-    } else {
-        println!("   No history returned.");
     }
     println!();
     Ok(())

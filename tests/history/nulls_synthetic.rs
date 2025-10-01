@@ -1,5 +1,5 @@
 use httpmock::{Method::GET, MockServer};
-use paft::core::domain::Currency;
+use paft::money::{Currency, IsoCurrency};
 use url::Url;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::{HistoryBuilder, YfClient};
@@ -41,11 +41,11 @@ async fn history_skips_points_with_null_ohlc() {
     );
     assert_eq!(
         bars[0].open,
-        f64_to_money_with_currency(100.0, Currency::USD)
+        f64_to_money_with_currency(100.0, Currency::Iso(IsoCurrency::USD))
     );
     assert_eq!(
         bars[0].close,
-        f64_to_money_with_currency(100.5, Currency::USD)
+        f64_to_money_with_currency(100.5, Currency::Iso(IsoCurrency::USD))
     );
     assert_eq!(bars[0].volume, Some(1_000_000));
 }

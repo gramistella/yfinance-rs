@@ -1,10 +1,11 @@
 //! Conversion utilities
 
 use chrono::{DateTime, Utc};
-use paft::core::domain::{Currency, Exchange, MarketState, Money, Period};
+use paft::domain::{Exchange, MarketState, Period};
 use paft::fundamentals::analysis::{RecommendationAction, RecommendationGrade};
 use paft::fundamentals::holders::{InsiderPosition, TransactionType};
 use paft::fundamentals::profile::FundKind;
+use paft::money::{Currency, IsoCurrency, Money};
 use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
 
@@ -17,25 +18,34 @@ fn f64_to_decimal_safely(value: f64) -> rust_decimal::Decimal {
 }
 
 /// Convert f64 to Money with specified currency
+///
+/// # Panics
+/// Panics if currency metadata is not registered for non-ISO currencies.
 #[must_use]
 pub fn f64_to_money_with_currency(value: f64, currency: Currency) -> Money {
     // Use string formatting to avoid f64 precision issues; coerce non-finite to zero
     let decimal = f64_to_decimal_safely(value);
-    Money::new(decimal, currency)
+    Money::new(decimal, currency).expect("currency metadata available")
 }
 
 /// Convert i64 to Money with specified currency (no precision loss)
+///
+/// # Panics
+/// Panics if currency metadata is not registered for non-ISO currencies.
 #[must_use]
 pub fn i64_to_money_with_currency(value: i64, currency: Currency) -> Money {
     let decimal = rust_decimal::Decimal::from_i128_with_scale(i128::from(value), 0);
-    Money::new(decimal, currency)
+    Money::new(decimal, currency).expect("currency metadata available")
 }
 
 /// Convert u64 to Money with specified currency (no precision loss)
+///
+/// # Panics
+/// Panics if currency metadata is not registered for non-ISO currencies.
 #[must_use]
 pub fn u64_to_money_with_currency(value: u64, currency: Currency) -> Money {
     let decimal = rust_decimal::Decimal::from_i128_with_scale(i128::from(value), 0);
-    Money::new(decimal, currency)
+    Money::new(decimal, currency).expect("currency metadata available")
 }
 
 /// Convert f64 to Money with currency string (parses currency string to Currency enum)
@@ -43,7 +53,7 @@ pub fn u64_to_money_with_currency(value: u64, currency: Currency) -> Money {
 pub fn f64_to_money_with_currency_str(value: f64, currency_str: Option<&str>) -> Money {
     let currency = currency_str
         .and_then(|s| Currency::from_str(s).ok())
-        .unwrap_or(Currency::USD);
+        .unwrap_or(Currency::Iso(IsoCurrency::USD));
     f64_to_money_with_currency(value, currency)
 }
 
@@ -109,13 +119,13 @@ pub fn string_to_exchange(s: Option<String>) -> Option<Exchange> {
             "BIST" => Some(Exchange::BIST),
             "JSE" => Some(Exchange::JSE),
             "TASE" => Some(Exchange::TASE),
-            "BseIndia" => Some(Exchange::BseIndia),
+            "BSE_HU" => Some(Exchange::BSE_HU),
             "NSE" => Some(Exchange::NSE),
             "KRX" => Some(Exchange::KRX),
             "SGX" => Some(Exchange::SGX),
             "SET" => Some(Exchange::SET),
             "KLSE" => Some(Exchange::KLSE),
-            "PsePhil" => Some(Exchange::PsePhil),
+            "PSE_CZ" => Some(Exchange::PSE_CZ),
             "IDX" => Some(Exchange::IDX),
             "HOSE" => Some(Exchange::HOSE),
             _ => Exchange::try_from(s).ok(),
