@@ -22,7 +22,7 @@ thiserror = "2.0"
 url = "2.5"
 tokio = { version = "1.47", features = ["macros", "rt-multi-thread"] }
 futures = "0.3"
-tokio-tungstenite = { version = "0.27", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.28", features = ["rustls-tls-native-roots"] }
 futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
