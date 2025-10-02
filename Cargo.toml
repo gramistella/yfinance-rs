@@ -27,7 +27,7 @@ futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.51", features = ["lazy", "strings", "temporal", "serde", "regex", "timezones", "diagonal_concat", "json", "rolling_window", "temporal"], optional = true }
-paft = { version = "0.3.0", path = "../paft-workspace/paft" , features = ["market", "fundamentals", "domain", "ident-validate"]}
+paft = { version = "0.3.0" , features = ["market", "fundamentals", "domain", "ident-validate"]}
 rust_decimal = "1.36"
 
 [dev-dependencies]

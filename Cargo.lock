@@ -2041,6 +2041,8 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 [[package]]
 name = "paft"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8c7808c43d7907c6d907a7725dae9aa0b1d089fc9d97cbab4305849404fd014"
 dependencies = [
  "iso_currency",
  "paft-core",
@@ -2055,6 +2057,8 @@ dependencies = [
 [[package]]
 name = "paft-core"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2740419285924cefc246eb2db1f0ebdc870b3d2955b39292322d2a4be0b9853b"
 dependencies = [
  "chrono",
  "paft-utils",
@@ -2066,6 +2070,8 @@ dependencies = [
 [[package]]
 name = "paft-domain"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70ebaa93a37a7cde1ea92b7e387e35cabcd1e432ee416fa038bcae9ac0453e66"
 dependencies = [
  "chrono",
  "isin",
@@ -2080,6 +2086,8 @@ dependencies = [
 [[package]]
 name = "paft-fundamentals"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "926f76b8b6de0ef47694d7cff882789b700a9289d080252460f2cea4765149c1"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -2097,6 +2105,8 @@ dependencies = [
 [[package]]
 name = "paft-market"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49a1c6639f096503f4fa89c91ac0a77c0f41970bffeeaba650867248b4c2d1ca"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2115,6 +2125,8 @@ dependencies = [
 [[package]]
 name = "paft-money"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62bf3a0b32109b8ddfb0192c24054e9045667b45064372f3b259eff4ada87e36"
 dependencies = [
  "df-derive",
  "iso_currency",
@@ -2128,6 +2140,8 @@ dependencies = [
 [[package]]
 name = "paft-utils"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15a9288cb4625b2e6bfb6012a4fd2a56e4b4b6ce8a148aaccfa2edb925af8c97"
 dependencies = [
  "polars",
  "thiserror 2.0.14",

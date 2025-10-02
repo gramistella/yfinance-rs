@@ -39,7 +39,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 ### Options & Derivatives
 
 * **Options Chains**: Fetch expiration dates and full option chains (calls and puts).
-* **Option Contracts**: Detailed option contract information including Greeks.
+* **Option Contracts**: Detailed option contract information.
 
 ### Analysis & Research
 
