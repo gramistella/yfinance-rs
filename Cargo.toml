@@ -26,12 +26,13 @@ tokio-tungstenite = { version = "0.28", features = ["rustls-tls-native-roots"] }
 futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
-polars = { version = "0.51", features = ["lazy", "strings", "temporal", "serde", "regex", "timezones", "diagonal_concat", "json", "rolling_window", "temporal"], optional = true }
+polars = { version = "0.51", default-features = false, optional = true }
 paft = { version = "0.4.0", features = ["market", "fundamentals", "domain", "aggregates", "ident-validate"]}
 rust_decimal = "1.36"
 
 [dev-dependencies]
 httpmock = "0.8.1"
+polars = { version = "0.51", default-features = false, features = ["lazy", "rolling_window"] }
 
 [build-dependencies]
 prost-build = "0.14"
