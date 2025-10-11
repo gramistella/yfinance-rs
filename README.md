@@ -68,7 +68,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 * **Company Profiles**: Detailed information about companies, ETFs, and funds.
 * **Search**: Find tickers by name or keyword.
 
-### Real-time Streaming
+### Real-time Streaming (WebSocket/Polling)
 
 * **WebSocket Streaming**: Get live quote updates using WebSockets (preferred method).
 * **HTTP Polling**: Fallback polling method for real-time data.
@@ -378,7 +378,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### ESG & Sustainability
+### ESG Scores & Involvement
 
 ```rust
 use yfinance_rs::{Ticker, YfClient};
