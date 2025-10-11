@@ -4,6 +4,52 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - Unreleased
+
+### Added
+
+- Enabled `paft` facade `aggregates` feature.
+  - `Ticker::fast_info()` now returns `paft_aggregates::FastInfo` (typed enums and `Money`), offering a richer, consistent snapshot model.
+- Options models expanded (re-exported from `paft-market`):
+  - `OptionContract` gains `expiration_date` (NaiveDate), `expiration_at` (Option<DateTime<Utc>>), `last_trade_at` (Option<DateTime<Utc>>), and `greeks` (Option<OptionGreeks>).
+- DataFrame support for options types is available when enabling this crate’s `dataframe` feature (forwards to `paft/dataframe`).
+
+### Changed
+
+- History response alignment with `paft` 0.4.0:
+  - `Candle` now carries `close_unadj: Option<Money>` (original unadjusted close, when available).
+  - `HistoryResponse` no longer includes a top-level `unadjusted_close` vector.
+- Examples and tests updated to use Money-typed values and typed enums (Exchange, MarketState, Currency).
+
+### Breaking
+
+- Fast Info return type changed:
+  - Old: struct with `last_price: f64`, `previous_close: Option<f64>`, string-y `currency`/`exchange`/`market_state`.
+  - New: `paft_aggregates::FastInfo` with `last: Option<Money>`, `previous_close: Option<Money>`, `currency: Option<paft_money::Currency>`, `exchange: Option<paft_domain::Exchange>`, `market_state: Option<paft_domain::MarketState>`, plus `name: Option<String>`.
+- Options contract fields changed:
+  - Old: `OptionContract { ..., expiration: DateTime<Utc>, ... }`
+  - New: `OptionContract { ..., expiration_date: NaiveDate, expiration_at: Option<DateTime<Utc>>, last_trade_at: Option<DateTime<Utc>>, greeks: Option<OptionGreeks>, ... }`
+- History unadjusted close location changed:
+  - Old: `HistoryResponse { ..., unadjusted_close: Option<Vec<Money>> }`
+  - New: `Candle { ..., close_unadj: Option<Money> }` (per-candle).
+
+### Migration notes
+
+- Fast Info
+  - Price as f64: replace `fi.last_price` with `fi.last.as_ref().map(money_to_f64).or_else(|| fi.previous_close.as_ref().map(money_to_f64))`.
+  - Currency string: replace `fi.currency` (String) with `fi.currency.map(|c| c.to_string())`.
+  - Exchange/MarketState strings: `.map(|e| e.to_string())`.
+- Options
+  - Replace usages of `contract.expiration` with `contract.expiration_at.unwrap_or_else(|| ...)`, or use `contract.expiration_date` for calendar-only logic.
+  - New optional fields `last_trade_at` and `greeks` are available (greeks currently not populated from Yahoo v7).
+- History
+  - Replace `resp.unadjusted_close[i]` with `resp.candles[i].close_unadj.as_ref()`.
+
+### Internal
+
+- Tests updated for `httpmock` 0.8 API changes.
+- Lints and examples adjusted for Money/typed enums.
+
 ## [0.3.2] - 2025-10-03
 
 ### Changed
