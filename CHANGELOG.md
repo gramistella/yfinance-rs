@@ -4,14 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - Unreleased
+## [0.4.0] - 2025-10-12
 
 ### Added
 
 - Enabled `paft` facade `aggregates` feature.
   - `Ticker::fast_info()` now returns `paft_aggregates::FastInfo` (typed enums and `Money`), offering a richer, consistent snapshot model.
 - Options models expanded (re-exported from `paft-market`):
-  - `OptionContract` gains `expiration_date` (NaiveDate), `expiration_at` (Option<DateTime<Utc>>), `last_trade_at` (Option<DateTime<Utc>>), and `greeks` (Option<OptionGreeks>).
+  - `OptionContract` gains `expiration_date` (NaiveDate), `expiration_at` (Option<DateTime\<Utc>>), `last_trade_at` (Option<DateTime\<Utc>>), and `greeks` (Option\<OptionGreeks>).
 - DataFrame support for options types is available when enabling this crate’s `dataframe` feature (forwards to `paft/dataframe`).
 
 ### Changed
@@ -172,6 +172,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Analysis tools: `recommendations`, `sustainability`, `major_holders`, `institutional_holders`.
 - Utilities: `DownloadBuilder`, `StreamBuilder`, `SearchBuilder`.
 
+[0.4.0]: https://github.com/gramistella/yfinance-rs/compare/v0.3.1...v0.4.0
 [0.3.2]: https://github.com/gramistella/yfinance-rs/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/gramistella/yfinance-rs/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/gramistella/yfinance-rs/compare/v0.2.1...v0.3.0
