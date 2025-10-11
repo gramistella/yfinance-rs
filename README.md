@@ -298,7 +298,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Calls: {}", chain.calls.len());
         println!("Puts: {}", chain.puts.len());
     
-        let current_price = ticker.fast_info().await?.last_price;
+        let fi = ticker.fast_info().await?;
+        let current_price = fi
+            .last
+            .as_ref()
+            .map(money_to_f64)
+            .or_else(|| fi.previous_close.as_ref().map(money_to_f64))
+            .unwrap_or(0.0);
         for call in &chain.calls {
             if (money_to_f64(&call.strike) - current_price).abs() < 5.0 {
                 println!(
