@@ -77,7 +77,7 @@ async fn live_gs2c_dual_listing_currency() -> Result<(), Box<dyn std::error::Err
     let ticker = Ticker::new(&client, "GS2C.DE");
 
     let fast = ticker.fast_info().await?;
-    assert_eq!(fast.currency.as_deref(), Some("EUR"));
+    assert_eq!(fast.currency.map(|c| c.to_string()).as_deref(), Some("EUR"));
 
     let history = ticker
         .history(Some(Range::D5), Some(Interval::D1), false)

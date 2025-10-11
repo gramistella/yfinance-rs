@@ -66,11 +66,11 @@ async fn live_ticker_options_for_record() {
             // Instead of a useless `>= 0` check on usize, ensure the chain is coherent:
             // every returned contract (if any) must match the requested expiration.
             assert!(
-                chain
-                    .calls
-                    .iter()
-                    .chain(chain.puts.iter())
-                    .all(|c| c.expiration.timestamp() == first),
+                chain.calls.iter().chain(chain.puts.iter()).all(|c| c
+                    .expiration_at
+                    .unwrap()
+                    .timestamp()
+                    == first),
                 "all option contracts should match the requested expiration for {sym}"
             );
         }

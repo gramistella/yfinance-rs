@@ -120,12 +120,11 @@ pub fn mock_options_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> 
     server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v7/finance/options/{symbol}"))
-            .matches(|req| {
-                if let Some(group) = &req.query_params {
-                    for (k, _) in group {
-                        if k == "date" {
-                            return false;
-                        }
+            .is_true(|req| {
+                let group = req.query_params();
+                for k in group.keys() {
+                    if k == "date" {
+                        return false;
                     }
                 }
                 true

@@ -96,13 +96,20 @@ async fn fast_info_derives_last_price() {
     mock.assert();
 
     assert_eq!(fi.symbol, "MSFT");
+    assert!(fi.last.is_none());
     assert!(
-        (fi.last_price - 421.00).abs() < 1e-9,
+        (money_to_f64(&fi.previous_close.unwrap()) - 421.00).abs() < 1e-9,
         "fallback to previous close"
     );
-    assert_eq!(fi.currency.as_deref(), Some("USD"));
-    assert_eq!(fi.exchange.as_deref(), Some("NASDAQ"));
-    assert_eq!(fi.market_state.as_deref(), Some("CLOSED"));
+    assert_eq!(fi.currency.map(|c| c.to_string()).as_deref(), Some("USD"));
+    assert_eq!(
+        fi.exchange.map(|e| e.to_string()).as_deref(),
+        Some("NASDAQ")
+    );
+    assert_eq!(
+        fi.market_state.map(|s| s.to_string()).as_deref(),
+        Some("CLOSED")
+    );
 }
 
 #[tokio::test]
@@ -119,7 +126,7 @@ async fn live_quote_smoke() {
     let fi = ticker.fast_info().await.unwrap();
 
     if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
-        assert!(fi.last_price > 0.0);
+        assert!(money_to_f64(&fi.last.unwrap()) > 0.0);
         assert_eq!(fi.symbol, "AAPL");
     }
 }

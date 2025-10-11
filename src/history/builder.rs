@@ -4,7 +4,7 @@ mod assemble;
 mod fetch;
 
 use crate::core::client::{CacheMode, RetryConfig};
-use crate::core::conversions::f64_to_money_with_currency_str;
+// use crate::core::conversions::f64_to_money_with_currency_str;
 use crate::core::{YfClient, YfError};
 use crate::history::wire::MetaNode;
 use chrono_tz::Tz;
@@ -184,7 +184,7 @@ impl HistoryBuilder {
 
         // 4) Assemble candles (+ raw close) with/without adjustments
         let currency = fetched.meta.as_ref().and_then(|m| m.currency.as_deref());
-        let (candles, raw_close) = assemble_candles(
+        let candles = assemble_candles(
             &fetched.ts,
             &fetched.quote,
             &fetched.adjclose,
@@ -209,12 +209,6 @@ impl HistoryBuilder {
             actions: actions_out,
             adjusted: self.auto_adjust,
             meta: meta_out,
-            unadjusted_close: Some(
-                raw_close
-                    .into_iter()
-                    .map(|price| f64_to_money_with_currency_str(price, currency))
-                    .collect(),
-            ),
         })
     }
 }

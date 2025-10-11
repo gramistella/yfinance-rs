@@ -43,11 +43,19 @@ async fn section_fast_info(client: &YfClient) -> Result<(), YfError> {
     println!("--- Fast Info for NVDA ---");
     let nvda = Ticker::new(client, "NVDA");
     let fast_info = nvda.fast_info().await?;
+    let price_money = fast_info
+        .last
+        .clone()
+        .or_else(|| fast_info.previous_close.clone())
+        .expect("last or previous_close present");
     println!(
         "{} is trading at ${:.2} in {}",
         fast_info.symbol,
-        fast_info.last_price,
-        fast_info.exchange.unwrap_or_default()
+        yfinance_rs::core::conversions::money_to_f64(&price_money),
+        fast_info
+            .exchange
+            .map(|e| e.to_string())
+            .unwrap_or_default()
     );
     println!();
     Ok(())

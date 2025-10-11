@@ -40,7 +40,7 @@ async fn history_retries_on_persistent_5xx() {
     let result = HistoryBuilder::new(&client, sym).fetch().await;
 
     // The mock should be hit 1 (initial) + 3 (retries) = 4 times.
-    fail_mock.assert_hits((1 + max_retries) as usize);
+    fail_mock.assert_calls((1 + max_retries) as usize);
 
     // Assert that the final result is the expected error.
     match result {

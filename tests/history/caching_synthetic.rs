@@ -67,7 +67,7 @@ async fn history_cache_refresh_bypasses_cache_get_but_updates_cache() {
 
     // First call, hits network and populates cache
     let _ = builder.clone().fetch().await.unwrap();
-    mock.assert_hits(1);
+    mock.assert_calls(1);
 
     // Second call with CacheMode::Refresh, should hit network again
     let _ = builder
@@ -76,10 +76,10 @@ async fn history_cache_refresh_bypasses_cache_get_but_updates_cache() {
         .fetch()
         .await
         .unwrap();
-    mock.assert_hits(2);
+    mock.assert_calls(2);
 
     // Third call with default CacheMode::Use, should now be served from cache
     let _ = builder.clone().fetch().await.unwrap();
     // The hit count should NOT increase, so we assert it's still 2.
-    mock.assert_hits(2);
+    mock.assert_calls(2);
 }

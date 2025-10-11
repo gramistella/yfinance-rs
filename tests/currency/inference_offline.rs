@@ -90,9 +90,9 @@ async fn offline_currency_inference_uses_profile_country() {
         .and_then(|row| row.total_revenue.as_ref().map(|m| m.currency().clone()));
     assert_eq!(cached_currency, Some(Currency::Iso(IsoCurrency::USD)));
 
-    assert_eq!(profile_mock.hits(), 1, "profile should be fetched once");
+    assert_eq!(profile_mock.calls(), 1, "profile should be fetched once");
     assert_eq!(
-        fundamentals_mock.hits(),
+        fundamentals_mock.calls(),
         4,
         "fundamentals should be fetched four times"
     );
@@ -174,7 +174,7 @@ async fn offline_gs2c_dual_listing_currency() {
     let ticker = Ticker::new(&client, symbol);
 
     let fast = ticker.fast_info().await.unwrap();
-    assert_eq!(fast.currency.as_deref(), Some("EUR".to_string()).as_deref());
+    assert_eq!(fast.currency.map(|c| c.to_string()).as_deref(), Some("EUR"));
 
     let fundamentals = ticker.income_stmt(None).await.unwrap();
     let fundamentals_currency = fundamentals
@@ -189,8 +189,8 @@ async fn offline_gs2c_dual_listing_currency() {
     let history_currency = history.first().map(|bar| bar.close.currency().clone());
     assert_eq!(history_currency, Some(Currency::Iso(IsoCurrency::EUR)));
 
-    assert_eq!(quote_mock.hits(), 1);
-    assert_eq!(profile_mock.hits(), 1);
-    assert_eq!(fundamentals_mock.hits(), 1);
-    assert_eq!(chart_mock.hits(), 1);
+    assert_eq!(quote_mock.calls(), 1);
+    assert_eq!(profile_mock.calls(), 1);
+    assert_eq!(fundamentals_mock.calls(), 1);
+    assert_eq!(chart_mock.calls(), 1);
 }

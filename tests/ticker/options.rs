@@ -54,7 +54,7 @@ async fn option_chain_for_specific_date() {
     let chain = t.option_chain(Some(date)).await.unwrap();
     chain_mock.assert();
     assert_eq!(
-        quote_mock.hits(),
+        quote_mock.calls(),
         0,
         "options currency should prevent quote fallback"
     );
@@ -70,13 +70,13 @@ async fn option_chain_for_specific_date() {
 
     let c = &chain.calls[0];
     assert_eq!(money_to_currency_str(&c.strike).as_deref(), Some("USD"));
-    assert_eq!(c.expiration.timestamp(), date);
+    assert_eq!(c.expiration_at.unwrap().timestamp(), date);
 
     let p = &chain.puts[0];
     if let Some(price) = p.price.as_ref() {
         assert_eq!(money_to_currency_str(price).as_deref(), Some("USD"));
     }
-    assert_eq!(p.expiration.timestamp(), date);
+    assert_eq!(p.expiration_at.unwrap().timestamp(), date);
 }
 
 #[tokio::test]
@@ -125,7 +125,7 @@ async fn option_chain_currency_fallback_fetches_quote() {
     quote_mock.assert();
 
     assert!(
-        quote_mock.hits() >= 1,
+        quote_mock.calls() >= 1,
         "fallback should hit quote endpoint at least once"
     );
 
@@ -144,7 +144,7 @@ async fn option_chain_currency_fallback_fetches_quote() {
             money_to_currency_str(&contract.strike).as_deref(),
             Some("USD")
         );
-        assert_eq!(contract.expiration.timestamp(), date);
+        assert_eq!(contract.expiration_at.unwrap().timestamp(), date);
     }
 }
 
@@ -191,16 +191,7 @@ fn mock_base_options_request<'a>(
     server.mock(move |when, then| {
         when.method(httpmock::Method::GET)
             .path(format!("/v7/finance/options/{symbol}"))
-            .matches(|req| {
-                if let Some(group) = &req.query_params {
-                    for (k, _) in group {
-                        if k == "date" {
-                            return false;
-                        }
-                    }
-                }
-                true
-            });
+            .is_true(|req| !req.query_params().contains_key("date"));
         then.status(200)
             .header("content-type", "application/json")
             .body(body);
@@ -240,18 +231,7 @@ async fn options_retry_with_crumb_on_403() {
         when.method(GET)
             .path("/v7/finance/options/MSFT")
             .query_param("date", date.to_string())
-            .matches(|req| {
-                // httpmock 0.7 exposes `query_params` as a nested Vec.
-                // Reject the match if ANY "crumb" param is present.
-                if let Some(group) = &req.query_params {
-                    for (k, _) in group {
-                        if k == "crumb" {
-                            return false;
-                        }
-                    }
-                }
-                true
-            });
+            .is_true(|req| !req.query_params().contains_key("crumb"));
         then.status(403);
     });
 

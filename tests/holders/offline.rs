@@ -88,5 +88,5 @@ async fn offline_all_holders_from_fixture() {
     let _insider_trans = t.insider_transactions().await.unwrap();
 
     // Verify the mock was hit for each of the 6 calls.
-    mock.assert_hits(6);
+    mock.assert_calls(6);
 }

@@ -14,6 +14,7 @@ use crate::{
 use paft::money::Currency;
 
 use super::model::{OptionChain, OptionContract};
+use chrono::{NaiveDate, TimeZone, Utc};
 
 /* ---------------- Public: expirations + chain ---------------- */
 
@@ -89,11 +90,17 @@ pub async fn option_chain(
             })?
     };
 
-    let map_side =
-        |side: Option<Vec<OptContractNode>>, currency: &Currency| -> Vec<OptionContract> {
-            side.unwrap_or_default()
-                .into_iter()
-                .map(|c| OptionContract {
+    let map_side = |side: Option<Vec<OptContractNode>>,
+                    currency: &Currency|
+     -> Vec<OptionContract> {
+        side.unwrap_or_default()
+            .into_iter()
+            .map(|c| {
+                let exp_ts = c.expiration.unwrap_or(expiration);
+                let exp_dt = i64_to_datetime(exp_ts);
+                let exp_date: NaiveDate = exp_dt.date_naive();
+
+                OptionContract {
                     contract_symbol: c.contract_symbol.unwrap_or_default(),
                     strike: f64_to_money_with_currency(c.strike.unwrap_or(0.0), currency.clone()),
                     price: c
@@ -109,10 +116,16 @@ pub async fn option_chain(
                     open_interest: c.open_interest,
                     implied_volatility: c.implied_volatility,
                     in_the_money: c.in_the_money.unwrap_or(false),
-                    expiration: i64_to_datetime(expiration),
-                })
-                .collect()
-        };
+                    expiration_date: exp_date,
+                    expiration_at: Some(exp_dt),
+                    last_trade_at: c
+                        .last_trade_date
+                        .and_then(|ts| Utc.timestamp_opt(ts, 0).single()),
+                    greeks: None,
+                }
+            })
+            .collect()
+    };
 
     Ok(OptionChain {
         calls: map_side(od.calls, &currency),
@@ -258,6 +271,10 @@ struct OptByDateNode {
 struct OptContractNode {
     #[serde(rename = "contractSymbol")]
     contract_symbol: Option<String>,
+    #[serde(rename = "expiration")]
+    expiration: Option<i64>,
+    #[serde(rename = "lastTradeDate")]
+    last_trade_date: Option<i64>,
     strike: Option<f64>,
     #[serde(rename = "lastPrice")]
     last_price: Option<f64>,

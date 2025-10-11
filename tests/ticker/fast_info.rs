@@ -39,7 +39,12 @@ async fn fast_info_uses_previous_close_when_price_missing() {
     mock.assert();
 
     assert_eq!(fi.symbol, "AAPL");
-    assert!((fi.last_price - 199.5).abs() < 1e-9);
-    assert_eq!(fi.previous_close, Some(199.5));
-    assert_eq!(fi.exchange.as_deref(), Some("NASDAQ"));
+    assert!(
+        (yfinance_rs::core::conversions::money_to_f64(&fi.previous_close.unwrap()) - 199.5).abs()
+            < 1e-9
+    );
+    assert_eq!(
+        fi.exchange.map(|e| e.to_string()).as_deref(),
+        Some("NASDAQ")
+    );
 }

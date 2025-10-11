@@ -47,12 +47,12 @@ async fn missing_set_cookie_header_is_an_error() {
         other => panic!("expected Auth error, got {other:?}"),
     }
     assert_eq!(
-        crumb.hits(),
+        crumb.calls(),
         0,
         "crumb endpoint should not be called if cookie fails"
     );
     assert_eq!(
-        api.hits(),
+        api.calls(),
         0,
         "API should not be called if credentials fail"
     );

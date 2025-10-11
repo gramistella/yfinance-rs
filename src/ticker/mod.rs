@@ -4,7 +4,8 @@ mod model;
 mod options;
 mod quote;
 
-pub use model::{FastInfo, Info, OptionChain, OptionContract};
+pub use model::{Info, OptionChain, OptionContract};
+pub use paft::aggregates::FastInfo;
 
 use crate::core::{Action, Candle, HistoryMeta, Interval, Quote, Range};
 use crate::fundamentals::{Calendar, ShareCount};
@@ -16,10 +17,7 @@ use crate::news::NewsArticle;
 use crate::{
     EsgBuilder,
     core::client::RetryConfig,
-    core::conversions::{
-        datetime_to_i64, exchange_to_string, market_state_to_string, money_to_currency_str,
-        money_to_f64,
-    },
+    core::conversions::{datetime_to_i64, money_to_currency_str, money_to_f64},
     core::{CacheMode, YfClient, YfError},
     holders::HoldersBuilder,
     news::NewsBuilder,
@@ -149,27 +147,19 @@ impl Ticker {
     /// or if the last/previous price is not available in the quote.
     pub async fn fast_info(&self) -> Result<FastInfo, YfError> {
         let q = self.quote().await?;
-        let last = q
-            .price
-            .as_ref()
-            .map(money_to_f64)
-            .or_else(|| q.previous_close.as_ref().map(money_to_f64))
-            .ok_or_else(|| YfError::MissingData("quote missing last/previous price".into()))?;
-
-        // Extract currency from the price or previous_close Money objects
-        let currency = q
-            .price
-            .as_ref()
-            .and_then(money_to_currency_str)
-            .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str));
-
         Ok(FastInfo {
             symbol: q.symbol,
-            last_price: last,
-            previous_close: q.previous_close.as_ref().map(money_to_f64),
-            currency,
-            exchange: exchange_to_string(q.exchange),
-            market_state: market_state_to_string(q.market_state),
+            name: q.shortname.clone(),
+            exchange: q.exchange,
+            market_state: q.market_state,
+            currency: q
+                .price
+                .as_ref()
+                .and_then(money_to_currency_str)
+                .or_else(|| q.previous_close.as_ref().and_then(money_to_currency_str))
+                .and_then(|code| code.parse().ok()),
+            last: q.price,
+            previous_close: q.previous_close,
         })
     }
 

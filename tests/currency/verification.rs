@@ -8,10 +8,21 @@ async fn check_fast_info(ticker: &Ticker, expected_currency: &str) {
     match ticker.fast_info().await {
         Ok(fi) => {
             println!("    Symbol: {}", fi.symbol);
-            println!("    Last Price: {}", fi.last_price);
-            println!("    Currency: {:?}", fi.currency);
-            println!("    Exchange: {:?}", fi.exchange);
-            let currency_correct = fi.currency.as_deref() == Some(expected_currency);
+            println!("    Last Price: {:?}", fi.last.as_ref().map(money_to_f64));
+            println!(
+                "    Currency: {:?}",
+                fi.currency.as_ref().map(std::string::ToString::to_string)
+            );
+            println!(
+                "    Exchange: {:?}",
+                fi.exchange.as_ref().map(std::string::ToString::to_string)
+            );
+            let currency_correct = fi
+                .currency
+                .as_ref()
+                .map(std::string::ToString::to_string)
+                .as_deref()
+                == Some(expected_currency);
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
@@ -20,7 +31,11 @@ async fn check_fast_info(ticker: &Ticker, expected_currency: &str) {
                 } else {
                     "INCORRECT"
                 },
-                fi.currency.as_deref().unwrap_or("None"),
+                fi.currency
+                    .as_ref()
+                    .map(std::string::ToString::to_string)
+                    .as_deref()
+                    .unwrap_or("None"),
                 expected_currency
             );
         }

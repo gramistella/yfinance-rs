@@ -12,9 +12,8 @@ pub fn assemble_candles(
     keepna: bool,
     cum_split_after: &[f64],
     currency: Option<&str>,
-) -> (Vec<Candle>, Vec<f64>) {
+) -> Vec<Candle> {
     let mut out = Vec::new();
-    let mut raw_close_vec = Vec::new();
 
     for (i, &t) in ts.iter().enumerate() {
         let getter_f64 = |v: &Vec<Option<f64>>| v.get(i).and_then(|x| *x);
@@ -60,9 +59,13 @@ pub fn assemble_candles(
                     high: f64_to_money_with_currency_str(hv, currency),
                     low: f64_to_money_with_currency_str(lv, currency),
                     close: f64_to_money_with_currency_str(cv, currency),
+                    close_unadj: if raw_close_val.is_finite() {
+                        Some(f64_to_money_with_currency_str(raw_close_val, currency))
+                    } else {
+                        None
+                    },
                     volume: volume_adj,
                 });
-                raw_close_vec.push(raw_close_val);
             } else if keepna {
                 out.push(Candle {
                     ts: i64_to_datetime(t),
@@ -70,9 +73,13 @@ pub fn assemble_candles(
                     high: f64_to_money_with_currency_str(high.unwrap_or(f64::NAN), currency),
                     low: f64_to_money_with_currency_str(low.unwrap_or(f64::NAN), currency),
                     close: f64_to_money_with_currency_str(close.unwrap_or(f64::NAN), currency),
+                    close_unadj: if raw_close_val.is_finite() {
+                        Some(f64_to_money_with_currency_str(raw_close_val, currency))
+                    } else {
+                        None
+                    },
                     volume: volume0,
                 });
-                raw_close_vec.push(raw_close_val);
             }
         } else if let (Some(ov), Some(hv), Some(lv), Some(cv)) = (open, high, low, close) {
             out.push(Candle {
@@ -81,9 +88,13 @@ pub fn assemble_candles(
                 high: f64_to_money_with_currency_str(hv, currency),
                 low: f64_to_money_with_currency_str(lv, currency),
                 close: f64_to_money_with_currency_str(cv, currency),
+                close_unadj: if raw_close_val.is_finite() {
+                    Some(f64_to_money_with_currency_str(raw_close_val, currency))
+                } else {
+                    None
+                },
                 volume: volume0,
             });
-            raw_close_vec.push(raw_close_val);
         } else if keepna {
             out.push(Candle {
                 ts: i64_to_datetime(t),
@@ -91,11 +102,15 @@ pub fn assemble_candles(
                 high: f64_to_money_with_currency_str(high.unwrap_or(f64::NAN), currency),
                 low: f64_to_money_with_currency_str(low.unwrap_or(f64::NAN), currency),
                 close: f64_to_money_with_currency_str(close.unwrap_or(f64::NAN), currency),
+                close_unadj: if raw_close_val.is_finite() {
+                    Some(f64_to_money_with_currency_str(raw_close_val, currency))
+                } else {
+                    None
+                },
                 volume: volume0,
             });
-            raw_close_vec.push(raw_close_val);
         }
     }
 
-    (out, raw_close_vec)
+    out
 }

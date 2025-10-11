@@ -98,16 +98,15 @@ impl DownloadBuilder {
         hb
     }
 
-    fn apply_back_adjust(&self, rows: &mut [Candle], unadjusted_close: &mut Option<Vec<Money>>) {
-        if self.back_adjust
-            && let Some(raw) = unadjusted_close.take()
-        {
-            for (i, c) in rows.iter_mut().enumerate() {
-                if let Some(rc) = raw.get(i)
-                    && rc.amount().to_f64().is_some_and(f64::is_finite)
-                {
-                    c.close = rc.clone();
-                }
+    fn apply_back_adjust(&self, rows: &mut [Candle]) {
+        if !self.back_adjust {
+            return;
+        }
+        for c in rows.iter_mut() {
+            if let Some(rc) = c.close_unadj.as_ref()
+                && rc.amount().to_f64().is_some_and(f64::is_finite)
+            {
+                c.close = rc.clone();
             }
         }
     }
@@ -176,10 +175,10 @@ impl DownloadBuilder {
         let mut actions: std::collections::HashMap<String, Vec<Action>> =
             std::collections::HashMap::new();
 
-        for (sym, mut resp) in joined {
+        for (sym, resp) in joined {
             let mut v = resp.candles;
 
-            self.apply_back_adjust(&mut v, &mut resp.unadjusted_close);
+            self.apply_back_adjust(&mut v);
             self.maybe_repair(&mut v);
             self.apply_rounding_if_enabled(&mut v);
 
