@@ -169,8 +169,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Troubleshooting
 
-Some users [report](https://github.com/gramistella/yfinance-rs/issues/1) encountering "Rate Limited" errors—even on their first use—or errors such as "HTTP error: error sending request for url (https://fc.yahoo.com/consent)". In some cases, a workaround is to manually visit the mentioned URL in a web browser on the same machine before attempting to use yfinance-rs again. This may help establish the required consent or session for Yahoo Finance’s endpoints
+**Possible network or consent issues**
 
+Some users [have reported](https://github.com/gramistella/yfinance-rs/issues/1) encountering errors on first use, such as:
+
+- `Rate limited at ...`  
+- `HTTP error: error sending request for url (https://fc.yahoo.com/consent)`
+
+These are typically **environmental** (network or regional) issues with Yahoo’s public API.  
+In some regions, Yahoo may require a one-time consent or session initialization.
+
+**Workaround:**  
+Open [`https://fc.yahoo.com/consent`](https://fc.yahoo.com/consent) in a web browser **from the same network** before running your code again.  
+This usually resolves the issue for that IP/network.
 
 ## Advanced Examples
 
