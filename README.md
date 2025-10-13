@@ -167,6 +167,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### Troubleshooting
+
+Some users [report](https://github.com/gramistella/yfinance-rs/issues/1) encountering "Rate Limited" errors—even on their first use—or errors such as "HTTP error: error sending request for url (https://fc.yahoo.com/consent)". In some cases, a workaround is to manually visit the mentioned URL in a web browser on the same machine before attempting to use yfinance-rs again. This may help establish the required consent or session for Yahoo Finance’s endpoints
+
+
 ## Advanced Examples
 
 ### Polars DataFrames (to_dataframe)
