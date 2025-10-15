@@ -95,6 +95,6 @@ async fn offline_info_uses_recorded_fixtures() {
     esg_mock.assert();
 
     // Verify data aggregation with more robust checks. Run recorders if these fail.
-    assert_eq!(info.symbol, "MSFT");
+    assert_eq!(info.symbol.as_str(), "MSFT");
     assert!(info.last.is_some(), "Price missing from quote fixture.");
 }

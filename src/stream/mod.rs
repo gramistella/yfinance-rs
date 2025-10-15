@@ -251,6 +251,7 @@ struct WsSubscribe<'a> {
     subscribe: &'a [String],
 }
 
+#[allow(clippy::too_many_lines)]
 async fn run_websocket_stream(
     client: &YfClient,
     symbols: Vec<String>,
@@ -329,8 +330,14 @@ async fn run_websocket_stream(
                             match wire_ws::PricingData::decode(&*bin) {
                                 Ok(ticker) => {
                                     let currency_str = Some(ticker.currency.as_str());
+                                    let Ok(symbol) = paft::domain::Symbol::new(&ticker.id) else {
+                                        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                                            eprintln!("YF_DEBUG(stream): skipping ws update with invalid symbol: {}", ticker.id);
+                                        }
+                                        continue;
+                                    };
                                     let update = QuoteUpdate {
-                                        symbol: ticker.id,
+                                        symbol,
                                         price: Some(f64_to_money_with_currency_str(f64::from(ticker.price), currency_str)),
                                         previous_close: Some(f64_to_money_with_currency_str(f64::from(ticker.previous_close), currency_str)),
                                         ts: i64_to_datetime(ticker.time),
@@ -389,8 +396,10 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
         .map_err(YfError::Base64)?;
     let ticker = wire_ws::PricingData::decode(&*decoded)?;
     let currency_str = Some(ticker.currency.as_str());
+    let symbol = paft::domain::Symbol::new(&ticker.id)
+        .map_err(|_| YfError::InvalidParams(format!("ws symbol invalid: {}", ticker.id)))?;
     Ok(QuoteUpdate {
-        symbol: ticker.id,
+        symbol,
         price: Some(f64_to_money_with_currency_str(
             f64::from(ticker.price),
             currency_str,
@@ -436,8 +445,10 @@ async fn run_polling_stream(
                                 }
                             }
                             let currency_str = q.currency.as_deref();
+                            let sym_s = q.symbol.clone().unwrap_or_default();
+                            let Ok(symbol) = paft::domain::Symbol::new(&sym_s) else { continue };
                             if tx.send(QuoteUpdate {
-                                symbol: q.symbol.unwrap_or_default(),
+                                symbol,
                                 price: lp.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 previous_close: q.regular_market_previous_close.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 ts,

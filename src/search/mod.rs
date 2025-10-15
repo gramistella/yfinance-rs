@@ -13,14 +13,19 @@ fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
     let quotes = env.quotes.unwrap_or_default();
     let results = quotes
         .into_iter()
-        .map(|q| SearchResult {
-            symbol: q.symbol.unwrap_or_default(),
-            name: q.shortname.or(q.longname),
-            exchange: q.exchange.and_then(|s| s.parse::<Exchange>().ok()),
-            kind: q
-                .quote_type
-                .and_then(|s| s.parse::<AssetKind>().ok())
-                .unwrap_or_default(),
+        .filter_map(|q| {
+            let sym = q.symbol.unwrap_or_default();
+            paft::domain::Symbol::try_from(sym)
+                .ok()
+                .map(|symbol| SearchResult {
+                    symbol,
+                    name: q.shortname.or(q.longname),
+                    exchange: q.exchange.and_then(|s| s.parse::<Exchange>().ok()),
+                    kind: q
+                        .quote_type
+                        .and_then(|s| s.parse::<AssetKind>().ok())
+                        .unwrap_or_default(),
+                })
         })
         .collect();
 

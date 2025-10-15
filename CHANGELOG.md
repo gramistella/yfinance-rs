@@ -6,20 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.5.0] Unreleased
 
+### Breaking
+
+- Adopted `paft` 0.5.0 identity and money types across search, streaming, and ticker info. `Quote.symbol`, `SearchResult.symbol`, `OptionContract.contract_symbol`, and `QuoteUpdate.symbol` now use `paft::domain::Symbol`; values are uppercased and validated during construction, and invalid search results are dropped.
+- `Ticker::Info` now re-exports `paft::aggregates::Info`. The previous struct with raw strings and floats has been removed, and fields such as `sector`, `industry`, analyst targets, recommendation metrics, and ESG scores are no longer populated on this convenience type. Monetary and exchange data now use `Money`, `Currency`, `Exchange`, and `MarketState`.
+- Real-time streaming emits `paft::market::quote::QuoteUpdate`. `last_price` is renamed to `price` and now carries `Money` (with embedded currency metadata), the standalone `currency` string is gone, and `ts` is now a `DateTime<Utc>`. Update stream consumers accordingly.
+- Search now returns `paft::market::responses::search::SearchResponse` with a `results` list. Each item exposes `Symbol`, `AssetKind`, and `Exchange` enums. Replace usages of `resp.quotes` and `quote.longname/shortname` with `resp.results` and `result.name`.
+
 ### Changed
 
-- Bumped `paft` to 0.5.0
+- Bumped `paft` to 0.5.0 via the workspace checkout and aligned with the new symbol validation.
+- Updated dependencies and fixtures: `reqwest 0.12.24`, `tokio 1.48`.
 
-- `ticker::Info` now re-exports `paft::aggregates::Info` and uses strongly-typed `Money`, `Currency`, `Exchange`, and `Isin`. The previous provider-specific fields like `regular_market_price: Option<f64>` and stringly-typed `currency`, `exchange`, and `market_state` have been replaced with paft types. This is a source-breaking change for consumers accessing those fields.
-- Real-time streaming updates now use `paft::market::quote::QuoteUpdate` (with `Money` and `DateTime<Utc>`). The old local `QuoteUpdate` with primitive fields is removed.
-- Search now returns `paft::market::responses::search::SearchResponse` with `results: Vec<SearchResult>`. Local `SearchResponse`/`SearchQuote` structs are removed. Update usages from `resp.quotes` to `resp.results` and from `longname/shortname` to `name`.
+### Documentation
+
+- Added troubleshooting guidance for consent-related errors in `README.md` (thanks to @hrishim for the contribution!)
+- Expanded `CONTRIBUTING.md` with `just` helpers and clarified repository setup.
+
+### Internal
+
+- Added `.github/FUNDING.yml` to advertise GitHub Sponsors support.
+- Removed stray `.DS_Store` files and regenerated fixtures for the new models.
 
 ### Migration notes
 
-- Replace `info.regular_market_price` with `info.last.as_ref().map(money_to_f64)`.
-- Replace `info.currency` (String) with `info.currency` (Currency) and use `to_string()` when needed.
-- Replace stream consumer code from `update.last_price` to `update.price` and `update.ts` is now a `DateTime<Utc>`.
-- Replace search usages: `resp.quotes` → `resp.results`, `quote.longname/shortname` → `quote.name`, `quote.quote_type` → `quote.kind`, `quote.exchange` is now an `Exchange`.
+- Symbols are now uppercase-validated `paft::domain::Symbol`. Use `.as_str()` for string comparisons or construct values with `Symbol::new("AAPL")` (handle the `Result` when user input is dynamic).
+- Stream updates now expose `update.price` (`Money`) and `update.ts: DateTime<Utc>`. Replace direct `last_price`/`ts` usage with the new typed fields and derive primitive values as needed.
+- Search responses provide `resp.results` instead of `resp.quotes`. Access display data via `result.name`, `result.kind`, and `result.exchange`.
+- The convenience info snapshot no longer embeds fundamentals, analyst, or ESG data. Fetch those via `profile::load_profile`, `analysis::AnalysisBuilder`, and `esg::EsgBuilder` if you still need them.
 
 ---
 

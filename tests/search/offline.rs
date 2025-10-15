@@ -37,5 +37,5 @@ async fn offline_search_uses_recorded_fixture() {
     mock.assert();
     // At least one result expected (record with YF_RECORD=1 first)
     assert!(!resp.results.is_empty(), "record with YF_RECORD=1 first");
-    assert!(resp.results.iter().any(|q| q.symbol == "AAPL"));
+    assert!(resp.results.iter().any(|q| q.symbol.as_str() == "AAPL"));
 }

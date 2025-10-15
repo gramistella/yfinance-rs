@@ -16,7 +16,7 @@ async fn offline_quote_uses_recorded_fixture() {
     let q = t.quote().await.unwrap();
     mock.assert();
 
-    assert_eq!(q.symbol, sym);
+    assert_eq!(q.symbol.as_str(), sym);
     // Don’t assert exact prices — fixtures will be from your latest recording
     assert!(q.price.is_some() || q.previous_close.is_some());
 }

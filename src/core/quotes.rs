@@ -1,5 +1,6 @@
 // src/core/quotes.rs
 use serde::Deserialize;
+use std::str::FromStr;
 use url::Url;
 
 use crate::{
@@ -163,7 +164,8 @@ pub async fn fetch_v7_quotes(
 impl From<V7QuoteNode> for Quote {
     fn from(n: V7QuoteNode) -> Self {
         Self {
-            symbol: n.symbol.unwrap_or_default(),
+            symbol: paft::domain::Symbol::from_str(&n.symbol.unwrap_or_default())
+                .expect("v7 quote node had invalid/missing symbol"),
             shortname: n.short_name,
             price: n
                 .regular_market_price

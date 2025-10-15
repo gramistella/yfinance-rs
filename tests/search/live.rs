@@ -17,7 +17,7 @@ async fn live_search_smoke_and_or_record() {
     if !crate::common::is_recording() {
         assert!(!resp.results.is_empty());
         // Heuristic: expect to see AAPL when searching "apple"
-        let has_aapl = resp.results.iter().any(|q| q.symbol == "AAPL");
+        let has_aapl = resp.results.iter().any(|q| q.symbol.as_str() == "AAPL");
         assert!(has_aapl, "expected AAPL among search results for 'apple'");
     }
 }

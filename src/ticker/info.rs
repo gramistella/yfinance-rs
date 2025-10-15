@@ -73,7 +73,10 @@ fn assemble_info(
     isin: Option<paft::domain::Isin>,
 ) -> Info {
     Info {
-        symbol: quote.map_or_else(|| symbol.to_string(), |q| q.symbol.clone()),
+        symbol: quote.map_or_else(
+            || paft::domain::Symbol::new(symbol).expect("invalid symbol"),
+            |q| q.symbol.clone(),
+        ),
         name: quote.and_then(|q| q.shortname.clone()),
         isin,
         exchange: quote.and_then(|q| q.exchange.clone()),

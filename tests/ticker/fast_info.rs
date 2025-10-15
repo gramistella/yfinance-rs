@@ -38,7 +38,7 @@ async fn fast_info_uses_previous_close_when_price_missing() {
     let fi = t.fast_info().await.unwrap();
     mock.assert();
 
-    assert_eq!(fi.symbol, "AAPL");
+    assert_eq!(fi.symbol.as_str(), "AAPL");
     assert!(
         (yfinance_rs::core::conversions::money_to_f64(&fi.previous_close.unwrap()) - 199.5).abs()
             < 1e-9

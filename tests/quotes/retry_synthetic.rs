@@ -68,8 +68,8 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
     ok.assert();
 
     assert_eq!(quotes.len(), 2);
-    let aapl = quotes.iter().find(|q| q.symbol == "AAPL").unwrap();
-    let msft = quotes.iter().find(|q| q.symbol == "MSFT").unwrap();
+    let aapl = quotes.iter().find(|q| q.symbol.as_str() == "AAPL").unwrap();
+    let msft = quotes.iter().find(|q| q.symbol.as_str() == "MSFT").unwrap();
     assert_eq!(
         aapl.price,
         Some(f64_to_money_with_currency(

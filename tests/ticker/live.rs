@@ -12,7 +12,7 @@ async fn live_ticker_quote_for_record() {
         let q = t.quote().await.unwrap();
 
         if !crate::common::is_recording() {
-            assert_eq!(q.symbol, sym);
+            assert_eq!(q.symbol.as_str(), sym);
             assert!(q.price.is_some() || q.previous_close.is_some());
         }
     }

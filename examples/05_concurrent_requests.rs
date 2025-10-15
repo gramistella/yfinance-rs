@@ -81,7 +81,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("--- Searching for SPY and getting its ticker ---");
     let search_results = SearchBuilder::new(&client, "SPY").fetch().await?;
-    if let Some(sp500_quote) = search_results.results.iter().find(|q| q.symbol == "SPY") {
+    if let Some(sp500_quote) = search_results
+        .results
+        .iter()
+        .find(|q| q.symbol.as_str() == "SPY")
+    {
         println!(
             "Found: {} ({})",
             sp500_quote.name.as_deref().unwrap_or("N/A"),

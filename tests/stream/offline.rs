@@ -37,7 +37,7 @@ async fn stream_websocket_fallback_to_polling_offline() {
         .expect("timed out waiting for cached stream update")
         .expect("stream closed without emitting an update");
 
-    assert_eq!(update.symbol, "AAPL");
+    assert_eq!(update.symbol.as_str(), "AAPL");
     assert!(
         update
             .price

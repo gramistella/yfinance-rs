@@ -95,13 +95,18 @@ pub async fn option_chain(
      -> Vec<OptionContract> {
         side.unwrap_or_default()
             .into_iter()
-            .map(|c| {
+            .filter_map(|c| {
+                let sym = c.contract_symbol.as_deref().unwrap_or("");
+                let Ok(contract_symbol) = paft::domain::Symbol::new(sym) else {
+                    return None;
+                };
+
                 let exp_ts = c.expiration.unwrap_or(expiration);
                 let exp_dt = i64_to_datetime(exp_ts);
                 let exp_date: NaiveDate = exp_dt.date_naive();
 
-                OptionContract {
-                    contract_symbol: c.contract_symbol.unwrap_or_default(),
+                Some(OptionContract {
+                    contract_symbol,
                     strike: f64_to_money_with_currency(c.strike.unwrap_or(0.0), currency.clone()),
                     price: c
                         .last_price
@@ -122,7 +127,7 @@ pub async fn option_chain(
                         .last_trade_date
                         .and_then(|ts| Utc.timestamp_opt(ts, 0).single()),
                     greeks: None,
-                }
+                })
             })
             .collect()
     };
