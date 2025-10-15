@@ -26,5 +26,5 @@ async fn live_stream_smoke() {
 
     // Updated assertion for the new symbol
     assert_eq!(update.symbol, "BTC-USD");
-    assert!(update.last_price.unwrap_or(0.0) > 0.0);
+    assert!(update.price.as_ref().map_or(0.0, yfinance_rs::core::conversions::money_to_f64) > 0.0);
 }

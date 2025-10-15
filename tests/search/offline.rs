@@ -35,16 +35,7 @@ async fn offline_search_uses_recorded_fixture() {
         .unwrap();
 
     mock.assert();
-    // Count should reflect the number of quotes in the fixture
-    assert_eq!(
-        resp.count,
-        Some(u32::try_from(resp.quotes.len()).unwrap_or(u32::MAX)),
-        "record with YF_RECORD=1 first"
-    );
-    assert!(!resp.quotes.is_empty(), "record with YF_RECORD=1 first");
-    assert!(
-        resp.quotes
-            .iter()
-            .any(|q| q.symbol == "AAPL" || q.shortname.as_deref() == Some("Apple Inc."))
-    );
+    // At least one result expected (record with YF_RECORD=1 first)
+    assert!(!resp.results.is_empty(), "record with YF_RECORD=1 first");
+    assert!(resp.results.iter().any(|q| q.symbol == "AAPL"));
 }

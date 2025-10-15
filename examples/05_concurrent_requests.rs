@@ -15,11 +15,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             async move {
                 let info = ticker.info().await?;
                 println!(
-                    "Symbol: {}, Name: {}, Price: {:.2}, Sector: {:?}",
+                    "Symbol: {}, Name: {}, Price: {:.2}",
                     info.symbol,
-                    info.short_name.unwrap_or_default(),
-                    info.regular_market_price.unwrap_or(0.0),
-                    info.sector
+                    info.name.unwrap_or_default(),
+                    info.last.as_ref().map_or(0.0, money_to_f64)
                 );
                 Ok::<_, yfinance_rs::YfError>(())
             }
@@ -82,10 +81,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("--- Searching for SPY and getting its ticker ---");
     let search_results = SearchBuilder::new(&client, "SPY").fetch().await?;
-    if let Some(sp500_quote) = search_results.quotes.iter().find(|q| q.symbol == "SPY") {
+    if let Some(sp500_quote) = search_results.results.iter().find(|q| q.symbol == "SPY") {
         println!(
             "Found: {} ({})",
-            sp500_quote.longname.as_deref().unwrap_or("N/A"),
+            sp500_quote.name.as_deref().unwrap_or("N/A"),
             sp500_quote.symbol
         );
     }

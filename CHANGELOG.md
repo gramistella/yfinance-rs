@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] Unreleased
+
+### Changed
+
+- Bumped `paft` to 0.5.0
+
+- `ticker::Info` now re-exports `paft::aggregates::Info` and uses strongly-typed `Money`, `Currency`, `Exchange`, and `Isin`. The previous provider-specific fields like `regular_market_price: Option<f64>` and stringly-typed `currency`, `exchange`, and `market_state` have been replaced with paft types. This is a source-breaking change for consumers accessing those fields.
+- Real-time streaming updates now use `paft::market::quote::QuoteUpdate` (with `Money` and `DateTime<Utc>`). The old local `QuoteUpdate` with primitive fields is removed.
+- Search now returns `paft::market::responses::search::SearchResponse` with `results: Vec<SearchResult>`. Local `SearchResponse`/`SearchQuote` structs are removed. Update usages from `resp.quotes` to `resp.results` and from `longname/shortname` to `name`.
+
+### Migration notes
+
+- Replace `info.regular_market_price` with `info.last.as_ref().map(money_to_f64)`.
+- Replace `info.currency` (String) with `info.currency` (Currency) and use `to_string()` when needed.
+- Replace stream consumer code from `update.last_price` to `update.price` and `update.ts` is now a `DateTime<Utc>`.
+- Replace search usages: `resp.quotes` → `resp.results`, `quote.longname/shortname` → `quote.name`, `quote.quote_type` → `quote.kind`, `quote.exchange` is now an `Exchange`.
+
+---
+
 ## [0.4.0] - 2025-10-12
 
 ### Added

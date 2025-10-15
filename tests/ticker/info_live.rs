@@ -20,22 +20,6 @@ async fn live_info_smoke_and_or_record() {
     if !crate::common::is_recording() {
         // Basic sanity checks for live mode
         assert_eq!(info.symbol, "MSFT");
-        assert!(
-            info.regular_market_price.is_some(),
-            "Expected a market price for MSFT"
-        );
-        assert_eq!(
-            info.sector.as_deref(),
-            Some("Technology"),
-            "Expected sector for MSFT"
-        );
-        assert!(
-            info.total_esg_score.is_some(),
-            "Expected ESG score for MSFT"
-        );
-        assert!(
-            info.target_mean_price.is_some(),
-            "Expected price target for MSFT"
-        );
+        assert!(info.last.is_some(), "Expected a market price for MSFT");
     }
 }

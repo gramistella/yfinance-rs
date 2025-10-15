@@ -1,5 +1,6 @@
+use paft::domain::{AssetKind, Exchange};
+use paft::market::responses::search::{SearchResponse, SearchResult};
 use serde::Deserialize;
-use serde::Serialize;
 use url::Url;
 
 use crate::core::client::CacheMode;
@@ -9,23 +10,21 @@ use crate::{YfClient, YfError};
 fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
     let env: V1SearchEnvelope = serde_json::from_str(body).map_err(YfError::Json)?;
 
-    let count = env.count.and_then(|c| u32::try_from(c).ok());
     let quotes = env.quotes.unwrap_or_default();
-
-    let out = quotes
+    let results = quotes
         .into_iter()
-        .map(|q| SearchQuote {
+        .map(|q| SearchResult {
             symbol: q.symbol.unwrap_or_default(),
-            shortname: q.shortname,
-            longname: q.longname,
-            quote_type: q.quote_type,
-            exchange: q.exchange,
-            exch_disp: q.exch_disp,
-            type_disp: q.type_disp,
+            name: q.shortname.or(q.longname),
+            exchange: q.exchange.and_then(|s| s.parse::<Exchange>().ok()),
+            kind: q
+                .quote_type
+                .and_then(|s| s.parse::<AssetKind>().ok())
+                .unwrap_or_default(),
         })
         .collect();
 
-    Ok(SearchResponse { count, quotes: out })
+    Ok(SearchResponse { results })
 }
 
 /* ---------------- Public API ---------------- */
@@ -274,34 +273,7 @@ impl SearchBuilder {
 }
 
 /* ---------------- Types returned by this module ---------------- */
-
-/// The response from a search query.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct SearchResponse {
-    /// The total number of quote results found.
-    pub count: Option<u32>,
-    /// A list of quote results matching the query.
-    pub quotes: Vec<SearchQuote>,
-}
-
-/// A quote result from a search query.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct SearchQuote {
-    /// The ticker symbol.
-    pub symbol: String,
-    /// The short name of the company or asset.
-    pub shortname: Option<String>,
-    /// The long name of the company or asset.
-    pub longname: Option<String>,
-    /// The type of the quote (e.g., "EQUITY", "ETF").
-    pub quote_type: Option<String>,
-    /// The exchange the asset is traded on.
-    pub exchange: Option<String>,
-    /// The display name of the exchange.
-    pub exch_disp: Option<String>,
-    /// The display name of the asset type.
-    pub type_disp: Option<String>,
-}
+// Local types removed in favor of paft::market::responses::search::{SearchResponse, SearchResult}
 
 const DEFAULT_BASE_SEARCH_V1: &str = "https://query2.finance.yahoo.com/v1/finance/search";
 
@@ -311,6 +283,7 @@ const DEFAULT_BASE_SEARCH_V1: &str = "https://query2.finance.yahoo.com/v1/financ
 struct V1SearchEnvelope {
     #[allow(dead_code)]
     explains: Option<serde_json::Value>,
+    #[allow(dead_code)]
     count: Option<i64>,
     quotes: Option<Vec<V1SearchQuote>>,
     #[allow(dead_code)]
@@ -334,9 +307,11 @@ struct V1SearchQuote {
     quote_type: Option<String>,
     #[serde(default)]
     exchange: Option<String>,
+    #[allow(dead_code)]
     #[serde(rename = "exchDisp")]
     #[serde(default)]
     exch_disp: Option<String>,
+    #[allow(dead_code)]
     #[serde(rename = "typeDisp")]
     #[serde(default)]
     type_disp: Option<String>,

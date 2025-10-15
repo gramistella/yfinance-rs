@@ -27,14 +27,11 @@ async fn section_info(client: &YfClient) -> Result<(), YfError> {
     let msft = Ticker::new(client, "MSFT");
     let info = msft.info().await?;
     println!("--- Ticker Info for {} ---", info.symbol);
-    println!("Name: {}", info.short_name.unwrap_or_default());
-    println!("Industry: {}", info.industry.unwrap_or_default());
-    println!("Website: {}", info.website.unwrap_or_default());
+    println!("Name: {}", info.name.unwrap_or_default());
     println!(
-        "Mean Analyst Target: ${:.2}",
-        info.target_mean_price.unwrap_or_default()
+        "Last Price: ${:.2}",
+        info.last.as_ref().map(money_to_f64).unwrap_or_default()
     );
-    println!("ESG Score: {:.2}", info.total_esg_score.unwrap_or_default());
     println!();
     Ok(())
 }
@@ -134,11 +131,10 @@ async fn section_stream(client: &YfClient) -> Result<(), YfError> {
         let mut count = 0;
         while let Some(update) = receiver.recv().await {
             println!(
-                "[{}] {} @ {:.2} (ts={})",
+                "[{}] {} @ {:.2}",
                 update.ts,
                 update.symbol,
-                update.last_price.unwrap_or_default(),
-                update.ts
+                update.price.as_ref().map(money_to_f64).unwrap_or_default()
             );
             count += 1;
             if count >= 10 {

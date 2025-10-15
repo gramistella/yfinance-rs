@@ -36,14 +36,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .fetch()
         .await?;
     println!(
-        "  Found {} quotes for 'Microsoft' in US region.",
-        search_results.quotes.len()
+        "  Found {} results for 'Microsoft' in US region.",
+        search_results.results.len()
     );
-    for quote in search_results.quotes {
+    for quote in search_results.results {
         println!(
             "    - {} ({})",
             quote.symbol,
-            quote.longname.unwrap_or_default()
+            quote.name.unwrap_or_default()
         );
     }
     println!();

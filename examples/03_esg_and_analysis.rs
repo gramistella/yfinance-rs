@@ -107,13 +107,13 @@ async fn section_search(client: &yfinance_rs::YfClient) -> Result<(), Box<dyn st
     println!("--- Searching for '{query}' ---");
     match search_results {
         Ok(results) => {
-            println!("Found {} results:", results.quotes.len());
-            for quote in results.quotes.iter().take(5) {
+            println!("Found {} results:", results.results.len());
+            for quote in results.results.iter().take(5) {
                 println!(
                     "  - {} ({}) : {}",
                     quote.symbol,
-                    quote.quote_type.as_deref().unwrap_or("N/A"),
-                    quote.longname.as_deref().unwrap_or("N/A")
+                    quote.kind,
+                    quote.name.as_deref().unwrap_or("N/A")
                 );
             }
         }

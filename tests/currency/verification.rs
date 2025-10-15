@@ -48,10 +48,26 @@ async fn check_comprehensive_info(ticker: &Ticker, expected_currency: &str) {
     match ticker.info().await {
         Ok(info) => {
             println!("    Symbol: {}", info.symbol);
-            println!("    Regular Market Price: {:?}", info.regular_market_price);
-            println!("    Currency: {:?}", info.currency);
-            println!("    Exchange: {:?}", info.exchange);
-            let currency_correct = info.currency.as_deref() == Some(expected_currency);
+            println!(
+                "    Last Price: {:?}",
+                info.last
+                    .as_ref()
+                    .map(yfinance_rs::core::conversions::money_to_f64)
+            );
+            println!(
+                "    Currency: {:?}",
+                info.currency.as_ref().map(std::string::ToString::to_string)
+            );
+            println!(
+                "    Exchange: {:?}",
+                info.exchange.as_ref().map(std::string::ToString::to_string)
+            );
+            let currency_correct = info
+                .currency
+                .as_ref()
+                .map(std::string::ToString::to_string)
+                .as_deref()
+                == Some(expected_currency);
             println!(
                 "    {} Currency {}: {} (expected {})",
                 if currency_correct { "✅" } else { "❌" },
@@ -60,7 +76,11 @@ async fn check_comprehensive_info(ticker: &Ticker, expected_currency: &str) {
                 } else {
                     "INCORRECT"
                 },
-                info.currency.as_deref().unwrap_or("None"),
+                info.currency
+                    .as_ref()
+                    .map(std::string::ToString::to_string)
+                    .as_deref()
+                    .unwrap_or("None"),
                 expected_currency
             );
         }

@@ -1,4 +1,5 @@
 use base64::{Engine as _, engine::general_purpose};
+use chrono::{DateTime, Utc};
 use futures_util::{SinkExt, StreamExt};
 use prost::Message;
 use serde::Serialize;
@@ -19,28 +20,16 @@ use tokio_tungstenite::{
 use crate::{
     YfClient, YfError,
     core::client::{CacheMode, RetryConfig},
+    core::conversions::{f64_to_money_with_currency_str, i64_to_datetime},
 };
+use paft::market::quote::QuoteUpdate;
 
 mod wire_ws {
     include!(concat!(env!("OUT_DIR"), "/yaticker.rs"));
 }
 
-/// A real-time update for a financial instrument, typically received via a stream.
-#[derive(Debug, Clone, PartialEq)]
-pub struct QuoteUpdate {
-    /// The ticker symbol for the instrument.
-    pub symbol: String,
-    /// The last traded price.
-    pub last_price: Option<f64>,
-    /// The previous day's closing price.
-    ///
-    /// Note: this is typically `None` when using WebSocket streaming.
-    pub previous_close: Option<f64>,
-    /// The currency of the instrument.
-    pub currency: Option<String>,
-    /// The timestamp of the update, as a Unix epoch timestamp.
-    pub ts: i64,
-}
+// Use paft's QuoteUpdate which carries Money and DateTime<Utc>
+// pub use paft::market::quote::QuoteUpdate; (imported above)
 
 /// Configuration for a polling-based quote stream.
 #[derive(Debug, Clone)]
@@ -339,12 +328,12 @@ async fn run_websocket_stream(
                         if !handled {
                             match wire_ws::PricingData::decode(&*bin) {
                                 Ok(ticker) => {
+                                    let currency_str = Some(ticker.currency.as_str());
                                     let update = QuoteUpdate {
                                         symbol: ticker.id,
-                                        last_price: Some(f64::from(ticker.price)),
-                                        previous_close: Some(f64::from(ticker.previous_close)),
-                                        currency: Some(ticker.currency),
-                                        ts: ticker.time,
+                                        price: Some(f64_to_money_with_currency_str(f64::from(ticker.price), currency_str)),
+                                        previous_close: Some(f64_to_money_with_currency_str(f64::from(ticker.previous_close), currency_str)),
+                                        ts: i64_to_datetime(ticker.time),
                                     };
                                     if tx.send(update).await.is_err() {
                                         break; // Receiver was dropped
@@ -399,12 +388,18 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
         .decode(b64_cow.as_ref())
         .map_err(YfError::Base64)?;
     let ticker = wire_ws::PricingData::decode(&*decoded)?;
+    let currency_str = Some(ticker.currency.as_str());
     Ok(QuoteUpdate {
         symbol: ticker.id,
-        last_price: Some(f64::from(ticker.price)),
-        previous_close: Some(f64::from(ticker.previous_close)),
-        currency: Some(ticker.currency),
-        ts: ticker.time,
+        price: Some(f64_to_money_with_currency_str(
+            f64::from(ticker.price),
+            currency_str,
+        )),
+        previous_close: Some(f64_to_money_with_currency_str(
+            f64::from(ticker.previous_close),
+            currency_str,
+        )),
+        ts: i64_to_datetime(ticker.time),
     })
 }
 
@@ -428,7 +423,7 @@ async fn run_polling_stream(
         tokio::select! {
             _ = ticker.tick() => {
                 if tx.is_closed() { break; }
-                let ts = chrono::Utc::now().timestamp();
+                let ts: DateTime<Utc> = chrono::Utc::now();
                 match crate::core::quotes::fetch_v7_quotes(&client, &symbol_slices, cache_mode, retry_override).await {
                     Ok(quotes) => {
                         for q in quotes {
@@ -440,11 +435,11 @@ async fn run_polling_stream(
                                     continue;
                                 }
                             }
+                            let currency_str = q.currency.as_deref();
                             if tx.send(QuoteUpdate {
                                 symbol: q.symbol.unwrap_or_default(),
-                                last_price: lp,
-                                previous_close: q.regular_market_previous_close,
-                                currency: q.currency,
+                                price: lp.map(|v| f64_to_money_with_currency_str(v, currency_str)),
+                                previous_close: q.regular_market_previous_close.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 ts,
                             }).await.is_err() {
                                 // Break outer loop if receiver is dropped

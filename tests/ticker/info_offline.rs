@@ -96,21 +96,5 @@ async fn offline_info_uses_recorded_fixtures() {
 
     // Verify data aggregation with more robust checks. Run recorders if these fail.
     assert_eq!(info.symbol, "MSFT");
-    assert!(
-        info.regular_market_price.is_some(),
-        "Price missing from quote fixture."
-    );
-    assert!(
-        info.sector.is_some(),
-        "Sector missing from profile fixture."
-    );
-    // Analysis data can be sparse. Check that at least one of the fields was populated.
-    assert!(
-        info.target_mean_price.is_some() || info.recommendation_key.is_some(),
-        "Analysis data missing from analysis fixtures."
-    );
-    assert!(
-        info.total_esg_score.is_some(),
-        "ESG score missing from esg fixture."
-    );
+    assert!(info.last.is_some(), "Price missing from quote fixture.");
 }

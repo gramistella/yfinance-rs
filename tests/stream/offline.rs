@@ -39,7 +39,11 @@ async fn stream_websocket_fallback_to_polling_offline() {
 
     assert_eq!(update.symbol, "AAPL");
     assert!(
-        update.last_price.unwrap_or(0.0) > 0.0,
+        update
+            .price
+            .as_ref()
+            .map_or(0.0, yfinance_rs::core::conversions::money_to_f64)
+            > 0.0,
         "cached price should be > 0"
     );
 }

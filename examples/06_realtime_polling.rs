@@ -24,7 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "[{}] {} @ {:.2}",
                 update.ts,
                 update.symbol,
-                update.last_price.unwrap_or_default()
+                update
+                    .price
+                    .as_ref()
+                    .map(yfinance_rs::core::conversions::money_to_f64)
+                    .unwrap_or_default()
             );
             count += 1;
         }

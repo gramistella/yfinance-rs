@@ -15,9 +15,9 @@ async fn live_search_smoke_and_or_record() {
     let resp = SearchBuilder::new(&client, query).fetch().await.unwrap();
 
     if !crate::common::is_recording() {
-        assert!(!resp.quotes.is_empty());
+        assert!(!resp.results.is_empty());
         // Heuristic: expect to see AAPL when searching "apple"
-        let has_aapl = resp.quotes.iter().any(|q| q.symbol == "AAPL");
+        let has_aapl = resp.results.iter().any(|q| q.symbol == "AAPL");
         assert!(has_aapl, "expected AAPL among search results for 'apple'");
     }
 }
