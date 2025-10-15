@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Documentation
 
-- Added troubleshooting guidance for consent-related errors in `README.md` (thanks to @hrishim for the contribution!)
+- Added troubleshooting guidance for consent-related errors in `README.md` (thanks to [@hrishim](https://github.com/hrishim) for the contribution!)
 - Expanded `CONTRIBUTING.md` with `just` helpers and clarified repository setup.
 
 ### Internal
