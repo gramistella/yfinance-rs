@@ -122,7 +122,7 @@ pub fn mock_options_v7<'a>(server: &'a MockServer, symbol: &'a str) -> Mock<'a> 
             .path(format!("/v7/finance/options/{symbol}"))
             .is_true(|req| {
                 let group = req.query_params();
-                for k in group.keys() {
+                for (k, _) in group {
                     if k == "date" {
                         return false;
                     }

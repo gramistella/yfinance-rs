@@ -191,7 +191,7 @@ fn mock_base_options_request<'a>(
     server.mock(move |when, then| {
         when.method(httpmock::Method::GET)
             .path(format!("/v7/finance/options/{symbol}"))
-            .is_true(|req| !req.query_params().contains_key("date"));
+            .is_true(|req| !req.query_params().iter().any(|(k, _)| k == "date"));
         then.status(200)
             .header("content-type", "application/json")
             .body(body);
@@ -231,7 +231,7 @@ async fn options_retry_with_crumb_on_403() {
         when.method(GET)
             .path("/v7/finance/options/MSFT")
             .query_param("date", date.to_string())
-            .is_true(|req| !req.query_params().contains_key("crumb"));
+            .is_true(|req| !req.query_params().iter().any(|(k, _)| k == "crumb"));
         then.status(403);
     });
 
