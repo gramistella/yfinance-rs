@@ -99,7 +99,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.5.0"
+yfinance-rs = "0.5.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -107,7 +107,7 @@ To enable DataFrame conversions backed by Polars, turn on the optional `datafram
 
 ```toml
 [dependencies]
-yfinance-rs = { version = "0.5.0", features = ["dataframe"] }
+yfinance-rs = { version = "0.5.1", features = ["dataframe"] }
 polars = "0.51"
 ```
 
