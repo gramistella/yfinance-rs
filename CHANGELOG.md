@@ -6,24 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [0.5.2] - 2025-10-17
+## [0.5.2] - 2025-10-20
 
 ### Added
 
+- Add `test` job in release workflow to run offline tests and lints before publish.
+- Add `create-release` job using `taiki-e/create-gh-release-action` to generate GitHub Releases from `CHANGELOG.md`.
 - Optional `tracing` feature: emits spans and key events across network I/O and major logical boundaries. Instrumented `send_with_retry`, profile fallback, quote summary fetch (including invalid crumb retry), history `fetch_full`, and `Ticker` public APIs (`info`, `quote`, `history`, etc.). Disabled by default; zero overhead when not enabled.
 - Optional `tracing-subscriber` feature (dev/testing): convenience initializer `init_tracing_for_tests()` to set up a basic subscriber in examples/tests. The library itself does not configure a subscriber.
 
-## Changed
+### Changed
 
-- Updated to paft v0.5.2
+- Gate `publish` job on `test` job in release workflow.
+- Use `just lint` and `just test-offline` in workflows for consistency.
+- Switch Rust setup to `dtolnay/rust-toolchain@stable` with `clippy` and `rustfmt` components.
+
+### Dependencies
+
+- Bump `paft` to `v0.5.2`.
+- Bump `actions/checkout` to `v5`.
+- Adopt `Swatinem/rust-cache@v2` for Cargo caching.
+- Install `just` via `taiki-e/install-action@just`.
+- Add `taiki-e/create-gh-release-action@v1.9.1`.
 
 ### Docs
 
 - Readme now includes a "Tracing" section.
 
+### Removed
+
+- Remove manual Cargo caching via `actions/cache@v4` in CI pipelines.
+
 ## [0.5.1] - 2025-10-17
 
-## Changed
+### Changed
 
 - Updated to paft v0.5.1
 - Updated httpmock to v0.8.2
