@@ -50,6 +50,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: checks
     steps:
+      - name: Clean up runner image
+        run: |
+          df -h
+          rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
+
       - name: Checkout code
         uses: actions/checkout@v5
 

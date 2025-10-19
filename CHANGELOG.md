@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add `test` job in release workflow to run offline tests and lints before publish.
 - Add `create-release` job using `taiki-e/create-gh-release-action` to generate GitHub Releases from `CHANGELOG.md`.
+- Clean up GitHub Actions runner image in CI and publish workflows to free disk space and reduce spurious failures.
 - Optional `tracing` feature: emits spans and key events across network I/O and major logical boundaries. Instrumented `send_with_retry`, profile fallback, quote summary fetch (including invalid crumb retry), history `fetch_full`, and `Ticker` public APIs (`info`, `quote`, `history`, etc.). Disabled by default; zero overhead when not enabled.
 - Optional `tracing-subscriber` feature (dev/testing): convenience initializer `init_tracing_for_tests()` to set up a basic subscriber in examples/tests. The library itself does not configure a subscriber.
 
