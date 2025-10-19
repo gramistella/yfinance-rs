@@ -25,6 +25,14 @@ pub struct V10Error {
     pub(crate) description: String,
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(
+        skip(client, cache_mode, retry_override),
+        err,
+        fields(symbol = %symbol, modules = %modules, caller = %caller)
+    )
+)]
 pub async fn fetch(
     client: &YfClient,
     symbol: &str,
@@ -93,9 +101,16 @@ pub async fn fetch(
                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
                     eprintln!("YF_DEBUG: Invalid crumb in {caller}; refreshing and retrying.");
                 }
+                #[cfg(feature = "tracing")]
+                tracing::event!(
+                    tracing::Level::WARN,
+                    "invalid crumb; refreshing and retrying"
+                );
                 client.clear_crumb().await;
                 continue;
             }
+            #[cfg(feature = "tracing")]
+            tracing::event!(tracing::Level::ERROR, description = %error.description, "quoteSummary error");
             return Err(YfError::Api(format!("yahoo error: {}", error.description)));
         }
 

@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.5.2] - 2025-10-17
+
+### Added
+
+- Optional `tracing` feature: emits spans and key events across network I/O and major logical boundaries. Instrumented `send_with_retry`, profile fallback, quote summary fetch (including invalid crumb retry), history `fetch_full`, and `Ticker` public APIs (`info`, `quote`, `history`, etc.). Disabled by default; zero overhead when not enabled.
+- Optional `tracing-subscriber` feature (dev/testing): convenience initializer `init_tracing_for_tests()` to set up a basic subscriber in examples/tests. The library itself does not configure a subscriber.
+
+## Changed
+
+- Updated to paft v0.5.2
+
+### Docs
+
+- Readme now includes a "Tracing" section.
+
 ## [0.5.1] - 2025-10-17
 
 ## Changed

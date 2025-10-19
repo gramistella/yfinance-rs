@@ -18,6 +18,7 @@ mod model;
 pub use model::{Address, Company, Fund, Profile};
 
 /// Helper to contain the API->Scrape fallback logic.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip(client), err, fields(symbol = %symbol)))]
 async fn load_with_fallback(client: &YfClient, symbol: &str) -> Result<Profile, YfError> {
     client.ensure_credentials().await?;
 
@@ -27,6 +28,8 @@ async fn load_with_fallback(client: &YfClient, symbol: &str) -> Result<Profile, 
             if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
                 eprintln!("YF_DEBUG: API call failed ({e}), falling back to scrape.");
             }
+            #[cfg(feature = "tracing")]
+            tracing::event!(tracing::Level::WARN, error = %e, "profile: API failed; falling back to scrape");
             scrape::load_from_scrape(client, symbol).await
         }
     }

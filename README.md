@@ -183,6 +183,12 @@ In some regions, Yahoo may require a one-time consent or session initialization.
 Open [`https://fc.yahoo.com/consent`](https://fc.yahoo.com/consent) in a web browser **from the same network** before running your code again.  
 This usually resolves the issue for that IP/network.
 
+### Tracing (optional)
+
+This crate can emit structured tracing spans and key events when the optional `tracing` feature is enabled. When disabled (default), all instrumentation is compiled out with zero overhead. The library does not configure a subscriber; set one up in your application.
+
+Spans are added at: `Ticker` public APIs (`info`, `quote`, `history`, etc.), HTTP `send_with_retry`, profile fallback, quote summary fetch (including invalid-crumb retry), and full history fetch. Key events include retry/backoff and fallback notifications.
+
 ## Advanced Examples
 
 ### Polars DataFrames (to_dataframe)

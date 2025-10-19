@@ -158,6 +158,21 @@ impl HistoryBuilder {
     ///
     /// Returns a `YfError` if the network request fails, the API returns an error,
     /// or the response cannot be parsed.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(
+            skip(self),
+            err,
+            fields(
+                symbol = %self.symbol,
+                interval = %format!("{:?}", self.interval),
+                range = %self
+                    .range
+                    .as_ref()
+                    .map_or_else(|| "period".into(), |r| format!("{r:?}"))
+            )
+        )
+    )]
     pub async fn fetch_full(self) -> Result<HistoryResponse, YfError> {
         // 1) Fetch and parse the /chart payload into owned blocks
         let fetched = fetch_chart(

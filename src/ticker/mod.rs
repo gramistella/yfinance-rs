@@ -112,6 +112,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the core profile data cannot be fetched.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn info(&self) -> Result<Info, YfError> {
         Box::pin(info::fetch_info(
             &self.client,
@@ -129,6 +130,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn quote(&self) -> Result<Quote, YfError> {
         quote::fetch_quote(
             &self.client,
@@ -202,6 +204,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn history(
         &self,
         range: Option<Range>,
@@ -231,6 +234,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn actions(&self, range: Option<Range>) -> Result<Vec<Action>, YfError> {
         let mut hb = self.history_builder();
         hb = hb.range(range.unwrap_or(Range::Max));
@@ -252,6 +256,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn dividends(&self, range: Option<Range>) -> Result<Vec<(i64, f64)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
@@ -273,6 +278,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn splits(&self, range: Option<Range>) -> Result<Vec<(i64, u32, u32)>, YfError> {
         let acts = self.actions(range).await?;
         Ok(acts
@@ -293,6 +299,7 @@ impl Ticker {
     /// # Errors
     ///
     /// This method will return an error if the request fails or the response cannot be parsed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(self), err, fields(symbol = %self.symbol)))]
     pub async fn get_history_metadata(
         &self,
         range: Option<Range>,

@@ -262,6 +262,23 @@ impl YfClient {
         currency
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(
+            skip(self, req, override_retry),
+            err,
+            fields(
+                url = %{
+                    let b = req
+                        .try_clone()
+                        .expect("cloneable")
+                        .build()
+                        .unwrap();
+                    b.url().clone()
+                }
+            )
+        )
+    )]
     pub(crate) async fn send_with_retry(
         &self,
         mut req: reqwest::RequestBuilder,
@@ -283,7 +300,22 @@ impl YfClient {
                 Ok(resp) => {
                     let code = resp.status().as_u16();
                     if cfg.retry_on_status.contains(&code) && attempt < cfg.max_retries {
-                        sleep_backoff(&cfg.backoff, attempt).await;
+                        #[cfg(feature = "tracing")]
+                        {
+                            let backoff = compute_backoff_duration(&cfg.backoff, attempt);
+                            tracing::event!(
+                                tracing::Level::INFO,
+                                attempt,
+                                backoff_ms = backoff.as_secs_f64() * 1000.0,
+                                status = code,
+                                "retrying after status"
+                            );
+                            tokio::time::sleep(backoff).await;
+                        }
+                        #[cfg(not(feature = "tracing"))]
+                        {
+                            sleep_backoff(&cfg.backoff, attempt).await;
+                        }
                         attempt += 1;
                         continue;
                     }
@@ -294,7 +326,24 @@ impl YfClient {
                         || (cfg.retry_on_connect && e.is_connect());
 
                     if should_retry && attempt < cfg.max_retries {
-                        sleep_backoff(&cfg.backoff, attempt).await;
+                        #[cfg(feature = "tracing")]
+                        {
+                            let backoff = compute_backoff_duration(&cfg.backoff, attempt);
+                            tracing::event!(
+                                tracing::Level::INFO,
+                                attempt,
+                                backoff_ms = backoff.as_secs_f64() * 1000.0,
+                                error = %e,
+                                timeout = e.is_timeout(),
+                                connect = e.is_connect(),
+                                "retrying after error"
+                            );
+                            tokio::time::sleep(backoff).await;
+                        }
+                        #[cfg(not(feature = "tracing"))]
+                        {
+                            sleep_backoff(&cfg.backoff, attempt).await;
+                        }
                         attempt += 1;
                         continue;
                     }
@@ -810,9 +859,16 @@ impl YfClientBuilder {
     }
 }
 
+#[cfg(not(feature = "tracing"))]
 async fn sleep_backoff(b: &Backoff, attempt: u32) {
+    let dur = compute_backoff_duration(b, attempt);
+    tokio::time::sleep(dur).await;
+}
+
+#[inline]
+fn compute_backoff_duration(b: &Backoff, attempt: u32) -> Duration {
     use std::time::Duration;
-    let dur = match *b {
+    match *b {
         Backoff::Fixed(d) => d,
         Backoff::Exponential {
             base,
@@ -826,7 +882,6 @@ async fn sleep_backoff(b: &Backoff, attempt: u32) {
                 d = max;
             }
             if jitter {
-                // simple +/- 50% jitter without extra deps
                 let nanos = d.as_nanos();
                 let j = u64::try_from(nanos / 2).unwrap_or(0)
                     * ((u64::from(attempt) % 5 + 1) * 13 % 100)
@@ -840,6 +895,5 @@ async fn sleep_backoff(b: &Backoff, attempt: u32) {
             }
             d
         }
-    };
-    tokio::time::sleep(dur).await;
+    }
 }

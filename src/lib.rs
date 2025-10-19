@@ -164,6 +164,23 @@ pub use search::{SearchBuilder, search};
 pub use stream::{StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
 pub use ticker::{FastInfo, Info, Ticker};
 
+/// Initialize a default tracing subscriber for tests/examples when the
+/// `tracing-subscriber` feature is enabled. No-op otherwise.
+#[cfg(feature = "tracing-subscriber")]
+#[doc(hidden)]
+pub fn init_tracing_for_tests() {
+    use tracing_subscriber::{EnvFilter, fmt};
+    let filter = std::env::var("RUST_LOG")
+        .ok()
+        .and_then(|s| EnvFilter::try_new(s).ok())
+        .unwrap_or_else(|| EnvFilter::new("info"));
+    let _ = fmt::Subscriber::builder()
+        .with_env_filter(filter)
+        .with_target(true)
+        .with_ansi(true)
+        .try_init();
+}
+
 // Explicitly re-export selected paft core types commonly used by users of this crate
 pub use crate::core::{Action, Candle, HistoryMeta, HistoryResponse, Quote};
 pub use crate::core::{Interval, Range};

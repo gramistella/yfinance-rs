@@ -27,8 +27,15 @@ futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.51", default-features = false, optional = true }
-paft = { version = "0.5.1", features = ["market", "fundamentals", "domain", "aggregates"]}
+paft = { version = "0.5.2", features = ["market", "fundamentals", "domain", "aggregates"]}
 rust_decimal = "1.36"
+tracing = { version = "0.1", optional = true }
+
+[dependencies.tracing-subscriber]
+version = "0.3"
+optional = true
+default-features = false
+features = ["fmt", "std", "env-filter"]
 
 [dev-dependencies]
 httpmock = "0.8.2"
@@ -42,6 +49,9 @@ default = []
 test-mode = []
 debug-dumps = []
 dataframe = ["polars", "paft/dataframe"]
+tracing = ["dep:tracing"]
+# Dev-only convenience to initialize a subscriber in examples/tests
+tracing-subscriber = ["tracing", "dep:tracing-subscriber"]
 
 [package.metadata.docs.rs]
 all-features = true
