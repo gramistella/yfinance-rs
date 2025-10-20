@@ -1607,9 +1607,7 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 
 [[package]]
 name = "paft"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2c3c64cc22db4c630e7772b7575501e2974f52feaf7d2db202d155b01e2d548"
+version = "0.6.0"
 dependencies = [
  "iso_currency",
  "paft-aggregates",
@@ -1624,9 +1622,7 @@ dependencies = [
 
 [[package]]
 name = "paft-aggregates"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "988c78c1dd3b8ea576bdfda063dc0c1cc0086c7cc326ebaed470749812ddc3fb"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1640,9 +1636,7 @@ dependencies = [
 
 [[package]]
 name = "paft-core"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ae83cf9d0533e071e5fdb862085ec4ccc9b97c13ba060ec8ecc5696e6aa83d0"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "serde",
@@ -1651,9 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "paft-domain"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "939571222f4a0ed72997f0172661bb2c551fc02eea2baaa173defab173ff5944"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1668,9 +1660,7 @@ dependencies = [
 
 [[package]]
 name = "paft-fundamentals"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28bc07a1b9679391ca4540380f34a71ae89616ae3ec771bd8ad1994976edfba6"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1686,9 +1676,7 @@ dependencies = [
 
 [[package]]
 name = "paft-market"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cb228454544cfed5a9010dfc22e6be8c0c7594a4228d456e898a7669ff1927d"
+version = "0.6.0"
 dependencies = [
  "bitflags",
  "chrono",
@@ -1706,9 +1694,7 @@ dependencies = [
 
 [[package]]
 name = "paft-money"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d53f6f20812b1cb54af18220bb238f617c45e284a3e09597b559bf6120dd060b"
+version = "0.6.0"
 dependencies = [
  "df-derive",
  "iso_currency",
@@ -1721,9 +1707,7 @@ dependencies = [
 
 [[package]]
 name = "paft-utils"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d342f43a8219384038944a627a65e421cd5088e7070f4e2d8e16029a3451ebaa"
+version = "0.6.0"
 dependencies = [
  "polars",
  "thiserror",
