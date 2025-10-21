@@ -1,30 +1,16 @@
-use std::collections::HashMap;
-
 use futures::future::try_join_all;
 
 use crate::{
     core::client::{CacheMode, RetryConfig},
-    core::{Action, Candle, HistoryMeta, HistoryResponse, Interval, Range, YfClient, YfError},
+    core::{Candle, HistoryResponse, Interval, Range, YfClient, YfError},
     history::HistoryBuilder,
 };
+use paft::domain::{AssetKind, Instrument};
+use paft::market::responses::download::{DownloadEntry, DownloadResponse};
 use paft::money::Money;
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 type DateRange = (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>);
 type MaybeDateRange = Option<DateRange>;
-
-/// The result of a multi-symbol download operation.
-#[derive(Debug, Clone)]
-pub struct DownloadResult {
-    /// A map of symbol to its corresponding time series of price `Candle`s.
-    pub series: HashMap<String, Vec<Candle>>,
-    /// A map of symbol to its historical metadata (timezone, etc.).
-    pub meta: HashMap<String, Option<HistoryMeta>>,
-    /// A map of symbol to its corporate `Action`s (dividends and splits).
-    /// This is only populated if `actions(true)` was set on the builder.
-    pub actions: HashMap<String, Vec<Action>>,
-    /// `true` if prices were adjusted for splits and dividends.
-    pub adjusted: bool,
-}
 
 /// A builder for downloading historical data for multiple symbols concurrently.
 ///
@@ -163,38 +149,36 @@ impl DownloadBuilder {
         }
     }
 
-    fn process_joined_results(
+    async fn process_joined_results(
         &self,
         joined: Vec<(String, HistoryResponse)>,
-        need_adjust_in_fetch: bool,
-    ) -> DownloadResult {
-        let mut series: std::collections::HashMap<String, Vec<Candle>> =
-            std::collections::HashMap::new();
-        let mut meta: std::collections::HashMap<String, Option<HistoryMeta>> =
-            std::collections::HashMap::new();
-        let mut actions: std::collections::HashMap<String, Vec<Action>> =
-            std::collections::HashMap::new();
+        _need_adjust_in_fetch: bool,
+    ) -> DownloadResponse {
+        let mut entries: Vec<DownloadEntry> = Vec::with_capacity(joined.len());
+        for (sym, mut resp) in joined {
+            // apply transforms to candles
+            self.apply_back_adjust(&mut resp.candles);
+            self.maybe_repair(&mut resp.candles);
+            self.apply_rounding_if_enabled(&mut resp.candles);
 
-        for (sym, resp) in joined {
-            let mut v = resp.candles;
+            // get instrument from cache or fallback
+            let instrument = if let Some(inst) = self.client.cached_instrument(&sym).await {
+                inst
+            } else {
+                let kind = AssetKind::Equity;
+                let inst = Instrument::from_symbol(&sym, kind).expect("valid symbol");
+                self.client
+                    .store_instrument(sym.clone(), inst.clone())
+                    .await;
+                inst
+            };
 
-            self.apply_back_adjust(&mut v);
-            self.maybe_repair(&mut v);
-            self.apply_rounding_if_enabled(&mut v);
-
-            if self.include_actions {
-                actions.insert(sym.clone(), resp.actions);
-            }
-            meta.insert(sym.clone(), resp.meta);
-            series.insert(sym, v);
+            entries.push(DownloadEntry {
+                instrument,
+                history: resp,
+            });
         }
-
-        DownloadResult {
-            series,
-            meta,
-            actions,
-            adjusted: need_adjust_in_fetch,
-        }
+        DownloadResponse { entries }
     }
 
     /// Creates a new `DownloadBuilder`.
@@ -334,7 +318,7 @@ impl DownloadBuilder {
     /// # Errors
     ///
     /// Returns an error if any of the underlying history requests fail.
-    pub async fn run(self) -> Result<DownloadResult, YfError> {
+    pub async fn run(self) -> Result<DownloadResponse, YfError> {
         if self.symbols.is_empty() {
             return Err(YfError::InvalidParams("no symbols specified".into()));
         }
@@ -353,7 +337,9 @@ impl DownloadBuilder {
         });
 
         let joined: Vec<(String, HistoryResponse)> = try_join_all(futures).await?;
-        Ok(self.process_joined_results(joined, need_adjust_in_fetch))
+        Ok(self
+            .process_joined_results(joined, need_adjust_in_fetch)
+            .await)
     }
 }
 

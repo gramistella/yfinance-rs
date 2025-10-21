@@ -62,12 +62,13 @@ async fn download_multi_symbols_happy_path() {
     m_aapl.assert();
     m_msft.assert();
 
-    assert!(res.series.contains_key("AAPL"));
-    assert!(res.series.contains_key("MSFT"));
-    assert!(res.meta.contains_key("AAPL"));
-    assert!(res.meta.contains_key("MSFT"));
-    assert!(res.actions.contains_key("AAPL"));
-    assert!(res.actions.contains_key("MSFT"));
+    let keys: Vec<_> = res
+        .entries
+        .iter()
+        .map(|e| e.instrument.symbol_str().to_string())
+        .collect();
+    assert!(keys.iter().any(|s| s == "AAPL"));
+    assert!(keys.iter().any(|s| s == "MSFT"));
 }
 
 #[tokio::test]
@@ -123,9 +124,19 @@ async fn download_between_params_applied_to_all_symbols() {
     q1.assert();
     q2.assert();
 
-    assert_eq!(res.series.len(), 2);
-    assert!(!res.series["AAPL"].is_empty());
-    assert!(!res.series["MSFT"].is_empty());
+    assert_eq!(res.entries.len(), 2);
+    let aapl = res
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .unwrap();
+    let msft = res
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "MSFT")
+        .unwrap();
+    assert!(!aapl.history.candles.is_empty());
+    assert!(!msft.history.candles.is_empty());
 }
 
 /* ---------- Parity knob checks using cached live fixtures ---------- */
@@ -189,8 +200,20 @@ async fn download_back_adjust_offline() {
     m1_aapl.assert(); // exactly 1
     m2_aapl.assert(); // exactly 1
 
-    let a = adj.series.get("AAPL").unwrap();
-    let b = back.series.get("AAPL").unwrap();
+    let a = &adj
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .unwrap()
+        .history
+        .candles;
+    let b = &back
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .unwrap()
+        .history
+        .candles;
 
     assert_eq!(a.len(), b.len(), "same number of bars");
     for (ca, cb) in a.iter().zip(b.iter()) {
@@ -258,8 +281,20 @@ async fn download_repair_is_noop_on_clean_data_offline() {
     m1_aapl.assert(); // exactly 1
     m2_aapl.assert(); // exactly 1
 
-    let a = base_run.series.get("AAPL").unwrap();
-    let b = repair_run.series.get("AAPL").unwrap();
+    let a = &base_run
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .unwrap()
+        .history
+        .candles;
+    let b = &repair_run
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .unwrap()
+        .history
+        .candles;
 
     assert_eq!(a.len(), b.len());
     for (ca, cb) in a.iter().zip(b.iter()) {
@@ -314,8 +349,8 @@ async fn rounding_two_decimals() {
     m_aapl.assert();
     m_msft.assert();
 
-    for bars in res.series.values() {
-        for c in bars {
+    for entry in &res.entries {
+        for c in &entry.history.candles {
             assert!(!has_more_than_two_decimals(money_to_f64(&c.open)));
             assert!(!has_more_than_two_decimals(money_to_f64(&c.high)));
             assert!(!has_more_than_two_decimals(money_to_f64(&c.low)));

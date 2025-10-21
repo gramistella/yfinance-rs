@@ -242,8 +242,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .run()
         .await?;
 
-    for (symbol, candles) in &results.series {
-        println!("{}: {} data points", symbol, candles.len());
+    for entry in &results.entries {
+        println!("{}: {} data points", entry.instrument.symbol(), entry.history.candles.len());
     }
     Ok(())
 }

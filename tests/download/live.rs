@@ -13,8 +13,18 @@ async fn live_download_smoke() {
         .unwrap();
 
     if !crate::common::is_recording() {
-        assert!(!res.series["AAPL"].is_empty());
-        assert!(!res.series["MSFT"].is_empty());
+        let aapl = res
+            .entries
+            .iter()
+            .find(|e| e.instrument.symbol_str() == "AAPL")
+            .unwrap();
+        let msft = res
+            .entries
+            .iter()
+            .find(|e| e.instrument.symbol_str() == "MSFT")
+            .unwrap();
+        assert!(!aapl.history.candles.is_empty());
+        assert!(!msft.history.candles.is_empty());
     }
 }
 

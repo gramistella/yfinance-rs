@@ -83,7 +83,9 @@ async fn section_download(client: &YfClient) -> Result<(), YfError> {
         .interval(Interval::D1)
         .run()
         .await?;
-    for (symbol, candles) in &results.series {
+    for entry in &results.entries {
+        let symbol = entry.instrument.symbol();
+        let candles = &entry.history.candles;
         println!("{} has {} data points.", symbol, candles.len());
         if let Some(last_candle) = candles.last() {
             println!(

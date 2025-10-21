@@ -60,10 +60,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .keepna(true)
         .run()
         .await?;
-    if let Some(candles) = download.series.get("TSLA") {
+    if let Some(entry) = download
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == "TSLA")
+    {
         println!(
             "  Fetched {} 15m candles for TSLA in the last 24h (pre/post included).",
-            candles.len()
+            entry.history.candles.len()
         );
     }
     println!();

@@ -44,7 +44,13 @@ async fn download_back_adjust_sets_close_to_raw() {
 
     mock.assert();
 
-    let s = res.series.get(sym).expect("symbol data");
+    let s = &res
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == sym)
+        .expect("symbol data")
+        .history
+        .candles;
     // first bar got 50% adjustment factor; OHLC adjusted => open≈50, high≈52.5, low≈47.5
     assert!((money_to_f64(&s[0].open) - 50.0).abs() < 1e-9);
     // back_adjust keeps raw Close

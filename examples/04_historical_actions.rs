@@ -43,7 +43,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .run()
         .await?;
 
-    for (symbol, candles) in &results.series {
+    for entry in &results.entries {
+        let symbol = entry.instrument.symbol();
+        let candles = &entry.history.candles;
         println!("- {} ({} candles)", symbol, candles.len());
         if let Some(first_candle) = candles.first() {
             println!("  First Open: ${:.2}", money_to_f64(&first_candle.open));

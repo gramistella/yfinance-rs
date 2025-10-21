@@ -54,7 +54,13 @@ async fn download_keepna_and_rounding() {
 
     mock.assert();
 
-    let v = res.series.get(sym).unwrap();
+    let v = &res
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == sym)
+        .unwrap()
+        .history
+        .candles;
     assert_eq!(v.len(), 3, "kept NA row");
     // row 1 rounded to 2dp
     assert!((money_to_f64(&v[0].open) - 100.00).abs() < 1e-9);

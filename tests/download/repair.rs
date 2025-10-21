@@ -53,7 +53,13 @@ async fn download_repair_simple_100x_fix() {
 
     mock.assert();
 
-    let v = res.series.get(sym).unwrap();
+    let v = &res
+        .entries
+        .iter()
+        .find(|e| e.instrument.symbol_str() == sym)
+        .unwrap()
+        .history
+        .candles;
     // middle row scaled ~0.01
     assert!((money_to_f64(&v[1].close) - 10.5).abs() < 1e-9);
     assert!((money_to_f64(&v[1].open) - 10.0).abs() < 1e-9);

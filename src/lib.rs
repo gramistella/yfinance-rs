@@ -153,12 +153,13 @@ pub use core::client::ApiPreference;
 pub use core::{CacheMode, RetryConfig, YfClient, YfClientBuilder, YfError};
 
 // Provider-specific builders and utilities
-pub use download::{DownloadBuilder, DownloadResult};
+pub use download::DownloadBuilder;
 pub use esg::EsgBuilder;
 pub use fundamentals::FundamentalsBuilder;
 pub use history::HistoryBuilder;
 pub use holders::HoldersBuilder;
 pub use news::{NewsBuilder, NewsTab};
+pub use paft::market::responses::download::{DownloadEntry, DownloadResponse};
 pub use quote::{QuotesBuilder, quotes};
 pub use search::{SearchBuilder, search};
 pub use stream::{StreamBuilder, StreamConfig, StreamHandle, StreamMethod};
