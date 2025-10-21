@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-10-21
+
 ### Breaking Change
 
 - `DownloadBuilder::run()` now returns `paft::market::responses::download::DownloadResponse` with an `entries: Vec<DownloadEntry>` instead of the previous `DownloadResult` maps. Access candles via `entry.history.candles` and the symbol via `entry.instrument.symbol_str()`.
@@ -22,8 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Documentation
 
 - Updated README examples to reflect the new `DownloadResponse.entries` usage.
-
-## [0.6.0] - 2025-10-21
 
 ### Dependencies
 
