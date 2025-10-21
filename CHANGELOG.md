@@ -6,11 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Breaking Change
+
+- `DownloadBuilder::run()` now returns `paft::market::responses::download::DownloadResponse` with an `entries: Vec<DownloadEntry>` instead of the previous `DownloadResult` maps. Access candles via `entry.history.candles` and the symbol via `entry.instrument.symbol_str()`.
+
+### Changed
+
+- Re-export `DownloadEntry` and `DownloadResponse` at the crate root for convenient imports.
+- Examples and tests updated to iterate over `entries` rather than `series`.
+
+### Performance
+
+- Introduced an instrument cache in `YfClient` and populate it opportunistically from v7 quote responses to reduce symbol resolution overhead during multi-symbol downloads.
+
+### Documentation
+
+- Updated README examples to reflect the new `DownloadResponse.entries` usage.
+
 ## [0.6.0] - 2025-10-21
 
 ### Dependencies
 
-- Bump `paft` to `v0.5.2`.
+- Bump `paft` to `v0.6.0`.
 
 ## [0.5.2] - 2025-10-20
 
