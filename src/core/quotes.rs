@@ -11,6 +11,7 @@ use crate::{
         net,
     },
 };
+use paft::domain::{AssetKind, Instrument};
 use paft::market::quote::Quote;
 
 // Centralized wire model for the v7 quote API
@@ -31,6 +32,8 @@ pub struct V7QuoteResponse {
 pub struct V7QuoteNode {
     #[serde(default)]
     pub(crate) symbol: Option<String>,
+    #[serde(rename = "quoteType")]
+    pub(crate) quote_type: Option<String>,
     #[serde(rename = "shortName")]
     pub(crate) short_name: Option<String>,
     #[serde(rename = "regularMarketPrice")]
@@ -50,6 +53,7 @@ pub struct V7QuoteNode {
 
 /// Centralized function to fetch one or more quotes from the v7 API.
 /// It handles caching, retries, and authentication (crumb).
+#[allow(clippy::too_many_lines)]
 pub async fn fetch_v7_quotes(
     client: &YfClient,
     symbols: &[&str],
@@ -154,11 +158,38 @@ pub async fn fetch_v7_quotes(
     };
 
     let env: V7Envelope = serde_json::from_str(&body_to_parse)?;
-
-    Ok(env
+    let nodes = env
         .quote_response
         .and_then(|qr| qr.result)
-        .unwrap_or_default())
+        .unwrap_or_default();
+
+    // Populate instrument cache best-effort from v7 quote nodes
+    for n in &nodes {
+        if let Some(sym) = n.symbol.as_deref() {
+            let exch = crate::core::conversions::string_to_exchange(
+                n.full_exchange_name
+                    .clone()
+                    .or_else(|| n.exchange.clone())
+                    .or_else(|| n.market.clone())
+                    .or_else(|| n.market_cap_figure_exchange.clone()),
+            );
+            let kind = n
+                .quote_type
+                .as_deref()
+                .and_then(|s| s.parse::<AssetKind>().ok())
+                .unwrap_or(AssetKind::Equity);
+
+            let inst = exch.map_or_else(
+                || Instrument::from_symbol(sym, kind),
+                |ex| Instrument::from_symbol_and_exchange(sym, ex, kind),
+            );
+            if let Ok(inst) = inst {
+                client.store_instrument(sym.to_string(), inst).await;
+            }
+        }
+    }
+
+    Ok(nodes)
 }
 
 impl From<V7QuoteNode> for Quote {

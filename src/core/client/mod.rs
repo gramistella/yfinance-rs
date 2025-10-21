@@ -85,6 +85,8 @@ pub struct YfClient {
 
     retry: RetryConfig,
     reporting_currency_cache: Arc<RwLock<HashMap<String, Currency>>>,
+    // Cache of resolved instruments by original ticker string
+    instrument_cache: Arc<RwLock<HashMap<String, paft::domain::Instrument>>>,
     cache: Option<Arc<CacheStore>>,
 }
 
@@ -182,6 +184,17 @@ impl YfClient {
         };
         let mut guard = store.map.write().await;
         guard.insert(key, entry);
+    }
+
+    // -------- instrument cache (async) --------
+    pub(crate) async fn cached_instrument(&self, key: &str) -> Option<paft::domain::Instrument> {
+        let guard = self.instrument_cache.read().await;
+        guard.get(key).cloned()
+    }
+
+    pub(crate) async fn store_instrument(&self, key: String, inst: paft::domain::Instrument) {
+        let mut guard = self.instrument_cache.write().await;
+        guard.insert(key, inst);
     }
 
     /// Clears the entire in-memory cache.
@@ -849,6 +862,7 @@ impl YfClientBuilder {
             api_preference: self.api_preference.unwrap_or(ApiPreference::ApiThenScrape),
             retry: self.retry.unwrap_or_default(),
             reporting_currency_cache: Arc::new(RwLock::new(HashMap::new())),
+            instrument_cache: Arc::new(RwLock::new(HashMap::new())),
             cache: self.cache_ttl.map(|ttl| {
                 Arc::new(CacheStore {
                     map: RwLock::new(HashMap::new()),
