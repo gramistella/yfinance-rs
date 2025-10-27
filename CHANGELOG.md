@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Fixed critical timestamp interpretation bug in WebSocket stream processing: use `DateTime::from_timestamp_millis()` instead of `i64_to_datetime()` to correctly interpret millisecond timestamps, preventing incorrect date values in quote updates
 
+#### Notes
+
+- **WebSocket Stream Timestamps:** Users may occasionally observe `QuoteUpdate` messages arriving via the WebSocket stream with timestamps that are older than previously received messages ("time traveling ticks"), sometimes by significant amounts (minutes or hours). This behavior appears to originate from the **Yahoo Finance data feed itself** and is not a bug introduced by `yfinance-rs`. To provide the most direct representation of the source data, `yfinance-rs` **does not automatically filter** these out-of-order messages. Applications requiring strictly chronological quote updates should implement their own filtering logic based on the timestamp (`ts`) field of the received `QuoteUpdate`.
+
 ## [0.6.0] - 2025-10-21
 
 ### Breaking Change
