@@ -20,7 +20,7 @@ use tokio_tungstenite::{
 use crate::{
     YfClient, YfError,
     core::client::{CacheMode, RetryConfig},
-    core::conversions::{f64_to_money_with_currency_str, i64_to_datetime},
+    core::conversions::f64_to_money_with_currency_str,
 };
 use paft::market::quote::QuoteUpdate;
 
@@ -336,11 +336,17 @@ async fn run_websocket_stream(
                                         }
                                         continue;
                                     };
+                                    let Some(timestamp) = DateTime::from_timestamp_millis(ticker.time) else {
+                                        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                                            eprintln!("YF_DEBUG(stream): skipping ws update with invalid timestamp: {}", ticker.time);
+                                        }
+                                        continue;
+                                    };
                                     let update = QuoteUpdate {
                                         symbol,
                                         price: Some(f64_to_money_with_currency_str(f64::from(ticker.price), currency_str)),
                                         previous_close: Some(f64_to_money_with_currency_str(f64::from(ticker.previous_close), currency_str)),
-                                        ts: i64_to_datetime(ticker.time),
+                                        ts: timestamp,
                                     };
                                     if tx.send(update).await.is_err() {
                                         break; // Receiver was dropped
@@ -398,6 +404,24 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
     let currency_str = Some(ticker.currency.as_str());
     let symbol = paft::domain::Symbol::new(&ticker.id)
         .map_err(|_| YfError::InvalidParams(format!("ws symbol invalid: {}", ticker.id)))?;
+
+    let Some(timestamp) = DateTime::from_timestamp_millis(ticker.time) else {
+        // Log the error and return an error from this function
+        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+            eprintln!(
+                "YF_DEBUG(stream): received ws update with invalid timestamp millis: {}",
+                ticker.time
+            );
+        }
+        #[cfg(feature = "tracing")]
+        tracing::warn!(timestamp_millis = ticker.time, symbol = %ticker.id, "received ws update with invalid timestamp");
+        // Return an error instead of default
+        return Err(YfError::InvalidParams(format!(
+            "Invalid timestamp in stream message: {}",
+            ticker.time
+        )));
+    };
+
     Ok(QuoteUpdate {
         symbol,
         price: Some(f64_to_money_with_currency_str(
@@ -408,7 +432,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
             f64::from(ticker.previous_close),
             currency_str,
         )),
-        ts: i64_to_datetime(ticker.time),
+        ts: timestamp,
     })
 }
 
