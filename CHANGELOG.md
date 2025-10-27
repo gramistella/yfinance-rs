@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.6.1] - 2025-01-27
+
+### Fixed
+
+- Fixed critical timestamp interpretation bug in WebSocket stream processing: use `DateTime::from_timestamp_millis()` instead of `i64_to_datetime()` to correctly interpret millisecond timestamps, preventing incorrect date values in quote updates
+
 ## [0.6.0] - 2025-10-21
 
 ### Breaking Change
