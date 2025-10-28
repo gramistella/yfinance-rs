@@ -24,6 +24,7 @@ use crate::{
 };
 use paft::market::quote::QuoteUpdate;
 
+// Yahoo Finance websocket wire types (generated from `yaticker.proto`).
 mod wire_ws {
     include!(concat!(env!("OUT_DIR"), "/yaticker.rs"));
 }
@@ -31,6 +32,20 @@ mod wire_ws {
 // Use paft's QuoteUpdate which carries Money and DateTime<Utc>
 // pub use paft::market::quote::QuoteUpdate; (imported above)
 
+// Streaming quotes
+//
+// Volume semantics:
+// - Yahoo sends cumulative intraday volume (`day_volume`). This crate converts it into
+//   per-update deltas when producing `QuoteUpdate`s.
+// - For each symbol, the first observed tick (or after a detected reset where current < last)
+//   has `volume = None` (no delta yet). Subsequent ticks set `volume = Some(current - last)`.
+// - This applies to both WebSocket and Polling streams. The JSON/base64 decoder helper
+//   (`decode_and_map_message`) is stateless and always returns `volume = None`.
+//
+// Implications:
+// - If you need cumulative volume, accumulate the per-update `volume` values yourself or
+//   use the `day_volume` from quote endpoints.
+// - Expect `None` for the first message per symbol and after rollovers.
 /// Configuration for a polling-based quote stream.
 #[derive(Debug, Clone)]
 pub struct StreamConfig {
@@ -287,6 +302,11 @@ async fn run_websocket_stream(
     #[cfg(feature = "test-mode")]
     let mut recorded = false;
 
+    let mut last_day_volume: std::collections::HashMap<String, u64> =
+        std::collections::HashMap::new();
+    let mut last_ts: std::collections::HashMap<String, DateTime<Utc>> =
+        std::collections::HashMap::new();
+
     loop {
         select! {
             msg = read.next() => {
@@ -302,11 +322,10 @@ async fn run_websocket_stream(
                             }
                         }
 
-                        match decode_and_map_message(&text) {
-                            Ok(update) => {
-                                if tx.send(update).await.is_err() {
-                                    break; // Receiver was dropped, exit loop
-                                }
+                        match decode_ws_pricing(&text) {
+                            Ok(ticker) => {
+                                if let Some(update) = map_ws_pricing_to_update_with_delta(&ticker, &mut last_day_volume, &mut last_ts)
+                                    && tx.send(update).await.is_err() { break; }
                             },
                             Err(e) => {
                                 if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -318,39 +337,19 @@ async fn run_websocket_stream(
                     }
                     Some(Ok(WsMessage::Binary(bin))) => {
                         // Try to interpret as UTF-8 JSON-wrapped base64 first
-                        let handled = if let Ok(as_text) = std::str::from_utf8(&bin)
-                            && let Ok(update) = decode_and_map_message(as_text) {
-                                if tx.send(update).await.is_err() {
-                                    break; // Receiver was dropped
-                                }
+                        let handled = if let Ok(as_text) = std::str::from_utf8(&bin) {
+                            if let Ok(ticker) = decode_ws_pricing(as_text) {
+                                if let Some(update) = map_ws_pricing_to_update_with_delta(&ticker, &mut last_day_volume, &mut last_ts)
+                                    && tx.send(update).await.is_err() { break; }
                                 true
-                            } else { false };
+                            } else { false }
+                        } else { false };
                         // If not handled, treat as raw protobuf bytes
                         if !handled {
                             match wire_ws::PricingData::decode(&*bin) {
                                 Ok(ticker) => {
-                                    let currency_str = Some(ticker.currency.as_str());
-                                    let Ok(symbol) = paft::domain::Symbol::new(&ticker.id) else {
-                                        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                                            eprintln!("YF_DEBUG(stream): skipping ws update with invalid symbol: {}", ticker.id);
-                                        }
-                                        continue;
-                                    };
-                                    let Some(timestamp) = DateTime::from_timestamp_millis(ticker.time) else {
-                                        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-                                            eprintln!("YF_DEBUG(stream): skipping ws update with invalid timestamp: {}", ticker.time);
-                                        }
-                                        continue;
-                                    };
-                                    let update = QuoteUpdate {
-                                        symbol,
-                                        price: Some(f64_to_money_with_currency_str(f64::from(ticker.price), currency_str)),
-                                        previous_close: Some(f64_to_money_with_currency_str(f64::from(ticker.previous_close), currency_str)),
-                                        ts: timestamp,
-                                    };
-                                    if tx.send(update).await.is_err() {
-                                        break; // Receiver was dropped
-                                    }
+                                    if let Some(update) = map_ws_pricing_to_update_with_delta(&ticker, &mut last_day_volume, &mut last_ts)
+                                        && tx.send(update).await.is_err() { break; }
                                 }
                                 Err(e) => {
                                     if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -371,6 +370,99 @@ async fn run_websocket_stream(
         }
     }
     Ok(())
+}
+
+fn decode_ws_pricing(text: &str) -> Result<wire_ws::PricingData, YfError> {
+    let s = text.trim();
+    let b64_cow: std::borrow::Cow<str> = if s.starts_with('{') {
+        match serde_json::from_str::<serde_json::Value>(s) {
+            Ok(v) => {
+                let msg = v.get("message").and_then(|m| m.as_str()).ok_or_else(|| {
+                    YfError::MissingData("ws json message missing 'message' field".into())
+                })?;
+                std::borrow::Cow::Owned(msg.to_string())
+            }
+            Err(_) => std::borrow::Cow::Borrowed(s),
+        }
+    } else {
+        std::borrow::Cow::Borrowed(s)
+    };
+    let decoded = general_purpose::STANDARD
+        .decode(b64_cow.as_ref())
+        .map_err(YfError::Base64)?;
+    let ticker = wire_ws::PricingData::decode(&*decoded)?;
+    Ok(ticker)
+}
+
+fn map_ws_pricing_to_update_with_delta(
+    ticker: &wire_ws::PricingData,
+    last_vol: &mut std::collections::HashMap<String, u64>,
+    last_ts: &mut std::collections::HashMap<String, DateTime<Utc>>,
+) -> Option<QuoteUpdate> {
+    let currency_str = Some(ticker.currency.as_str());
+    let Ok(symbol) = paft::domain::Symbol::new(&ticker.id) else {
+        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+            eprintln!(
+                "YF_DEBUG(stream): skipping ws update with invalid symbol: {}",
+                ticker.id
+            );
+        }
+        return None;
+    };
+    let Some(timestamp) = DateTime::from_timestamp_millis(ticker.time) else {
+        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+            eprintln!(
+                "YF_DEBUG(stream): skipping ws update with invalid timestamp: {}",
+                ticker.time
+            );
+        }
+        return None;
+    };
+
+    // If out-of-order, emit but don't mutate state; volume=None
+    if let Some(prev_ts) = last_ts.get(&ticker.id)
+        && timestamp < *prev_ts
+    {
+        return Some(QuoteUpdate {
+            symbol,
+            price: Some(f64_to_money_with_currency_str(
+                f64::from(ticker.price),
+                currency_str,
+            )),
+            previous_close: Some(f64_to_money_with_currency_str(
+                f64::from(ticker.previous_close),
+                currency_str,
+            )),
+            ts: timestamp,
+            volume: None,
+        });
+    }
+
+    let cur_vol = u64::try_from(ticker.day_volume).unwrap_or(0);
+    let prev_vol = last_vol.get(&ticker.id).copied();
+    let volume = match prev_vol {
+        Some(p) if cur_vol >= p => Some(cur_vol - p),
+        // First observation or reset forward in time → no delta
+        _ => None,
+    };
+
+    // Update state only for in-order ticks
+    last_ts.insert(ticker.id.clone(), timestamp);
+    last_vol.insert(ticker.id.clone(), cur_vol);
+
+    Some(QuoteUpdate {
+        symbol,
+        price: Some(f64_to_money_with_currency_str(
+            f64::from(ticker.price),
+            currency_str,
+        )),
+        previous_close: Some(f64_to_money_with_currency_str(
+            f64::from(ticker.previous_close),
+            currency_str,
+        )),
+        ts: timestamp,
+        volume,
+    })
 }
 
 /// Decodes a single base64-encoded protobuf message from the Yahoo Finance WebSocket stream.
@@ -433,6 +525,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
             currency_str,
         )),
         ts: timestamp,
+        volume: None,
     })
 }
 
@@ -448,6 +541,8 @@ async fn run_polling_stream(
 ) {
     let mut ticker = tokio::time::interval(cfg.interval);
     let mut last_price: std::collections::HashMap<String, Option<f64>> =
+        std::collections::HashMap::new();
+    let mut last_day_volume: std::collections::HashMap<String, u64> =
         std::collections::HashMap::new();
 
     let symbol_slices: Vec<&str> = symbols.iter().map(AsRef::as_ref).collect();
@@ -470,12 +565,21 @@ async fn run_polling_stream(
                             }
                             let currency_str = q.currency.as_deref();
                             let sym_s = q.symbol.clone().unwrap_or_default();
+                            let vol_delta = q.regular_market_volume.and_then(|cur| {
+                                let prev = last_day_volume.insert(sym_s.clone(), cur);
+                                match prev {
+                                    Some(p) if cur >= p => Some(cur - p),
+                                    // First observation for symbol, or reset: no delta
+                                    _ => None,
+                                }
+                            });
                             let Ok(symbol) = paft::domain::Symbol::new(&sym_s) else { continue };
                             if tx.send(QuoteUpdate {
                                 symbol,
                                 price: lp.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 previous_close: q.regular_market_previous_close.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 ts,
+                                volume: vol_delta,
                             }).await.is_err() {
                                 // Break outer loop if receiver is dropped
                                 break;

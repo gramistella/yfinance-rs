@@ -16,4 +16,7 @@ fn decode_real_websocket_message() {
             > 0.0,
         "price should be positive"
     );
+
+    // Decoder is stateless: volume must be None
+    assert!(update.volume.is_none(), "decoder should not set volume");
 }
