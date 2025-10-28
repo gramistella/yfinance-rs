@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-10-28
+
+### Added
+
+- Per-update volume deltas in real-time streaming: `QuoteUpdate.volume` now reflects the delta
+  since the previous update for a symbol. First tick per symbol and after a detected reset/rollover
+  yields `None`. Applies to both WebSocket and HTTP polling streams.
+- Expose intraday cumulative volume on snapshots: populate `Quote.day_volume` from v7 quotes and
+  surface it on convenience types (`Ticker::quote()` and `Ticker::info()` as `Info.volume`).
+- SearchBuilder accessors: `lang_ref()` and `region_ref()` to inspect configured parameters.
+
+### Changed
+
+- Stream volume semantics: WebSocket and polling streams compute per-update volume deltas. The
+  low-level decoder helper remains stateless and always returns `volume = None`.
+
+### Documentation
+
+- README: added a "Volume semantics" section for streaming; clarified delta behavior and how to
+  obtain cumulative volume.
+- Examples: updated streaming and convenience examples to display volume; SearchBuilder example now
+  demonstrates `lang_ref()`/`region_ref()`.
+
+### Dependencies
+
+- Bump `paft` to `v0.7.0`.
+
 ## [0.6.1] - 2025-01-27
 
 ### Fixed
@@ -262,6 +289,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Utilities: `DownloadBuilder`, `StreamBuilder`, `SearchBuilder`.
 
 [0.6.0]: https://github.com/gramistella/yfinance-rs/compare/v0.5.2...v0.6.0
+[0.7.0]: https://github.com/gramistella/yfinance-rs/compare/v0.6.1...v0.7.0
 [0.5.2]: https://github.com/gramistella/yfinance-rs/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/gramistella/yfinance-rs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gramistella/yfinance-rs/compare/v0.4.0...v0.5.0

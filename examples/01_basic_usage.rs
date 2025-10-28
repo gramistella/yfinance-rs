@@ -32,6 +32,19 @@ async fn section_info(client: &YfClient) -> Result<(), YfError> {
         "Last Price: ${:.2}",
         info.last.as_ref().map(money_to_f64).unwrap_or_default()
     );
+    if let Some(v) = info.volume {
+        println!("Volume (day): {v}");
+    }
+    if let Some(pt) = info.price_target.as_ref()
+        && let Some(mean) = pt.mean.as_ref()
+    {
+        println!("Price target mean: ${:.2}", money_to_f64(mean));
+    }
+    if let Some(rs) = info.recommendation_summary.as_ref() {
+        let mean = rs.mean.unwrap_or_default();
+        let text = rs.mean_rating_text.as_deref().unwrap_or("N/A");
+        println!("Recommendation mean: {mean:.2} ({text})");
+    }
     println!();
     Ok(())
 }
@@ -54,6 +67,9 @@ async fn section_fast_info(client: &YfClient) -> Result<(), YfError> {
             .map(|e| e.to_string())
             .unwrap_or_default()
     );
+    if let Some(v) = fast_info.volume {
+        println!("Day volume: {v}");
+    }
     println!();
     Ok(())
 }
@@ -62,10 +78,15 @@ async fn section_batch_quotes(client: &YfClient) -> Result<(), YfError> {
     println!("--- Batch Quotes for Multiple Symbols ---");
     let quotes = yfinance_rs::quotes(client, vec!["AMD", "INTC", "QCOM"]).await?;
     for quote in quotes {
+        let vol = quote
+            .day_volume
+            .map(|v| format!(" (vol: {v})"))
+            .unwrap_or_default();
         println!(
-            "  {}: ${:.2}",
+            "  {}: ${:.2}{}",
             quote.symbol,
-            quote.price.as_ref().map(money_to_f64).unwrap_or_default()
+            quote.price.as_ref().map(money_to_f64).unwrap_or_default(),
+            vol
         );
     }
     println!();
@@ -125,21 +146,26 @@ async fn section_stream(client: &YfClient) -> Result<(), YfError> {
     println!("--- Streaming Real-time Quotes for MSFT and GOOG ---");
     println!("(Streaming for 10 seconds or until stopped...)");
     let (handle, mut receiver) = StreamBuilder::new(client)
-        .symbols(vec!["MSFT", "GOOG"])
+        .symbols(vec!["GME"])
         .method(StreamMethod::WebsocketWithFallback)
         .start()?;
 
     let stream_task = tokio::spawn(async move {
         let mut count = 0;
         while let Some(update) = receiver.recv().await {
+            let vol = update
+                .volume
+                .map(|v| format!(" (vol Δ: {v})"))
+                .unwrap_or_default();
             println!(
-                "[{}] {} @ {:.2}",
+                "[{}] {} @ {:.2}{}",
                 update.ts,
                 update.symbol,
-                update.price.as_ref().map(money_to_f64).unwrap_or_default()
+                update.price.as_ref().map(money_to_f64).unwrap_or_default(),
+                vol
             );
             count += 1;
-            if count >= 10 {
+            if count >= 1000 {
                 break;
             }
         }
@@ -147,7 +173,7 @@ async fn section_stream(client: &YfClient) -> Result<(), YfError> {
     });
 
     tokio::select! {
-        () = tokio::time::sleep(StdDuration::from_secs(10)) => {
+        () = tokio::time::sleep(StdDuration::from_secs(1000)) => {
             println!("Stopping stream due to timeout.");
             handle.stop().await;
         }

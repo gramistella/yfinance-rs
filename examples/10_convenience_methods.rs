@@ -9,15 +9,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("--- Ticker Quote (Convenience) ---");
     let quote = ticker.quote().await?;
+    let vol = quote
+        .day_volume
+        .map(|v| format!(" (vol: {v})"))
+        .unwrap_or_default();
     println!(
-        "  {}: ${:.2} (prev_close: ${:.2})",
+        "  {}: ${:.2} (prev_close: ${:.2}){}",
         quote.symbol,
         quote.price.as_ref().map(money_to_f64).unwrap_or_default(),
         quote
             .previous_close
             .as_ref()
             .map(money_to_f64)
-            .unwrap_or_default()
+            .unwrap_or_default(),
+        vol
     );
     println!();
 

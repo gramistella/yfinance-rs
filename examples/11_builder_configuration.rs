@@ -29,12 +29,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     println!("--- SearchBuilder Customization ---");
-    let search_results = SearchBuilder::new(&client, "Microsoft")
+    let sb = SearchBuilder::new(&client, "Microsoft")
         .quotes_count(2)
         .region("US")
-        .lang("en-US")
-        .fetch()
-        .await?;
+        .lang("en-US");
+    println!(
+        "  Using lang={} region={}",
+        sb.lang_ref().unwrap_or("N/A"),
+        sb.region_ref().unwrap_or("N/A")
+    );
+    let search_results = sb.fetch().await?;
     println!(
         "  Found {} results for 'Microsoft' in US region.",
         search_results.results.len()

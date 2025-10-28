@@ -73,6 +73,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 * **WebSocket Streaming**: Get live quote updates using WebSockets (preferred method).
 * **HTTP Polling**: Fallback polling method for real-time data.
 * **Configurable Streaming**: Customize update frequency and change-only filtering.
+* **Per-update volume deltas**: `QuoteUpdate.volume` reflects the delta since the previous update for that symbol. The first observed tick (and after a reset/rollover) has `volume = None`.
 
 ### Advanced Features
 
@@ -266,8 +267,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .start()?;
 
     while let Some(update) = receiver.recv().await {
-        println!("{}: ${:.2}", update.symbol, update.last_price.unwrap_or(0.0));
+        let vol = update.volume.map(|v| format!(" (vol Δ: {v})")).unwrap_or_default();
+        println!("{}: ${:.2}{}",
+            update.symbol,
+            update.price.as_ref().map(yfinance_rs::core::conversions::money_to_f64).unwrap_or(0.0),
+            vol);
     }
+#### Volume semantics
+
+Yahoo’s websocket stream provides cumulative intraday volume (`day_volume`). This crate converts it to per-update deltas on the consumer-facing `QuoteUpdate`:
+
+- First tick per symbol and after a detected reset (current < last): `volume = None`.
+- Otherwise: `volume = Some(current_day_volume - last_day_volume)`.
+- The polling stream applies the same logic using the v7 `regularMarketVolume` field.
+- The low-level decoder helper `stream::decode_and_map_message` is stateless and always returns `volume = None`.
+
+If you need cumulative volume, sum the emitted per-update `volume` values, or use `Quote.day_volume` from the quote endpoints.
 
     Ok(())
 }

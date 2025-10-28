@@ -84,7 +84,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let query = "S&P 500";
     println!("--- Searching for '{query}' ---");
 
-    let search_results = SearchBuilder::new(&client, query).fetch().await?;
+    let search_results = SearchBuilder::new(&client, query)
+        .lang("en")
+        .region("US")
+        .fetch()
+        .await?;
 
     println!("Found {} results:", search_results.results.len());
     for quote in search_results.results {

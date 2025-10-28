@@ -21,13 +21,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut count = 0;
         while let Some(update) = receiver.recv().await {
             println!(
-                "[{}] {} @ {:.2}",
+                "[{}] {} @ {:.2} {}",
                 update.ts,
                 update.symbol,
                 update
                     .price
                     .as_ref()
                     .map(yfinance_rs::core::conversions::money_to_f64)
+                    .unwrap_or_default(),
+                update
+                    .volume
+                    .map(|v| format!("({v} delta)"))
                     .unwrap_or_default()
             );
             count += 1;
