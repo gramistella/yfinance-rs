@@ -83,7 +83,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! yfinance-rs = "0.6.1"
+//! yfinance-rs = "0.7.0"
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!

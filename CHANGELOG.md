@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   surface it on convenience types (`Ticker::quote()` and `Ticker::info()` as `Info.volume`).
 - SearchBuilder accessors: `lang_ref()` and `region_ref()` to inspect configured parameters.
 
+### Breaking Change
+
+- Upgrade to `paft` v0.7.0 adds a new field to `paft::market::quote::QuoteUpdate`:
+  `volume: Option<u64>`. If you construct or exhaustively destructure `QuoteUpdate`, update your
+  code to include the new field or use `..`. Stream APIs and typical consumers that only read
+  updates are unaffected.
+
 ### Changed
 
 - Stream volume semantics: WebSocket and polling streams compute per-update volume deltas. The
@@ -33,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Bump `paft` to `v0.7.0`.
 
-## [0.6.1] - 2025-01-27
+## [0.6.1] - 2025-10-27
 
 ### Fixed
 
@@ -288,8 +295,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Analysis tools: `recommendations`, `sustainability`, `major_holders`, `institutional_holders`.
 - Utilities: `DownloadBuilder`, `StreamBuilder`, `SearchBuilder`.
 
-[0.6.0]: https://github.com/gramistella/yfinance-rs/compare/v0.5.2...v0.6.0
 [0.7.0]: https://github.com/gramistella/yfinance-rs/compare/v0.6.1...v0.7.0
+[0.6.1]: https://github.com/gramistella/yfinance-rs/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/gramistella/yfinance-rs/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/gramistella/yfinance-rs/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/gramistella/yfinance-rs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gramistella/yfinance-rs/compare/v0.4.0...v0.5.0
