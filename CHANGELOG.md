@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Expose intraday cumulative volume on snapshots: populate `Quote.day_volume` from v7 quotes and
   surface it on convenience types (`Ticker::quote()` and `Ticker::info()` as `Info.volume`).
 - SearchBuilder accessors: `lang_ref()` and `region_ref()` to inspect configured parameters.
+- Populate convenience `Info` with analytics and ESG when available: `price_target`,
+  `recommendation_summary`, `esg_scores`.
 
 ### Breaking Change
 
