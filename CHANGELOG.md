@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Stream volume semantics: WebSocket and polling streams compute per-update volume deltas. The
   low-level decoder helper remains stateless and always returns `volume = None`.
+- Polling stream `diff_only` now emits when either price or volume changes.
 
 ### Documentation
 
