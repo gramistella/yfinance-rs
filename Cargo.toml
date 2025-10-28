@@ -27,7 +27,7 @@ futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.51", default-features = false, optional = true }
-paft = { version = "0.6.0", features = ["market", "fundamentals", "domain", "aggregates"]}
+paft = { version = "0.7.0", features = ["market", "fundamentals", "domain", "aggregates"]}
 rust_decimal = "1.36"
 tracing = { version = "0.1", optional = true }
 
