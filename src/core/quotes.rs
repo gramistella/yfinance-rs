@@ -40,6 +40,8 @@ pub struct V7QuoteNode {
     pub(crate) regular_market_price: Option<f64>,
     #[serde(rename = "regularMarketPreviousClose")]
     pub(crate) regular_market_previous_close: Option<f64>,
+    #[serde(rename = "regularMarketVolume")]
+    pub(crate) regular_market_volume: Option<u64>,
     pub(crate) currency: Option<String>,
     #[serde(rename = "fullExchangeName")]
     pub(crate) full_exchange_name: Option<String>,
@@ -204,6 +206,7 @@ impl From<V7QuoteNode> for Quote {
             previous_close: n
                 .regular_market_previous_close
                 .map(|price| f64_to_money_with_currency_str(price, n.currency.as_deref())),
+            day_volume: n.regular_market_volume,
             exchange: crate::core::conversions::string_to_exchange(
                 n.full_exchange_name
                     .or(n.exchange)

@@ -162,6 +162,7 @@ impl Ticker {
                 .and_then(|code| code.parse().ok()),
             last: q.price,
             previous_close: q.previous_close,
+            volume: q.day_volume,
         })
     }
 

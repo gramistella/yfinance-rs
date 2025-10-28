@@ -136,6 +136,18 @@ impl SearchBuilder {
         self
     }
 
+    /// Returns the configured language parameter, if any.
+    #[must_use]
+    pub fn lang_ref(&self) -> Option<&str> {
+        self.lang.as_deref()
+    }
+
+    /// Returns the configured region parameter, if any.
+    #[must_use]
+    pub fn region_ref(&self) -> Option<&str> {
+        self.region.as_deref()
+    }
+
     /// Executes the search request.
     ///
     /// # Errors
