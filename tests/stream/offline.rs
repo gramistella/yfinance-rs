@@ -1,6 +1,7 @@
 use tokio::time::{Duration, timeout};
 use url::Url;
 use yfinance_rs::StreamMethod;
+use yfinance_rs::core::client::CacheMode;
 
 #[tokio::test]
 async fn stream_websocket_fallback_to_polling_offline() {
@@ -77,4 +78,109 @@ async fn stream_polling_explicitly_offline() {
     mock.assert();
 
     assert!(got.is_ok());
+}
+
+#[tokio::test]
+async fn stream_polling_emits_on_volume_only_change_with_diff_only() {
+    let server = crate::common::setup_server();
+
+    // First response: price P, volume V1
+    let body1 = r#"{
+        "quoteResponse": {
+            "result": [
+                {
+                    "symbol": "MSFT",
+                    "regularMarketPrice": 420.00,
+                    "regularMarketPreviousClose": 420.00,
+                    "regularMarketVolume": 1000,
+                    "currency": "USD"
+                }
+            ],
+            "error": null
+        }
+    }"#;
+
+    // Second response: same price P, higher volume V2
+    let body2 = r#"{
+        "quoteResponse": {
+            "result": [
+                {
+                    "symbol": "MSFT",
+                    "regularMarketPrice": 420.00,
+                    "regularMarketPreviousClose": 420.00,
+                    "regularMarketVolume": 1500,
+                    "currency": "USD"
+                }
+            ],
+            "error": null
+        }
+    }"#;
+
+    // Set up two sequential mocks. The first is limited to a single call so the second one is used next.
+    let mut m1 = server.mock(|when, then| {
+        when.method(httpmock::Method::GET)
+            .path("/v7/finance/quote")
+            .query_param("symbols", "MSFT");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body1);
+    });
+
+    let client = yfinance_rs::YfClient::builder()
+        .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+
+    // diff_only defaults to true; ensure we bypass cache so each poll hits the server
+    let builder = yfinance_rs::StreamBuilder::new(&client)
+        .symbols(["MSFT"])
+        .method(StreamMethod::Polling)
+        .interval(Duration::from_millis(100))
+        .cache_mode(CacheMode::Bypass);
+
+    let (handle, mut rx) = builder.start().unwrap();
+
+    // First tick (price change from None -> P) should emit
+    let first = timeout(Duration::from_secs(3), rx.recv()).await;
+    // After first emission, switch the mock to return a higher volume
+    m1.delete();
+    let _m2 = server.mock(|when, then| {
+        when.method(httpmock::Method::GET)
+            .path("/v7/finance/quote")
+            .query_param("symbols", "MSFT");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body2);
+    });
+
+    // Second tick: price unchanged, volume increased -> must emit
+    let second = timeout(Duration::from_secs(3), rx.recv()).await;
+
+    handle.abort();
+
+    let first = first
+        .expect("timed out waiting for first update")
+        .expect("stream closed before first update");
+    let second = second
+        .expect("timed out waiting for second update")
+        .expect("stream closed before second update");
+
+    // Price should be unchanged between ticks in this scenario
+    let first_price = first
+        .price
+        .as_ref()
+        .map_or(f64::NAN, yfinance_rs::core::conversions::money_to_f64);
+    let second_price = second
+        .price
+        .as_ref()
+        .map_or(f64::NAN, yfinance_rs::core::conversions::money_to_f64);
+    assert!(
+        (first_price - second_price).abs() < 1e-9,
+        "price should be unchanged when only volume increases"
+    );
+
+    assert!(
+        second.volume.unwrap_or(0) > 0,
+        "second update should carry positive volume delta when price is unchanged"
+    );
 }

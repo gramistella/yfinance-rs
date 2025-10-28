@@ -555,24 +555,36 @@ async fn run_polling_stream(
                 match crate::core::quotes::fetch_v7_quotes(&client, &symbol_slices, cache_mode, retry_override).await {
                     Ok(quotes) => {
                         for q in quotes {
-                            let lp = q.regular_market_price.or(q.regular_market_previous_close);
-                            if cfg.diff_only {
-                                let symbol = q.symbol.clone().unwrap_or_default();
-                                let prev = last_price.insert(symbol, lp);
-                                if prev == Some(lp) {
-                                    continue;
-                                }
-                            }
-                            let currency_str = q.currency.as_deref();
                             let sym_s = q.symbol.clone().unwrap_or_default();
-                            let vol_delta = q.regular_market_volume.and_then(|cur| {
+                            let lp = q.regular_market_price.or(q.regular_market_previous_close);
+
+                            // Track price changes when diff_only is enabled
+                            let price_changed = if cfg.diff_only {
+                                let prev = last_price.insert(sym_s.clone(), lp);
+                                prev != Some(lp)
+                            } else {
+                                true
+                            };
+
+                            // Compute volume delta and detect changes, including resets (cur < prev)
+                            let (vol_delta, vol_changed) = q.regular_market_volume.map_or((None, false), |cur| {
                                 let prev = last_day_volume.insert(sym_s.clone(), cur);
                                 match prev {
-                                    Some(p) if cur >= p => Some(cur - p),
-                                    // First observation for symbol, or reset: no delta
-                                    _ => None,
+                                    Some(p) if cur >= p => {
+                                        let d = cur - p;
+                                        (Some(d), d > 0)
+                                    }
+                                    Some(p) if cur < p => (None, true), // reset detected
+                                    _ => (None, false),                  // first observation; no delta
                                 }
                             });
+
+                            // With diff_only, emit if either price OR volume changed
+                            if cfg.diff_only && !price_changed && !vol_changed {
+                                continue;
+                            }
+
+                            let currency_str = q.currency.as_deref();
                             let Ok(symbol) = paft::domain::Symbol::new(&sym_s) else { continue };
                             if tx.send(QuoteUpdate {
                                 symbol,
