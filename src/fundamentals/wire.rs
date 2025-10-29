@@ -6,8 +6,10 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct V10Result {
     /* income */
+    #[allow(dead_code)]
     #[serde(rename = "incomeStatementHistory")]
     pub(crate) income_statement_history: Option<IncomeHistoryNode>,
+    #[allow(dead_code)]
     #[serde(rename = "incomeStatementHistoryQuarterly")]
     pub(crate) income_statement_history_quarterly: Option<IncomeHistoryNode>,
 
@@ -20,20 +22,26 @@ pub struct V10Result {
 /* --- income --- */
 #[derive(Deserialize)]
 pub struct IncomeHistoryNode {
+    #[allow(dead_code)]
     #[serde(rename = "incomeStatementHistory")]
     pub(crate) income_statement_history: Option<Vec<IncomeRowNode>>,
 }
 
 #[derive(Deserialize)]
 pub struct IncomeRowNode {
+    #[allow(dead_code)]
     #[serde(rename = "endDate")]
     pub(crate) end_date: Option<RawDate>,
+    #[allow(dead_code)]
     #[serde(rename = "totalRevenue")]
     pub(crate) total_revenue: Option<RawNum<f64>>,
+    #[allow(dead_code)]
     #[serde(rename = "grossProfit")]
     pub(crate) gross_profit: Option<RawNum<f64>>,
+    #[allow(dead_code)]
     #[serde(rename = "operatingIncome")]
     pub(crate) operating_income: Option<RawNum<f64>>,
+    #[allow(dead_code)]
     #[serde(rename = "netIncome")]
     pub(crate) net_income: Option<RawNum<f64>>,
 }

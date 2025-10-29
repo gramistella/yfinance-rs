@@ -6,7 +6,6 @@ use crate::{
         YfClient, YfError,
         client::{CacheMode, RetryConfig},
         conversions::{f64_to_money_with_currency, i64_to_datetime, string_to_period},
-        wire::from_raw,
     },
     fundamentals::wire::{TimeseriesData, TimeseriesEnvelope},
 };
@@ -124,40 +123,79 @@ pub(super) async fn income_statement(
     cache_mode: CacheMode,
     retry_override: Option<&RetryConfig>,
 ) -> Result<Vec<IncomeStatementRow>, YfError> {
-    let modules = if quarterly {
-        "incomeStatementHistoryQuarterly"
-    } else {
-        "incomeStatementHistory"
+    use serde::Deserialize;
+
+    use crate::core::wire::RawNum;
+
+    #[derive(Deserialize)]
+    struct TimeseriesValueF64 {
+        #[serde(rename = "reportedValue")]
+        reported_value: Option<RawNum<f64>>,
+    }
+
+    let keys = [
+        "TotalRevenue",
+        "GrossProfit",
+        "OperatingIncome",
+        "NetIncome",
+    ];
+    let endpoint_name = "income_statement";
+
+    let create_default_row = |period_end: i64| IncomeStatementRow {
+        period: string_to_period(&period_end.to_string()),
+        total_revenue: None,
+        gross_profit: None,
+        operating_income: None,
+        net_income: None,
     };
 
-    let root = fetch_modules(client, symbol, modules, cache_mode, retry_override).await?;
-    let arr = if quarterly {
-        root.income_statement_history_quarterly
-            .and_then(|x| x.income_statement_history)
-    } else {
-        root.income_statement_history
-            .and_then(|x| x.income_statement_history)
-    }
-    .unwrap_or_default();
+    let process_item = |key: &str,
+                        values_json: &serde_json::Value,
+                        rows_map: &mut BTreeMap<i64, IncomeStatementRow>,
+                        timestamps: &[i64],
+                        prefix: &str|
+     -> Result<(), YfError> {
+        if let Ok(values) = serde_json::from_value::<Vec<TimeseriesValueF64>>(values_json.clone()) {
+            for (i, ts) in timestamps.iter().enumerate() {
+                let row = rows_map
+                    .entry(*ts)
+                    .or_insert_with(|| create_default_row(*ts));
 
-    Ok(arr
-        .into_iter()
-        .map(|n| IncomeStatementRow {
-            period: string_to_period(
-                &n.end_date
-                    .map(|d| d.raw.unwrap_or_default().to_string())
-                    .unwrap_or_default(),
-            ),
-            total_revenue: from_raw(n.total_revenue)
-                .map(|v| f64_to_money_with_currency(v, currency.clone())),
-            gross_profit: from_raw(n.gross_profit)
-                .map(|v| f64_to_money_with_currency(v, currency.clone())),
-            operating_income: from_raw(n.operating_income)
-                .map(|v| f64_to_money_with_currency(v, currency.clone())),
-            net_income: from_raw(n.net_income)
-                .map(|v| f64_to_money_with_currency(v, currency.clone())),
-        })
-        .collect())
+                let value = values
+                    .get(i)
+                    .and_then(|v| v.reported_value.and_then(|rv| rv.raw));
+
+                if key == format!("{prefix}TotalRevenue") {
+                    row.total_revenue =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}GrossProfit") {
+                    row.gross_profit =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}OperatingIncome") {
+                    row.operating_income =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}NetIncome") {
+                    row.net_income = value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                }
+            }
+        }
+        Ok(())
+    };
+
+    let result = fetch_timeseries_data(
+        client,
+        symbol,
+        quarterly,
+        cache_mode,
+        retry_override,
+        &keys,
+        endpoint_name,
+        create_default_row,
+        process_item,
+    )
+    .await?;
+
+    Ok(result)
 }
 
 #[allow(clippy::too_many_lines)]
