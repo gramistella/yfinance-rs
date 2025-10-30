@@ -142,7 +142,7 @@ pub(super) async fn income_statement(
     let endpoint_name = "income_statement";
 
     let create_default_row = |period_end: i64| IncomeStatementRow {
-        period: string_to_period(&period_end.to_string()),
+        period: string_to_period(&i64_to_datetime(period_end).format("%Y-%m-%d").to_string()),
         total_revenue: None,
         gross_profit: None,
         operating_income: None,
@@ -234,7 +234,7 @@ pub(super) async fn balance_sheet(
     let endpoint_name = "balance_sheet";
 
     let create_default_row = |period_end: i64| BalanceSheetRow {
-        period: string_to_period(&period_end.to_string()),
+        period: string_to_period(&i64_to_datetime(period_end).format("%Y-%m-%d").to_string()),
         total_assets: None,
         total_liabilities: None,
         total_equity: None,
@@ -336,7 +336,7 @@ pub(super) async fn cashflow(
     let endpoint_name = "cash_flow";
 
     let create_default_row = |period_end: i64| CashflowRow {
-        period: string_to_period(&period_end.to_string()),
+        period: string_to_period(&i64_to_datetime(period_end).format("%Y-%m-%d").to_string()),
         operating_cashflow: None,
         capital_expenditures: None,
         free_cash_flow: None,
