@@ -76,4 +76,8 @@ async fn live_fundamentals_for_record() {
 
     let t5 = yfinance_rs::Ticker::new(&client, "META");
     let _ = t5.calendar().await;
+
+    // Also record annual income statement for TSCO.L used by currency inference offline test
+    let t6 = yfinance_rs::Ticker::new(&client, "TSCO.L");
+    let _ = t6.income_stmt(None).await;
 }

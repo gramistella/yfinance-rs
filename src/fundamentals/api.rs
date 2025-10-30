@@ -498,13 +498,13 @@ pub(super) async fn calendar(
     retry_override: Option<&RetryConfig>,
 ) -> Result<super::Calendar, YfError> {
     let root = fetch_modules(client, symbol, "calendarEvents", cache_mode, retry_override).await?;
-    let c = root
+    let calendar_events = root
         .calendar_events
-        .and_then(|ce| ce.earnings)
-        .ok_or_else(|| YfError::MissingData("calendarEvents.earnings missing".into()))?;
+        .ok_or_else(|| YfError::MissingData("calendarEvents missing".into()))?;
 
-    let earnings_dates = c
-        .earnings_date
+    let earnings_dates = calendar_events
+        .earnings
+        .and_then(|e| e.earnings_date)
         .unwrap_or_default()
         .into_iter()
         .filter_map(|d| d.raw.map(i64_to_datetime))
@@ -512,8 +512,12 @@ pub(super) async fn calendar(
 
     Ok(super::Calendar {
         earnings_dates,
-        ex_dividend_date: c.ex_dividend_date.and_then(|x| x.raw.map(i64_to_datetime)),
-        dividend_payment_date: c.dividend_date.and_then(|x| x.raw.map(i64_to_datetime)),
+        ex_dividend_date: calendar_events
+            .ex_dividend_date
+            .and_then(|x| x.raw.map(i64_to_datetime)),
+        dividend_payment_date: calendar_events
+            .dividend_date
+            .and_then(|x| x.raw.map(i64_to_datetime)),
     })
 }
 

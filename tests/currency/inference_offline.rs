@@ -22,8 +22,8 @@ async fn offline_currency_inference_uses_profile_country() {
         "missing fixture profile_api_assetProfile-quoteType-fundProfile_{symbol}.json"
     );
     assert!(
-        has_fixture("fundamentals_api_incomeStatementHistory", symbol),
-        "missing fixture fundamentals_api_incomeStatementHistory_{symbol}.json"
+        has_fixture("timeseries_income_statement_annual", symbol),
+        "missing fixture timeseries_income_statement_annual_{symbol}.json"
     );
 
     let server = MockServer::start();
@@ -43,16 +43,25 @@ async fn offline_currency_inference_uses_profile_country() {
 
     let fundamentals_mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{symbol}"))
-            .query_param("modules", "incomeStatementHistory")
+            .path(format!(
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}"
+            ))
+            .query_param_exists("type")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api_incomeStatementHistory", symbol));
+            .body(fixture("timeseries_income_statement_annual", symbol));
     });
     let client = YfClient::builder()
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
+        .base_timeseries(
+            Url::parse(&format!(
+                "{}/ws/fundamentals-timeseries/v1/finance/timeseries/",
+                server.base_url()
+            ))
+            .unwrap(),
         )
         ._preauth("cookie", "crumb")
         .build()
@@ -111,8 +120,8 @@ async fn offline_gs2c_dual_listing_currency() {
         "missing fixture profile_api_assetProfile-quoteType-fundProfile_{symbol}.json"
     );
     assert!(
-        has_fixture("fundamentals_api_incomeStatementHistory", symbol),
-        "missing fixture fundamentals_api_incomeStatementHistory_{symbol}.json"
+        has_fixture("timeseries_income_statement_annual", symbol),
+        "missing fixture timeseries_income_statement_annual_{symbol}.json"
     );
     assert!(
         has_fixture("history_chart", symbol),
@@ -145,12 +154,14 @@ async fn offline_gs2c_dual_listing_currency() {
 
     let fundamentals_mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{symbol}"))
-            .query_param("modules", "incomeStatementHistory")
+            .path(format!(
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}"
+            ))
+            .query_param_exists("type")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture("fundamentals_api_incomeStatementHistory", symbol));
+            .body(fixture("timeseries_income_statement_annual", symbol));
     });
 
     let chart_mock = server.mock(|when, then| {
@@ -164,6 +175,13 @@ async fn offline_gs2c_dual_listing_currency() {
         .base_quote_v7(Url::parse(&format!("{}/v7/finance/quote", server.base_url())).unwrap())
         .base_quote_api(
             Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
+        .base_timeseries(
+            Url::parse(&format!(
+                "{}/ws/fundamentals-timeseries/v1/finance/timeseries/",
+                server.base_url()
+            ))
+            .unwrap(),
         )
         .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
         ._api_preference(ApiPreference::ApiOnly)

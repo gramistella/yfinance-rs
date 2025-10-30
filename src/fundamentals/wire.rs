@@ -91,6 +91,10 @@ pub struct EpsQuarterNode {
 #[derive(Deserialize)]
 pub struct CalendarEventsNode {
     pub(crate) earnings: Option<CalendarEarningsNode>,
+    #[serde(rename = "exDividendDate")]
+    pub(crate) ex_dividend_date: Option<RawDate>,
+    #[serde(rename = "dividendDate")]
+    pub(crate) dividend_date: Option<RawDate>,
 }
 
 #[derive(Deserialize)]
@@ -98,10 +102,6 @@ pub struct CalendarEventsNode {
 pub struct CalendarEarningsNode {
     #[serde(rename = "earningsDate")]
     pub(crate) earnings_date: Option<Vec<RawDate>>,
-    #[serde(rename = "exDividendDate")]
-    pub(crate) ex_dividend_date: Option<RawDate>,
-    #[serde(rename = "dividendDate")]
-    pub(crate) dividend_date: Option<RawDate>,
 }
 
 #[derive(Deserialize)]

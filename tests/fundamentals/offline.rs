@@ -17,22 +17,24 @@ async fn offline_income_quarterly_uses_recorded_fixture() {
 
     let mock = server.mock(|when, then| {
         when.method(GET)
-            .path(format!("/v10/finance/quoteSummary/{sym}"))
-            .query_param("modules", "incomeStatementHistoryQuarterly")
+            .path(format!(
+                "/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
+            ))
+            .query_param_exists("type")
             .query_param("crumb", "crumb");
         then.status(200)
             .header("content-type", "application/json")
-            .body(fixture(
-                "fundamentals_api_incomeStatementHistoryQuarterly",
-                sym,
-            ));
+            .body(fixture("timeseries_income_statement_quarterly", sym));
     });
 
     let client = YfClient::builder()
-        .base_quote_api(
-            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        .base_timeseries(
+            Url::parse(&format!(
+                "{}/ws/fundamentals-timeseries/v1/finance/timeseries/",
+                server.base_url()
+            ))
+            .unwrap(),
         )
-        ._api_preference(ApiPreference::ApiOnly)
         ._preauth("cookie", "crumb")
         .build()
         .unwrap();
