@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.7.2] - 2025-10-31
+
+### Dependencies
+
+- Bump `paft` to `v0.7.1`.
+
+### Note
+
+Yahoo Finance appears to have removed or relocated the ESG data endpoint. As a result, `ticker.sustainability()` currently panics during normal usage and live testing. This issue is under investigation.
+
 ## [0.7.1] - 2025-10-30
 
 ### Fixed
@@ -306,6 +316,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Analysis tools: `recommendations`, `sustainability`, `major_holders`, `institutional_holders`.
 - Utilities: `DownloadBuilder`, `StreamBuilder`, `SearchBuilder`.
 
+[0.7.2]: https://github.com/gramistella/yfinance-rs/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/gramistella/yfinance-rs/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/gramistella/yfinance-rs/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/gramistella/yfinance-rs/compare/v0.6.0...v0.6.1
