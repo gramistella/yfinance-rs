@@ -37,8 +37,10 @@ mod wire_ws {
 // Volume semantics:
 // - Yahoo sends cumulative intraday volume (`day_volume`). This crate converts it into
 //   per-update deltas when producing `QuoteUpdate`s.
-// - For each symbol, the first observed tick (or after a detected reset where current < last)
-//   has `volume = None` (no delta yet). Subsequent ticks set `volume = Some(current - last)`.
+// - For each symbol, the first observed tick has `volume = None` (no delta yet).
+// - On normal progression, `volume = Some(current - last)`.
+// - On a detected reset (e.g., midnight rollover where `current < last`), emit the current
+//   reading as the first delta of the new session: `volume = Some(current)`.
 // - This applies to both WebSocket and Polling streams. The JSON/base64 decoder helper
 //   (`decode_and_map_message`) is stateless and always returns `volume = None`.
 //
@@ -442,7 +444,9 @@ fn map_ws_pricing_to_update_with_delta(
     let prev_vol = last_vol.get(&ticker.id).copied();
     let volume = match prev_vol {
         Some(p) if cur_vol >= p => Some(cur_vol - p),
-        // First observation or reset forward in time → no delta
+        // Reset detected (e.g., midnight rollover): treat current as first delta
+        Some(p) if cur_vol < p => Some(cur_vol),
+        // First observation → no delta yet
         _ => None,
     };
 
@@ -574,8 +578,11 @@ async fn run_polling_stream(
                                         let d = cur - p;
                                         (Some(d), d > 0)
                                     }
-                                    Some(p) if cur < p => (None, true), // reset detected
-                                    _ => (None, false),                  // first observation; no delta
+                                    // Reset detected: emit current as first delta of new session
+                                    Some(p) if cur < p => {
+                                        (Some(cur), cur > 0)
+                                    }
+                                    _ => (None, false), // first observation; no delta
                                 }
                             });
 
