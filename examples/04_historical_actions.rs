@@ -1,4 +1,5 @@
 use chrono::{Duration, Utc};
+use paft::domain::IdentifierScheme;
 use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::core::{Interval, Range};
 use yfinance_rs::{DownloadBuilder, Ticker, YfClient};
@@ -44,14 +45,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     for entry in &results.entries {
-        let symbol = entry.instrument.symbol();
-        let candles = &entry.history.candles;
-        println!("- {} ({} candles)", symbol, candles.len());
-        if let Some(first_candle) = candles.first() {
-            println!("  First Open: ${:.2}", money_to_f64(&first_candle.open));
-        }
-        if let Some(last_candle) = candles.last() {
-            println!("  Last Close: ${:.2}", money_to_f64(&last_candle.close));
+        match entry.instrument.id() {
+            IdentifierScheme::Security(s) => {
+                let symbol = &s.symbol;
+                let candles = &entry.history.candles;
+                println!("- {:?} ({} candles)", symbol, candles.len());
+                if let Some(first_candle) = candles.first() {
+                    println!("  First Open: ${:.2}", money_to_f64(&first_candle.open));
+                }
+                if let Some(last_candle) = candles.last() {
+                    println!("  Last Close: ${:.2}", money_to_f64(&last_candle.close));
+                }
+            }
+            IdentifierScheme::Prediction(_) => {
+                println!("Unsupported instrument: {:?}", entry.instrument.id());
+            }
         }
     }
     println!("--------------------------------------");

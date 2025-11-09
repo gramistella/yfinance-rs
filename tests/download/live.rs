@@ -1,3 +1,5 @@
+use paft::domain::IdentifierScheme;
+
 #[tokio::test]
 #[ignore = "exercise live Yahoo Finance API"]
 async fn live_download_smoke() {
@@ -16,12 +18,18 @@ async fn live_download_smoke() {
         let aapl = res
             .entries
             .iter()
-            .find(|e| e.instrument.symbol_str() == "AAPL")
+            .find(|e| match e.instrument.id() {
+                IdentifierScheme::Security(s) => s.symbol.as_ref() == "AAPL",
+                IdentifierScheme::Prediction(_) => false,
+            })
             .unwrap();
         let msft = res
             .entries
             .iter()
-            .find(|e| e.instrument.symbol_str() == "MSFT")
+            .find(|e| match e.instrument.id() {
+                IdentifierScheme::Security(s) => s.symbol.as_ref() == "MSFT",
+                IdentifierScheme::Prediction(_) => false,
+            })
             .unwrap();
         assert!(!aapl.history.candles.is_empty());
         assert!(!msft.history.candles.is_empty());

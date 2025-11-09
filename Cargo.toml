@@ -27,7 +27,7 @@ futures-util = "0.3"
 prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.51", default-features = false, optional = true }
-paft = { version = "0.7.1", features = ["market", "fundamentals", "domain", "aggregates"]}
+paft = { git = "https://github.com/paft-rs/paft", rev = "50afe29a76062f55ee995093a2e127ce6b70255b", features = ["market", "fundamentals", "domain", "aggregates"]}
 rust_decimal = "1.36"
 tracing = { version = "0.1", optional = true }
 

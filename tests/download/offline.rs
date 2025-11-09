@@ -3,6 +3,7 @@ use httpmock::MockServer;
 use url::Url;
 
 use crate::common;
+use paft::domain::IdentifierScheme;
 use yfinance_rs::core::conversions::*;
 use yfinance_rs::core::{Interval, Range};
 use yfinance_rs::{DownloadBuilder, YfClient};
@@ -65,7 +66,10 @@ async fn download_multi_symbols_happy_path() {
     let keys: Vec<_> = res
         .entries
         .iter()
-        .map(|e| e.instrument.symbol_str().to_string())
+        .map(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref().to_string(),
+            IdentifierScheme::Prediction(_) => String::new(),
+        })
         .collect();
     assert!(keys.iter().any(|s| s == "AAPL"));
     assert!(keys.iter().any(|s| s == "MSFT"));
@@ -128,12 +132,18 @@ async fn download_between_params_applied_to_all_symbols() {
     let aapl = res
         .entries
         .iter()
-        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .find(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref() == "AAPL",
+            IdentifierScheme::Prediction(_) => false,
+        })
         .unwrap();
     let msft = res
         .entries
         .iter()
-        .find(|e| e.instrument.symbol_str() == "MSFT")
+        .find(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref() == "MSFT",
+            IdentifierScheme::Prediction(_) => false,
+        })
         .unwrap();
     assert!(!aapl.history.candles.is_empty());
     assert!(!msft.history.candles.is_empty());
@@ -203,14 +213,20 @@ async fn download_back_adjust_offline() {
     let a = &adj
         .entries
         .iter()
-        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .find(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref() == "AAPL",
+            IdentifierScheme::Prediction(_) => false,
+        })
         .unwrap()
         .history
         .candles;
     let b = &back
         .entries
         .iter()
-        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .find(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref() == "AAPL",
+            IdentifierScheme::Prediction(_) => false,
+        })
         .unwrap()
         .history
         .candles;
@@ -284,14 +300,20 @@ async fn download_repair_is_noop_on_clean_data_offline() {
     let a = &base_run
         .entries
         .iter()
-        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .find(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref() == "AAPL",
+            IdentifierScheme::Prediction(_) => false,
+        })
         .unwrap()
         .history
         .candles;
     let b = &repair_run
         .entries
         .iter()
-        .find(|e| e.instrument.symbol_str() == "AAPL")
+        .find(|e| match e.instrument.id() {
+            IdentifierScheme::Security(s) => s.symbol.as_ref() == "AAPL",
+            IdentifierScheme::Prediction(_) => false,
+        })
         .unwrap()
         .history
         .candles;
