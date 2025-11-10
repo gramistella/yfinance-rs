@@ -28,7 +28,7 @@ prost = "0.14"
 base64 = "0.22"
 polars = { version = "0.51", default-features = false, optional = true }
 #paft = { path = "../paft-workspace/paft", features = ["market", "fundamentals", "domain", "aggregates"]}
-paft = { git = "https://github.com/paft-rs/paft", rev = "dc02e8c0512d662953b94a6b095b9801eb9897e0", features = ["market", "fundamentals", "domain", "aggregates"] }
+paft = { git = "https://github.com/paft-rs/paft", rev = "226fb6cff4e7eff2f411702120fd0940f99383ad", features = ["market", "fundamentals", "domain", "aggregates"] }
 rust_decimal = "1.36"
 tracing = { version = "0.1", optional = true }
 
