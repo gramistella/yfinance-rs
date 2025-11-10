@@ -27,13 +27,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let quote1 = aapl.quote().await?;
     println!(
         "First fetch for {}: ${:.2} (from network)",
-        quote1.symbol,
+        quote1.instrument,
         quote1.price.as_ref().map(money_to_f64).unwrap_or_default()
     );
     let quote2 = aapl.quote().await?;
     println!(
         "Second fetch for {}: ${:.2} (should be from cache)",
-        quote2.symbol,
+        quote2.instrument,
         quote2.price.as_ref().map(money_to_f64).unwrap_or_default()
     );
     println!();
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let quote3 = aapl.quote().await?;
     println!(
         "Third fetch for {}: ${:.2} (from network again)",
-        quote3.symbol,
+        quote3.instrument,
         quote3.price.as_ref().map(money_to_f64).unwrap_or_default()
     );
     println!();

@@ -19,7 +19,12 @@ async fn live_info_smoke_and_or_record() {
 
     if !crate::common::is_recording() {
         // Basic sanity checks for live mode
-        assert_eq!(info.symbol.as_str(), "MSFT");
+        match info.instrument.id() {
+            paft::domain::IdentifierScheme::Security(s) => assert_eq!(s.symbol.as_str(), "MSFT"),
+            paft::domain::IdentifierScheme::Prediction(_) => {
+                panic!("unexpected instrument identifier scheme")
+            }
+        }
         assert!(info.last.is_some(), "Expected a market price for MSFT");
     }
 }

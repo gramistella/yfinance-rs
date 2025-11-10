@@ -7,7 +7,7 @@ async fn check_fast_info(ticker: &Ticker, expected_currency: &str) {
     println!("  📈 Quote/Fast Info:");
     match ticker.fast_info().await {
         Ok(fi) => {
-            println!("    Symbol: {}", fi.symbol);
+            println!("    Instrument: {}", fi.instrument);
             println!("    Last Price: {:?}", fi.last.as_ref().map(money_to_f64));
             println!(
                 "    Currency: {:?}",
@@ -47,7 +47,7 @@ async fn check_comprehensive_info(ticker: &Ticker, expected_currency: &str) {
     println!("  📋 Comprehensive Info:");
     match ticker.info().await {
         Ok(info) => {
-            println!("    Symbol: {}", info.symbol);
+            println!("    Instrument: {}", info.instrument);
             println!(
                 "    Last Price: {:?}",
                 info.last

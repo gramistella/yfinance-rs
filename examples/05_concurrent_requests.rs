@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .unwrap_or_default();
                 println!(
                     "Symbol: {}, Name: {}, Price: {:.2}{}",
-                    info.symbol,
+                    info.instrument,
                     info.name.unwrap_or_default(),
                     info.last.as_ref().map_or(0.0, money_to_f64),
                     vol
@@ -57,24 +57,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     println!();
 
-    println!("--- Fetching ESG and holder data for MSFT ---");
+    println!("--- Fetching holder data for MSFT ---");
     let msft_ticker = Ticker::new(&client, "MSFT");
-    let esg_summary = msft_ticker.sustainability().await?;
-    let parts = esg_summary
-        .scores
-        .map_or([None, None, None], |s| {
-            [s.environmental, s.social, s.governance]
-        })
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
-    let total_esg = if parts.is_empty() {
-        0.0
-    } else {
-        let denom: f64 = u32::try_from(parts.len()).map(f64::from).unwrap_or(1.0);
-        parts.iter().sum::<f64>() / denom
-    };
-    println!("MSFT Total ESG Score: {total_esg:.2}");
+    // let esg_summary = msft_ticker.sustainability().await?;
+    // let parts = esg_summary
+    //     .scores
+    //     .map_or([None, None, None], |s| {
+    //         [s.environmental, s.social, s.governance]
+    //     })
+    //     .into_iter()
+    //     .flatten()
+    //     .collect::<Vec<_>>();
+    // let total_esg = if parts.is_empty() {
+    //     0.0
+    // } else {
+    //     let denom: f64 = u32::try_from(parts.len()).map(f64::from).unwrap_or(1.0);
+    //     parts.iter().sum::<f64>() / denom
+    // };
+    // println!("MSFT Total ESG Score: {total_esg:.2}");
     let institutional_holders = msft_ticker.institutional_holders().await?;
     if let Some(holder) = institutional_holders.first() {
         println!(
@@ -89,12 +89,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(sp500_quote) = search_results
         .results
         .iter()
-        .find(|q| q.symbol.as_str() == "SPY")
+        .find(|q| matches!(q.instrument.id(), paft::domain::IdentifierScheme::Security(s) if s.symbol.as_str() == "SPY"))
     {
         println!(
             "Found: {} ({})",
             sp500_quote.name.as_deref().unwrap_or("N/A"),
-            sp500_quote.symbol
+            sp500_quote.instrument
         );
     }
     println!();

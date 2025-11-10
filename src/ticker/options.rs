@@ -15,6 +15,7 @@ use paft::money::Currency;
 
 use super::model::{OptionChain, OptionContract};
 use chrono::{NaiveDate, TimeZone, Utc};
+use paft::domain::{AssetKind, Instrument};
 
 /* ---------------- Public: expirations + chain ---------------- */
 
@@ -97,7 +98,7 @@ pub async fn option_chain(
             .into_iter()
             .filter_map(|c| {
                 let sym = c.contract_symbol.as_deref().unwrap_or("");
-                let Ok(contract_symbol) = paft::domain::Symbol::new(sym) else {
+                let Ok(instrument) = Instrument::from_symbol(sym, AssetKind::Option) else {
                     return None;
                 };
 
@@ -106,7 +107,7 @@ pub async fn option_chain(
                 let exp_date: NaiveDate = exp_dt.date_naive();
 
                 Some(OptionContract {
-                    contract_symbol,
+                    instrument,
                     strike: f64_to_money_with_currency(c.strike.unwrap_or(0.0), currency.clone()),
                     price: c
                         .last_price

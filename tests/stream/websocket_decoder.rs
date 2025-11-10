@@ -1,4 +1,5 @@
 use super::common;
+use paft::domain::IdentifierScheme;
 
 #[test]
 fn decode_real_websocket_message() {
@@ -6,7 +7,12 @@ fn decode_real_websocket_message() {
     let update = yfinance_rs::stream::decode_and_map_message(&base64_msg).unwrap();
 
     // Generic assertions, as the symbol/price will change with each recording
-    assert!(!update.symbol.is_empty(), "symbol should not be empty");
+    match update.instrument.id() {
+        IdentifierScheme::Security(s) => {
+            assert!(!s.symbol.is_empty(), "symbol should not be empty");
+        }
+        IdentifierScheme::Prediction(_) => panic!("unexpected instrument identifier scheme"),
+    }
     assert!(update.price.is_some(), "price should be present");
     assert!(
         update

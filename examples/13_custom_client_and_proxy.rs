@@ -22,7 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ticker = Ticker::new(&client_with_custom, "AAPL");
     match ticker.quote().await {
-        Ok(quote) => println!("   Fetched quote for {} using custom client", quote.symbol),
+        Ok(quote) => println!(
+            "   Fetched quote for {} using custom client",
+            quote.instrument
+        ),
         Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
@@ -43,7 +46,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ticker = Ticker::new(&client_with_timeout, "MSFT");
     match ticker.quote().await {
-        Ok(quote) => println!("   Fetched quote for {} with custom timeout", quote.symbol),
+        Ok(quote) => println!(
+            "   Fetched quote for {} with custom timeout",
+            quote.instrument
+        ),
         Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
@@ -64,7 +70,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ticker = Ticker::new(&client_with_retry, "GOOGL");
     match ticker.quote().await {
-        Ok(quote) => println!("   Fetched quote for {} with retry enabled", quote.symbol),
+        Ok(quote) => println!(
+            "   Fetched quote for {} with retry enabled",
+            quote.instrument
+        ),
         Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }
     println!();
@@ -88,7 +97,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match ticker.quote().await {
         Ok(quote) => println!(
             "   Fetched quote for {} with advanced client config",
-            quote.symbol
+            quote.instrument
         ),
         Err(e) => println!("   Rate limited or error fetching quote: {e}"),
     }

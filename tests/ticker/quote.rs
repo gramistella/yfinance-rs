@@ -42,7 +42,12 @@ async fn quote_v7_happy_path() {
     let q = ticker.quote().await.unwrap();
     mock.assert();
 
-    assert_eq!(q.symbol.as_str(), "AAPL");
+    match q.instrument.id() {
+        paft::domain::IdentifierScheme::Security(s) => assert_eq!(s.symbol.as_str(), "AAPL"),
+        paft::domain::IdentifierScheme::Prediction(_) => {
+            panic!("unexpected instrument identifier scheme")
+        }
+    }
     assert_eq!(
         q.exchange.as_ref().map(std::string::ToString::to_string),
         Some("NASDAQ".to_string())
@@ -95,7 +100,12 @@ async fn fast_info_derives_last_price() {
     let fi = ticker.fast_info().await.unwrap();
     mock.assert();
 
-    assert_eq!(fi.symbol.as_str(), "MSFT");
+    match fi.instrument.id() {
+        paft::domain::IdentifierScheme::Security(s) => assert_eq!(s.symbol.as_str(), "MSFT"),
+        paft::domain::IdentifierScheme::Prediction(_) => {
+            panic!("unexpected instrument identifier scheme")
+        }
+    }
     assert!(fi.last.is_none());
     assert!(
         (money_to_f64(&fi.previous_close.unwrap()) - 421.00).abs() < 1e-9,
@@ -127,6 +137,11 @@ async fn live_quote_smoke() {
 
     if std::env::var("YF_RECORD").ok().as_deref() != Some("1") {
         assert!(money_to_f64(&fi.last.unwrap()) > 0.0);
-        assert_eq!(fi.symbol.as_str(), "AAPL");
+        match fi.instrument.id() {
+            paft::domain::IdentifierScheme::Security(s) => assert_eq!(s.symbol.as_str(), "AAPL"),
+            paft::domain::IdentifierScheme::Prediction(_) => {
+                panic!("unexpected instrument identifier scheme")
+            }
+        }
     }
 }

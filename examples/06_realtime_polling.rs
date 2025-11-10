@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "[{}] {} @ {:.2} {}",
                 update.ts,
-                update.symbol,
+                update.instrument,
                 update
                     .price
                     .as_ref()

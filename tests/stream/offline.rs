@@ -1,3 +1,4 @@
+use paft::domain::IdentifierScheme;
 use tokio::time::{Duration, timeout};
 use url::Url;
 use yfinance_rs::StreamMethod;
@@ -38,7 +39,10 @@ async fn stream_websocket_fallback_to_polling_offline() {
         .expect("timed out waiting for cached stream update")
         .expect("stream closed without emitting an update");
 
-    assert_eq!(update.symbol.as_str(), "AAPL");
+    match update.instrument.id() {
+        IdentifierScheme::Security(s) => assert_eq!(s.symbol.as_str(), "AAPL"),
+        IdentifierScheme::Prediction(_) => panic!("unexpected instrument identifier scheme"),
+    }
     assert!(
         update
             .price

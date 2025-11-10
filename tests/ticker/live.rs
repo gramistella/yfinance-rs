@@ -12,7 +12,12 @@ async fn live_ticker_quote_for_record() {
         let q = t.quote().await.unwrap();
 
         if !crate::common::is_recording() {
-            assert_eq!(q.symbol.as_str(), sym);
+            match q.instrument.id() {
+                paft::domain::IdentifierScheme::Security(s) => assert_eq!(s.symbol.as_str(), sym),
+                paft::domain::IdentifierScheme::Prediction(_) => {
+                    panic!("unexpected instrument identifier scheme")
+                }
+            }
             assert!(q.price.is_some() || q.previous_close.is_some());
         }
     }

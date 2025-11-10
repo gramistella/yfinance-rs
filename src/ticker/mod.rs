@@ -150,7 +150,7 @@ impl Ticker {
     pub async fn fast_info(&self) -> Result<FastInfo, YfError> {
         let q = self.quote().await?;
         Ok(FastInfo {
-            symbol: q.symbol,
+            instrument: q.instrument,
             name: q.shortname.clone(),
             exchange: q.exchange,
             market_state: q.market_state,

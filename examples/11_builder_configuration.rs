@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let quote_no_cache = aapl.quote().await?;
     println!(
         "  Fetched {} quote, bypassing the client's cache.",
-        quote_no_cache.symbol
+        quote_no_cache.instrument
     );
     println!();
 
@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for quote in search_results.results {
         println!(
             "    - {} ({})",
-            quote.symbol,
+            quote.instrument,
             quote.name.unwrap_or_default()
         );
     }
@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let goog_info = goog.fast_info().await?;
     println!(
         "  Fetched fast info for {} with a custom retry policy.",
-        goog_info.symbol
+        goog_info.instrument
     );
 
     Ok(())

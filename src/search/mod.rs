@@ -1,4 +1,4 @@
-use paft::domain::{AssetKind, Exchange};
+use paft::domain::{AssetKind, Exchange, Instrument};
 use paft::market::responses::search::{SearchResponse, SearchResult};
 use serde::Deserialize;
 use url::Url;
@@ -15,17 +15,26 @@ fn parse_search_body(body: &str) -> Result<SearchResponse, YfError> {
         .into_iter()
         .filter_map(|q| {
             let sym = q.symbol.unwrap_or_default();
-            paft::domain::Symbol::try_from(sym)
-                .ok()
-                .map(|symbol| SearchResult {
-                    symbol,
-                    name: q.shortname.or(q.longname),
-                    exchange: q.exchange.and_then(|s| s.parse::<Exchange>().ok()),
-                    kind: q
-                        .quote_type
-                        .and_then(|s| s.parse::<AssetKind>().ok())
-                        .unwrap_or_default(),
-                })
+            let exchange_opt = q.exchange.and_then(|s| s.parse::<Exchange>().ok());
+            let kind = q
+                .quote_type
+                .and_then(|s| s.parse::<AssetKind>().ok())
+                .unwrap_or_default();
+
+            let instrument = exchange_opt
+                .clone()
+                .map_or_else(
+                    || Instrument::from_symbol(&sym, kind),
+                    |ex| Instrument::from_symbol_and_exchange(&sym, ex, kind),
+                )
+                .ok()?;
+
+            Some(SearchResult {
+                instrument,
+                name: q.shortname.or(q.longname),
+                exchange: exchange_opt,
+                kind,
+            })
         })
         .collect();
 

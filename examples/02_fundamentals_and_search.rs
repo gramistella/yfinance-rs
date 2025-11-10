@@ -95,7 +95,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let name = quote.name.unwrap_or_default();
         let exchange = quote.exchange.map(|e| e.to_string()).unwrap_or_default();
         let kind = quote.kind.to_string();
-        println!("  - {}: {} ({}) on {}", quote.symbol, name, kind, exchange);
+        println!(
+            "  - {}: {} ({}) on {}",
+            quote.instrument, name, kind, exchange
+        );
     }
     println!("--------------------------------------");
 

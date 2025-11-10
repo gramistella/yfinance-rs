@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_default();
     println!(
         "  {}: ${:.2} (prev_close: ${:.2}){}",
-        quote.symbol,
+        quote.instrument,
         quote.price.as_ref().map(money_to_f64).unwrap_or_default(),
         quote
             .previous_close

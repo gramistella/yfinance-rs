@@ -111,7 +111,7 @@ async fn section_search(client: &yfinance_rs::YfClient) -> Result<(), Box<dyn st
             for quote in results.results.iter().take(5) {
                 println!(
                     "  - {} ({}) : {}",
-                    quote.symbol,
+                    quote.instrument,
                     quote.kind,
                     quote.name.as_deref().unwrap_or("N/A")
                 );

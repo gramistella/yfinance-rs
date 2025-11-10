@@ -1615,7 +1615,7 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 [[package]]
 name = "paft"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "iso_currency",
  "paft-aggregates",
@@ -1632,7 +1632,7 @@ dependencies = [
 [[package]]
 name = "paft-aggregates"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1648,7 +1648,7 @@ dependencies = [
 [[package]]
 name = "paft-core"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "chrono",
  "serde",
@@ -1658,7 +1658,7 @@ dependencies = [
 [[package]]
 name = "paft-domain"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1674,7 +1674,7 @@ dependencies = [
 [[package]]
 name = "paft-fundamentals"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1691,7 +1691,7 @@ dependencies = [
 [[package]]
 name = "paft-market"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "bitflags",
  "chrono",
@@ -1710,7 +1710,7 @@ dependencies = [
 [[package]]
 name = "paft-money"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "df-derive",
  "iso_currency",
@@ -1724,7 +1724,7 @@ dependencies = [
 [[package]]
 name = "paft-prediction"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "chrono",
  "df-derive",
@@ -1739,7 +1739,7 @@ dependencies = [
 [[package]]
 name = "paft-utils"
 version = "0.8.0"
-source = "git+https://github.com/paft-rs/paft?rev=50afe29a76062f55ee995093a2e127ce6b70255b#50afe29a76062f55ee995093a2e127ce6b70255b"
+source = "git+https://github.com/paft-rs/paft?rev=dc02e8c0512d662953b94a6b095b9801eb9897e0#dc02e8c0512d662953b94a6b095b9801eb9897e0"
 dependencies = [
  "polars",
  "thiserror",

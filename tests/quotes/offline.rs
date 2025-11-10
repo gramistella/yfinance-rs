@@ -30,7 +30,13 @@ async fn offline_multi_quotes_uses_recorded_fixture() {
         .unwrap();
 
     // Sanity against the recorded fixture
-    let syms: Vec<_> = quotes.iter().map(|q| q.symbol.as_str()).collect();
+    let syms: Vec<_> = quotes
+        .iter()
+        .filter_map(|q| match q.instrument.id() {
+            paft::domain::IdentifierScheme::Security(s) => Some(s.symbol.as_str()),
+            paft::domain::IdentifierScheme::Prediction(_) => None,
+        })
+        .collect();
     assert!(syms.contains(&"AAPL"));
     assert!(syms.contains(&"MSFT"));
 }

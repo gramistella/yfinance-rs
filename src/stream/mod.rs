@@ -22,6 +22,7 @@ use crate::{
     core::client::{CacheMode, RetryConfig},
     core::conversions::f64_to_money_with_currency_str,
 };
+use paft::domain::{AssetKind, Instrument};
 use paft::market::quote::QuoteUpdate;
 
 // Yahoo Finance websocket wire types (generated from `yaticker.proto`).
@@ -326,7 +327,7 @@ async fn run_websocket_stream(
 
                         match decode_ws_pricing(&text) {
                             Ok(ticker) => {
-                                if let Some(update) = map_ws_pricing_to_update_with_delta(&ticker, &mut last_day_volume, &mut last_ts)
+                                if let Some(update) = map_ws_pricing_to_update_with_delta(client, &ticker, &mut last_day_volume, &mut last_ts).await
                                     && tx.send(update).await.is_err() { break; }
                             },
                             Err(e) => {
@@ -341,7 +342,7 @@ async fn run_websocket_stream(
                         // Try to interpret as UTF-8 JSON-wrapped base64 first
                         let handled = if let Ok(as_text) = std::str::from_utf8(&bin) {
                             if let Ok(ticker) = decode_ws_pricing(as_text) {
-                                if let Some(update) = map_ws_pricing_to_update_with_delta(&ticker, &mut last_day_volume, &mut last_ts)
+                                if let Some(update) = map_ws_pricing_to_update_with_delta(client, &ticker, &mut last_day_volume, &mut last_ts).await
                                     && tx.send(update).await.is_err() { break; }
                                 true
                             } else { false }
@@ -350,7 +351,7 @@ async fn run_websocket_stream(
                         if !handled {
                             match wire_ws::PricingData::decode(&*bin) {
                                 Ok(ticker) => {
-                                    if let Some(update) = map_ws_pricing_to_update_with_delta(&ticker, &mut last_day_volume, &mut last_ts)
+                                    if let Some(update) = map_ws_pricing_to_update_with_delta(client, &ticker, &mut last_day_volume, &mut last_ts).await
                                         && tx.send(update).await.is_err() { break; }
                                 }
                                 Err(e) => {
@@ -396,20 +397,31 @@ fn decode_ws_pricing(text: &str) -> Result<wire_ws::PricingData, YfError> {
     Ok(ticker)
 }
 
-fn map_ws_pricing_to_update_with_delta(
+async fn map_ws_pricing_to_update_with_delta(
+    client: &YfClient,
     ticker: &wire_ws::PricingData,
     last_vol: &mut std::collections::HashMap<String, u64>,
     last_ts: &mut std::collections::HashMap<String, DateTime<Utc>>,
 ) -> Option<QuoteUpdate> {
     let currency_str = Some(ticker.currency.as_str());
-    let Ok(symbol) = paft::domain::Symbol::new(&ticker.id) else {
-        if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
-            eprintln!(
-                "YF_DEBUG(stream): skipping ws update with invalid symbol: {}",
-                ticker.id
-            );
+    let instrument = if let Some(inst) = client.cached_instrument(&ticker.id).await {
+        inst
+    } else {
+        let kind = AssetKind::Equity;
+        if let Ok(inst) = Instrument::from_symbol(&ticker.id, kind) {
+            client
+                .store_instrument(ticker.id.clone(), inst.clone())
+                .await;
+            inst
+        } else {
+            if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
+                eprintln!(
+                    "YF_DEBUG(stream): skipping ws update with invalid symbol: {}",
+                    ticker.id
+                );
+            }
+            return None;
         }
-        return None;
     };
     let Some(timestamp) = DateTime::from_timestamp_millis(ticker.time) else {
         if std::env::var("YF_DEBUG").ok().as_deref() == Some("1") {
@@ -426,7 +438,7 @@ fn map_ws_pricing_to_update_with_delta(
         && timestamp < *prev_ts
     {
         return Some(QuoteUpdate {
-            symbol,
+            instrument,
             price: Some(f64_to_money_with_currency_str(
                 f64::from(ticker.price),
                 currency_str,
@@ -455,7 +467,7 @@ fn map_ws_pricing_to_update_with_delta(
     last_vol.insert(ticker.id.clone(), cur_vol);
 
     Some(QuoteUpdate {
-        symbol,
+        instrument,
         price: Some(f64_to_money_with_currency_str(
             f64::from(ticker.price),
             currency_str,
@@ -498,7 +510,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
         .map_err(YfError::Base64)?;
     let ticker = wire_ws::PricingData::decode(&*decoded)?;
     let currency_str = Some(ticker.currency.as_str());
-    let symbol = paft::domain::Symbol::new(&ticker.id)
+    let instrument = Instrument::from_symbol(&ticker.id, AssetKind::Equity)
         .map_err(|_| YfError::InvalidParams(format!("ws symbol invalid: {}", ticker.id)))?;
 
     let Some(timestamp) = DateTime::from_timestamp_millis(ticker.time) else {
@@ -519,7 +531,7 @@ pub fn decode_and_map_message(text: &str) -> Result<QuoteUpdate, YfError> {
     };
 
     Ok(QuoteUpdate {
-        symbol,
+        instrument,
         price: Some(f64_to_money_with_currency_str(
             f64::from(ticker.price),
             currency_str,
@@ -592,9 +604,20 @@ async fn run_polling_stream(
                             }
 
                             let currency_str = q.currency.as_deref();
-                            let Ok(symbol) = paft::domain::Symbol::new(&sym_s) else { continue };
+                            let instrument = if let Some(inst) = client.cached_instrument(&sym_s).await {
+                                inst
+                            } else {
+                                let kind = AssetKind::Equity;
+                                match Instrument::from_symbol(&sym_s, kind) {
+                                    Ok(inst) => {
+                                        client.store_instrument(sym_s.clone(), inst.clone()).await;
+                                        inst
+                                    }
+                                    Err(_) => continue,
+                                }
+                            };
                             if tx.send(QuoteUpdate {
-                                symbol,
+                                instrument,
                                 price: lp.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 previous_close: q.regular_market_previous_close.map(|v| f64_to_money_with_currency_str(v, currency_str)),
                                 ts,

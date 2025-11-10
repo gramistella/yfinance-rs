@@ -27,7 +27,7 @@ async fn main() -> Result<(), YfError> {
 async fn section_info(client: &YfClient) -> Result<(), YfError> {
     let msft = Ticker::new(client, "MSFT");
     let info = msft.info().await?;
-    println!("--- Ticker Info for {} ---", info.symbol);
+    println!("--- Ticker Info for {} ---", info.instrument);
     println!("Name: {}", info.name.unwrap_or_default());
     println!(
         "Last Price: ${:.2}",
@@ -61,7 +61,7 @@ async fn section_fast_info(client: &YfClient) -> Result<(), YfError> {
         .expect("last or previous_close present");
     println!(
         "{} is trading at ${:.2} in {}",
-        fast_info.symbol,
+        fast_info.instrument,
         yfinance_rs::core::conversions::money_to_f64(&price_money),
         fast_info
             .exchange
@@ -85,7 +85,7 @@ async fn section_batch_quotes(client: &YfClient) -> Result<(), YfError> {
             .unwrap_or_default();
         println!(
             "  {}: ${:.2}{}",
-            quote.symbol,
+            quote.instrument,
             quote.price.as_ref().map(money_to_f64).unwrap_or_default(),
             vol
         );
@@ -141,7 +141,7 @@ async fn section_options(client: &YfClient) -> Result<(), YfError> {
         if let Some(first_call) = chain.calls.first() {
             println!(
                 "  First call option: {} @ ${:.2}",
-                first_call.contract_symbol,
+                first_call.instrument,
                 money_to_f64(&first_call.strike)
             );
         }
@@ -168,7 +168,7 @@ async fn section_stream(client: &YfClient) -> Result<(), YfError> {
             println!(
                 "[{}] {} @ {:.2}{}",
                 update.ts,
-                update.symbol,
+                update.instrument,
                 update.price.as_ref().map(money_to_f64).unwrap_or_default(),
                 vol
             );
@@ -181,7 +181,7 @@ async fn section_stream(client: &YfClient) -> Result<(), YfError> {
     });
 
     tokio::select! {
-        () = tokio::time::sleep(StdDuration::from_secs(1000)) => {
+        () = tokio::time::sleep(StdDuration::from_secs(10)) => {
             println!("Stopping stream due to timeout.");
             handle.stop().await;
         }

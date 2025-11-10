@@ -1,6 +1,5 @@
 // src/core/quotes.rs
 use serde::Deserialize;
-use std::str::FromStr;
 use url::Url;
 
 use crate::{
@@ -196,9 +195,28 @@ pub async fn fetch_v7_quotes(
 
 impl From<V7QuoteNode> for Quote {
     fn from(n: V7QuoteNode) -> Self {
+        let sym = n.symbol.unwrap_or_default();
+        let exchange = crate::core::conversions::string_to_exchange(
+            n.full_exchange_name
+                .or(n.exchange)
+                .or(n.market)
+                .or(n.market_cap_figure_exchange),
+        );
+        let kind = n
+            .quote_type
+            .as_deref()
+            .and_then(|s| s.parse::<AssetKind>().ok())
+            .unwrap_or(AssetKind::Equity);
+        let instrument = exchange
+            .clone()
+            .map_or_else(
+                || Instrument::from_symbol(&sym, kind),
+                |ex| Instrument::from_symbol_and_exchange(&sym, ex, kind),
+            )
+            .expect("v7 quote node had invalid/missing symbol");
+
         Self {
-            symbol: paft::domain::Symbol::from_str(&n.symbol.unwrap_or_default())
-                .expect("v7 quote node had invalid/missing symbol"),
+            instrument,
             shortname: n.short_name,
             price: n
                 .regular_market_price
@@ -207,12 +225,7 @@ impl From<V7QuoteNode> for Quote {
                 .regular_market_previous_close
                 .map(|price| f64_to_money_with_currency_str(price, n.currency.as_deref())),
             day_volume: n.regular_market_volume,
-            exchange: crate::core::conversions::string_to_exchange(
-                n.full_exchange_name
-                    .or(n.exchange)
-                    .or(n.market)
-                    .or(n.market_cap_figure_exchange),
-            ),
+            exchange,
             market_state: n.market_state.and_then(|s| s.parse().ok()),
         }
     }

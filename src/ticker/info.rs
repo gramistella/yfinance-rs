@@ -6,6 +6,7 @@ use crate::{
     profile::Profile,
 };
 use paft::aggregates::Info;
+use paft::domain::{AssetKind, Instrument};
 
 /// Private helper to handle optional async results, logging errors in debug mode.
 fn log_err_async<T>(res: Result<T, YfError>, name: &str, symbol: &str) -> Option<T> {
@@ -95,9 +96,12 @@ fn assemble_info(
     esg_scores: Option<paft::fundamentals::esg::EsgScores>,
 ) -> Info {
     Info {
-        symbol: quote.map_or_else(
-            || paft::domain::Symbol::new(symbol).expect("invalid symbol"),
-            |q| q.symbol.clone(),
+        instrument: quote.map_or_else(
+            || {
+                let kind = AssetKind::Equity;
+                Instrument::from_symbol(symbol, kind).expect("invalid symbol")
+            },
+            |q| q.instrument.clone(),
         ),
         name: quote.and_then(|q| q.shortname.clone()),
         isin,
