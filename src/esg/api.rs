@@ -32,9 +32,9 @@ pub(super) async fn fetch_esg_scores(
 
     // Map to paft types: paft::fundamentals::EsgScores now has only environmental/social/governance.
     let scores = EsgScores {
-        environmental: from_raw(esg.environment_score).map(|v| f64_to_decimal_safely(v)),
-        social: from_raw(esg.social_score).map(|v| f64_to_decimal_safely(v)),
-        governance: from_raw(esg.governance_score).map(|v| f64_to_decimal_safely(v)),
+        environmental: from_raw(esg.environment_score).map(f64_to_decimal_safely),
+        social: from_raw(esg.social_score).map(f64_to_decimal_safely),
+        governance: from_raw(esg.governance_score).map(f64_to_decimal_safely),
     };
 
     // Collect involvement booleans as individual entries with simple categories.

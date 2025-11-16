@@ -103,7 +103,7 @@ pub(super) async fn recommendation_summary(
         hold: h,
         sell: s,
         strong_sell: ss,
-        mean: mean.map(|v| f64_to_decimal_safely(v)),
+        mean: mean.map(f64_to_decimal_safely),
         mean_rating_text: None,
     })
 }
@@ -270,7 +270,7 @@ pub(super) async fn earnings_trend(
 
             EarningsTrendRow {
                 period: string_to_period(&n.period.unwrap_or_default()),
-                growth: from_raw(n.growth).map(|v| f64_to_decimal_safely(v)),
+                growth: from_raw(n.growth).map(f64_to_decimal_safely),
                 earnings_estimate: EarningsEstimate {
                     avg: earnings_estimate_avg
                         .map(|v| f64_to_money_with_currency(v, currency.clone())),
@@ -281,7 +281,7 @@ pub(super) async fn earnings_trend(
                     year_ago_eps: earnings_estimate_year_ago_eps
                         .map(|v| f64_to_money_with_currency(v, currency.clone())),
                     num_analysts: earnings_estimate_num_analysts,
-                    growth: earnings_estimate_growth.map(|v| f64_to_decimal_safely(v)),
+                    growth: earnings_estimate_growth.map(f64_to_decimal_safely),
                 },
                 revenue_estimate: RevenueEstimate {
                     avg: revenue_estimate_avg
@@ -293,7 +293,7 @@ pub(super) async fn earnings_trend(
                     year_ago_revenue: revenue_estimate_year_ago_revenue
                         .map(|v| i64_to_money_with_currency(v, currency.clone())),
                     num_analysts: revenue_estimate_num_analysts,
-                    growth: revenue_estimate_growth.map(|v| f64_to_decimal_safely(v)),
+                    growth: revenue_estimate_growth.map(f64_to_decimal_safely),
                 },
                 eps_trend: EpsTrend {
                     current: eps_trend_current

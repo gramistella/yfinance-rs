@@ -92,7 +92,7 @@ fn map_ownership_list(
                 || DateTime::from_timestamp(0, 0).unwrap_or_default(),
                 i64_to_datetime,
             ),
-            pct_held: from_raw(h.pct_held).map(|v| f64_to_decimal_safely(v)),
+            pct_held: from_raw(h.pct_held).map(f64_to_decimal_safely),
             value: from_raw(h.value).map(|v| u64_to_money_with_currency(v, currency.clone())),
         })
         .collect()
@@ -202,6 +202,6 @@ pub(super) async fn net_share_purchase_activity(
             net_count: from_raw(n.net_info_count),
             total_insider_shares: from_raw(n.total_insider_shares),
             net_percent_insider_shares: from_raw(n.net_percent_insider_shares)
-                .map(|v| f64_to_decimal_safely(v)),
+                .map(f64_to_decimal_safely),
         }))
 }

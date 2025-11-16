@@ -28,7 +28,7 @@ async fn section_esg(client: &yfinance_rs::YfClient) -> Result<(), Box<dyn std::
             let total_esg_score = if total_esg.is_empty() {
                 Decimal::ZERO
             } else {
-                let denom = Decimal::from(total_esg.len() as u32);
+                let denom = Decimal::from(total_esg.len() as u64);
                 total_esg.iter().copied().sum::<Decimal>() / denom
             };
             println!("Total ESG Score: {total_esg_score:.2}");

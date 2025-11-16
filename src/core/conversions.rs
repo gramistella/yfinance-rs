@@ -16,6 +16,7 @@ use std::str::FromStr;
 /// - The conversion rounds to 4 decimal places using string formatting
 ///   to avoid float precision issues.
 /// - If the formatted string cannot be parsed, returns [`Decimal::ZERO`].
+#[must_use]
 pub fn f64_to_decimal_safely(value: f64) -> rust_decimal::Decimal {
     if !value.is_finite() {
         return rust_decimal::Decimal::ZERO;
