@@ -9,7 +9,14 @@ use paft::money::{Currency, IsoCurrency, Money};
 use rust_decimal::prelude::ToPrimitive;
 use std::str::FromStr;
 
-fn f64_to_decimal_safely(value: f64) -> rust_decimal::Decimal {
+/// Converts an `f64` value to a `rust_decimal::Decimal` with 4 decimal places of precision, 
+/// safely handling non-finite values and common float precision artifacts.
+///
+/// - If the input is not finite (e.g., NaN, `inf`, or `-inf`), returns [`Decimal::ZERO`].
+/// - The conversion rounds to 4 decimal places using string formatting 
+///   to avoid float precision issues.
+/// - If the formatted string cannot be parsed, returns [`Decimal::ZERO`].
+pub fn f64_to_decimal_safely(value: f64) -> rust_decimal::Decimal {
     if !value.is_finite() {
         return rust_decimal::Decimal::ZERO;
     }

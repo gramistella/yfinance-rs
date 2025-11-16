@@ -3,6 +3,7 @@ use super::model::{
     NetSharePurchaseActivity,
 };
 use super::wire::V10Result;
+use crate::core::conversions::f64_to_decimal_safely;
 use crate::core::wire::{from_raw, from_raw_date};
 use crate::core::{
     YfClient, YfError,
@@ -14,13 +15,8 @@ use crate::core::{
     quotesummary,
 };
 use chrono::DateTime;
+use paft::Decimal;
 use paft::money::Currency;
-
-#[inline]
-#[allow(clippy::cast_precision_loss)]
-const fn u64_to_f64(n: u64) -> f64 {
-    n as f64
-}
 
 const MODULES: &str = "institutionOwnership,fundOwnership,majorHoldersBreakdown,insiderTransactions,insiderHolders,netSharePurchaseActivity";
 
@@ -57,25 +53,25 @@ pub(super) async fn major_holders(
     if let Some(v) = from_raw(breakdown.insiders_percent_held) {
         result.push(MajorHolder {
             category: "% of Shares Held by All Insiders".into(),
-            value: v,
+            value: f64_to_decimal_safely(v),
         });
     }
     if let Some(v) = from_raw(breakdown.institutions_percent_held) {
         result.push(MajorHolder {
             category: "% of Shares Held by Institutions".into(),
-            value: v,
+            value: f64_to_decimal_safely(v),
         });
     }
     if let Some(v) = from_raw(breakdown.institutions_float_percent_held) {
         result.push(MajorHolder {
             category: "% of Float Held by Institutions".into(),
-            value: v,
+            value: f64_to_decimal_safely(v),
         });
     }
     if let Some(v) = from_raw(breakdown.institutions_count) {
         result.push(MajorHolder {
             category: "Number of Institutions Holding Shares".into(),
-            value: u64_to_f64(v),
+            value: Decimal::from(v),
         });
     }
 
@@ -96,7 +92,7 @@ fn map_ownership_list(
                 || DateTime::from_timestamp(0, 0).unwrap_or_default(),
                 i64_to_datetime,
             ),
-            pct_held: from_raw(h.pct_held),
+            pct_held: from_raw(h.pct_held).map(|v| f64_to_decimal_safely(v)),
             value: from_raw(h.value).map(|v| u64_to_money_with_currency(v, currency.clone())),
         })
         .collect()
@@ -205,6 +201,7 @@ pub(super) async fn net_share_purchase_activity(
             net_shares: from_raw(n.net_info_shares),
             net_count: from_raw(n.net_info_count),
             total_insider_shares: from_raw(n.total_insider_shares),
-            net_percent_insider_shares: from_raw(n.net_percent_insider_shares),
+            net_percent_insider_shares: from_raw(n.net_percent_insider_shares)
+                .map(|v| f64_to_decimal_safely(v)),
         }))
 }

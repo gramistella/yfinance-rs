@@ -1,4 +1,5 @@
 use chrono::Duration;
+use rust_decimal::Decimal;
 use yfinance_rs::{SearchBuilder, Ticker, YfClientBuilder};
 
 #[tokio::main]
@@ -25,10 +26,10 @@ async fn section_esg(client: &yfinance_rs::YfClient) -> Result<(), Box<dyn std::
                 .flatten()
                 .collect::<Vec<_>>();
             let total_esg_score = if total_esg.is_empty() {
-                0.0
+                Decimal::ZERO
             } else {
-                let denom = u32::try_from(total_esg.len()).map(f64::from).unwrap_or(1.0);
-                total_esg.iter().sum::<f64>() / denom
+                let denom = Decimal::from(total_esg.len() as u32);
+                total_esg.iter().copied().sum::<Decimal>() / denom
             };
             println!("Total ESG Score: {total_esg_score:.2}");
             println!(

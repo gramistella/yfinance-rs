@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{ApiPreference, Ticker, YfClient};
+use yfinance_rs::{ApiPreference, Ticker, YfClient, core::conversions::f64_to_decimal_safely};
 
 #[tokio::test]
 async fn analysis_invalid_crumb_then_retry_succeeds() {
@@ -67,7 +67,7 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
     crumb.assert();
     ok.assert();
 
-    assert_eq!(s.mean, Some(2.5));
+    assert_eq!(s.mean, Some(f64_to_decimal_safely(2.5)));
     // The mean_rating_text field might not be populated in the test data
     // Let's just check that the summary was created successfully
     assert!(s.mean.is_some());

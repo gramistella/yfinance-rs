@@ -7,7 +7,7 @@ use crate::{
     YfClient, YfError,
     core::{
         client::{CacheMode, RetryConfig},
-        conversions::{f64_to_money_with_currency, i64_to_datetime},
+        conversions::{f64_to_decimal_safely, f64_to_money_with_currency, i64_to_datetime},
         net,
     },
 };
@@ -120,7 +120,7 @@ pub async fn option_chain(
                         .map(|v| f64_to_money_with_currency(v, currency.clone())),
                     volume: c.volume,
                     open_interest: c.open_interest,
-                    implied_volatility: c.implied_volatility,
+                    implied_volatility: c.implied_volatility.map(|v| f64_to_decimal_safely(v)),
                     in_the_money: c.in_the_money.unwrap_or(false),
                     expiration_date: exp_date,
                     expiration_at: Some(exp_dt),

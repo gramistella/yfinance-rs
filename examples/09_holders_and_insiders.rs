@@ -1,3 +1,4 @@
+use paft::Decimal;
 use yfinance_rs::{Ticker, YfClient};
 
 #[tokio::main]
@@ -15,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "  - {}: {:?} shares ({:.2}%)",
             holder.holder,
             holder.shares,
-            holder.pct_held.unwrap_or(0.0) * 100.0
+            holder.pct_held.unwrap_or(Decimal::ZERO) * Decimal::from(100)
         );
     }
 
