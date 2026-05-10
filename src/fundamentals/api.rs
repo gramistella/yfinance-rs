@@ -138,6 +138,9 @@ pub(super) async fn income_statement(
         "GrossProfit",
         "OperatingIncome",
         "NetIncome",
+        "InterestExpense",
+        "TaxProvision",
+        "DepreciationAndAmortization",
     ];
     let endpoint_name = "income_statement";
 
@@ -147,6 +150,9 @@ pub(super) async fn income_statement(
         gross_profit: None,
         operating_income: None,
         net_income: None,
+        interest_expense: None,
+        tax_expense: None,
+        depreciation_and_amortization: None,
     };
 
     let process_item = |key: &str,
@@ -176,6 +182,15 @@ pub(super) async fn income_statement(
                         value.map(|v| f64_to_money_with_currency(v, currency.clone()));
                 } else if key == format!("{prefix}NetIncome") {
                     row.net_income = value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}InterestExpense") {
+                    row.interest_expense =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}TaxProvision") {
+                    row.tax_expense =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}DepreciationAndAmortization") {
+                    row.depreciation_and_amortization =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
                 }
             }
         }
@@ -230,6 +245,13 @@ pub(super) async fn balance_sheet(
         "CashAndCashEquivalents",
         "LongTermDebt",
         "OrdinarySharesNumber",
+        "AccountsReceivable",
+        "Inventory",
+        "AccountsPayable",
+        "CurrentAssets",
+        "CurrentLiabilities",
+        "NetPPE",
+        "GoodwillAndOtherIntangibleAssets",
     ];
     let endpoint_name = "balance_sheet";
 
@@ -241,6 +263,13 @@ pub(super) async fn balance_sheet(
         cash: None,
         long_term_debt: None,
         shares_outstanding: None,
+        accounts_receivable: None,
+        inventory: None,
+        accounts_payable: None,
+        current_assets: None,
+        current_liabilities: None,
+        net_ppe: None,
+        intangible_assets: None,
     };
 
     let process_item = |key: &str,
@@ -288,6 +317,26 @@ pub(super) async fn balance_sheet(
                 } else if key == format!("{prefix}LongTermDebt") {
                     row.long_term_debt =
                         value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}AccountsReceivable") {
+                    row.accounts_receivable =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}Inventory") {
+                    row.inventory =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}AccountsPayable") {
+                    row.accounts_payable =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}CurrentAssets") {
+                    row.current_assets =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}CurrentLiabilities") {
+                    row.current_liabilities =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}NetPPE") {
+                    row.net_ppe = value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}GoodwillAndOtherIntangibleAssets") {
+                    row.intangible_assets =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
                 }
             }
         }
@@ -332,6 +381,7 @@ pub(super) async fn cashflow(
         "CapitalExpenditure",
         "FreeCashFlow",
         "NetIncome",
+        "DepreciationAndAmortization",
     ];
     let endpoint_name = "cash_flow";
 
@@ -341,6 +391,7 @@ pub(super) async fn cashflow(
         capital_expenditures: None,
         free_cash_flow: None,
         net_income: None,
+        depreciation_and_amortization: None,
     };
 
     let process_item = |key: &str,
@@ -370,6 +421,9 @@ pub(super) async fn cashflow(
                         value.map(|v| f64_to_money_with_currency(v, currency.clone()));
                 } else if key == format!("{prefix}NetIncome") {
                     row.net_income = value.map(|v| f64_to_money_with_currency(v, currency.clone()));
+                } else if key == format!("{prefix}DepreciationAndAmortization") {
+                    row.depreciation_and_amortization =
+                        value.map(|v| f64_to_money_with_currency(v, currency.clone()));
                 }
             }
         }
