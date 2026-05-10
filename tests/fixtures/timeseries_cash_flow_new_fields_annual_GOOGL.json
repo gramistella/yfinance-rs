@@ -1,0 +1,1 @@
+{"timeseries":{"result":[{"meta":{"symbol":["GOOGL"],"type":["annualDepreciationAndAmortization"]},"timestamp":[1719705600],"annualDepreciationAndAmortization":[{"dataId":30040,"asOfDate":"2024-06-30","periodType":"12M","currencyCode":"USD","reportedValue":{"raw":1.4E10,"fmt":"14.00B"}}]}],"error":null}}

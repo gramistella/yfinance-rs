@@ -37,10 +37,34 @@ pub struct V7QuoteNode {
     pub(crate) short_name: Option<String>,
     #[serde(rename = "regularMarketPrice")]
     pub(crate) regular_market_price: Option<f64>,
+    #[serde(rename = "regularMarketOpen")]
+    pub(crate) regular_market_open: Option<f64>,
+    #[serde(rename = "regularMarketDayHigh")]
+    pub(crate) regular_market_day_high: Option<f64>,
+    #[serde(rename = "regularMarketDayLow")]
+    pub(crate) regular_market_day_low: Option<f64>,
     #[serde(rename = "regularMarketPreviousClose")]
     pub(crate) regular_market_previous_close: Option<f64>,
     #[serde(rename = "regularMarketVolume")]
     pub(crate) regular_market_volume: Option<u64>,
+    #[serde(rename = "averageDailyVolume3Month")]
+    pub(crate) average_daily_volume_3_month: Option<u64>,
+    #[serde(rename = "fiftyTwoWeekHigh")]
+    pub(crate) fifty_two_week_high: Option<f64>,
+    #[serde(rename = "fiftyTwoWeekLow")]
+    pub(crate) fifty_two_week_low: Option<f64>,
+    #[serde(rename = "marketCap")]
+    pub(crate) market_cap: Option<f64>,
+    #[serde(rename = "sharesOutstanding")]
+    pub(crate) shares_outstanding: Option<u64>,
+    #[serde(rename = "epsTrailingTwelveMonths")]
+    pub(crate) eps_trailing_twelve_months: Option<f64>,
+    #[serde(rename = "trailingPE")]
+    pub(crate) trailing_pe: Option<f64>,
+    #[serde(rename = "trailingAnnualDividendYield")]
+    pub(crate) trailing_annual_dividend_yield: Option<f64>,
+    #[serde(rename = "dividendDate")]
+    pub(crate) dividend_date: Option<i64>,
     pub(crate) currency: Option<String>,
     #[serde(rename = "fullExchangeName")]
     pub(crate) full_exchange_name: Option<String>,
@@ -215,16 +239,51 @@ impl From<V7QuoteNode> for Quote {
             )
             .expect("v7 quote node had invalid/missing symbol");
 
+        let currency = n.currency.as_deref();
+        let ex_dividend_date = n.dividend_date.and_then(|ts| {
+            chrono::DateTime::from_timestamp(ts, 0).map(|dt| dt.date_naive())
+        });
+
         Self {
             instrument,
             shortname: n.short_name,
             price: n
                 .regular_market_price
-                .map(|price| f64_to_money_with_currency_str(price, n.currency.as_deref())),
+                .map(|price| f64_to_money_with_currency_str(price, currency)),
+            open: n
+                .regular_market_open
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
+            day_range_high: n
+                .regular_market_day_high
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
+            day_range_low: n
+                .regular_market_day_low
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
+            fifty_two_week_high: n
+                .fifty_two_week_high
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
+            fifty_two_week_low: n
+                .fifty_two_week_low
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
             previous_close: n
                 .regular_market_previous_close
-                .map(|price| f64_to_money_with_currency_str(price, n.currency.as_deref())),
+                .map(|price| f64_to_money_with_currency_str(price, currency)),
             day_volume: n.regular_market_volume,
+            average_volume: n.average_daily_volume_3_month,
+            market_cap: n
+                .market_cap
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
+            shares_outstanding: n.shares_outstanding,
+            eps_ttm: n
+                .eps_trailing_twelve_months
+                .map(|v| f64_to_money_with_currency_str(v, currency)),
+            pe_ttm: n
+                .trailing_pe
+                .and_then(|v| paft::Decimal::try_from(v).ok()),
+            dividend_yield: n
+                .trailing_annual_dividend_yield
+                .and_then(|v| paft::Decimal::try_from(v).ok()),
+            ex_dividend_date,
             exchange,
             market_state: n.market_state.and_then(|s| s.parse().ok()),
         }
