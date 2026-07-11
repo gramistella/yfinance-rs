@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [0.9.0]
+## [0.9.1] - 2026-07-11
+
+### Fixed
+
+- Maximum-range history requests now use explicit, interval-aware Yahoo date
+  windows instead of `range=max`, preventing Yahoo from silently returning
+  quarterly candles for a requested daily interval. History responses also
+  reject a present `dataGranularity` that does not match the requested interval.
+- The Polars dataframe example's analysis queries now use the `paft` 0.9
+  `volume.amount` history column name instead of the removed `volume` column.
+
+## [0.9.0] - 2026-06-10
 
 ### Breaking Changes
 
@@ -260,8 +271,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - The Polars dataframe and convenience-methods examples now raise their crate
   recursion limits so all-target clippy/check builds compile under current
   stable Rust.
-- The Polars dataframe example's analysis queries now use the `paft` 0.9
-  `volume.amount` history column name instead of the removed `volume` column.
 - Yahoo exchange and quote-type vocabulary is now normalized through one shared
   adapter across quote, fast info, info, search, screener, history, options,
   stream, and currency-inference paths.
@@ -747,8 +756,9 @@ Yahoo Finance appears to have removed or relocated the ESG data endpoint. As a r
 - Analysis tools: `recommendations`, `sustainability`, `major_holders`, `institutional_holders`.
 - Utilities: `DownloadBuilder`, `StreamBuilder`, `SearchBuilder`.
 
-[Unreleased]: https://github.com/gramistella/yfinance-rs/compare/v0.8.0...HEAD
-[0.9.0]: https://github.com/gramistella/yfinance-rs/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/gramistella/yfinance-rs/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/gramistella/yfinance-rs/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/gramistella/yfinance-rs/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/gramistella/yfinance-rs/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/gramistella/yfinance-rs/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/gramistella/yfinance-rs/compare/v0.7.0...v0.7.1

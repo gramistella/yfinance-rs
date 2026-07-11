@@ -97,7 +97,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! yfinance-rs = "0.9.0"
+//! yfinance-rs = "0.9.1"
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!

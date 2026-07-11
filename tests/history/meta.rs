@@ -1,5 +1,6 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use std::time::Duration;
 use url::Url;
 use yfinance_rs::core::Range;
 use yfinance_rs::core::conversions::money_to_f64;
@@ -129,6 +130,25 @@ fn malformed_instrument_type_body() -> String {
     .to_string()
 }
 
+fn mismatched_granularity_body() -> String {
+    r#"{
+      "chart":{
+        "result":[
+          {
+            "meta": { "dataGranularity": "3mo" },
+            "timestamp": [],
+            "indicators": {
+              "quote":[{ "open":[], "high":[], "low":[], "close":[], "volume":[] }],
+              "adjclose":[{ "adjclose":[] }]
+            }
+          }
+        ],
+        "error": null
+      }
+    }"#
+    .to_string()
+}
+
 #[tokio::test]
 async fn get_history_metadata_returns_timezone() {
     let server = MockServer::start();
@@ -200,6 +220,44 @@ async fn missing_timestamp_with_empty_chart_series_returns_empty_history() {
             .map(std::string::ToString::to_string),
         Some("America/New_York".to_string())
     );
+}
+
+#[tokio::test]
+async fn mismatched_chart_granularity_is_rejected_in_every_quality_mode() {
+    let server = MockServer::start();
+
+    let mock = server.mock(|when, then| {
+        when.method(GET)
+            .path("/v8/finance/chart/AAPL")
+            .query_param("range", "1d")
+            .query_param("interval", "1d");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(mismatched_granularity_body());
+    });
+
+    let client = YfClient::builder()
+        .base_chart(Url::parse(&format!("{}/v8/finance/chart/", server.base_url())).unwrap())
+        .cache_ttl(Duration::from_mins(1))
+        .build()
+        .unwrap();
+
+    for strict in [false, true] {
+        let builder = HistoryBuilder::new(&client, "AAPL").range(Range::D1);
+        let err = if strict {
+            builder.strict().fetch_full().await.unwrap_err()
+        } else {
+            builder.fetch_full().await.unwrap_err()
+        };
+
+        assert!(matches!(
+            err,
+            YfError::InvalidData(message)
+                if message.contains("3mo") && message.contains("1d")
+        ));
+    }
+
+    mock.assert_calls(2);
 }
 
 #[tokio::test]

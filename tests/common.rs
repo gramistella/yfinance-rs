@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use httpmock::{Method::GET, Mock, MockServer};
+use httpmock::{HttpMockRequest, Method::GET, Mock, MockServer};
 #[cfg(feature = "tracing-subscriber")]
 use std::sync::OnceLock;
 use std::{
@@ -11,6 +11,8 @@ use std::{
 pub const KEY_STATISTICS_MODULES: &str = "summaryDetail,defaultKeyStatistics";
 pub const KEY_STATISTICS_FIXTURE_ENDPOINT: &str =
     "key_statistics_api_summaryDetail-defaultKeyStatistics";
+const DAILY_MAX_PERIOD_SPAN_SECONDS: i64 = 3_122_063_995;
+const SECONDS_PER_DAY: i64 = 86_400;
 
 #[cfg(feature = "tracing-subscriber")]
 static TEST_TRACING: OnceLock<()> = OnceLock::new();
@@ -26,6 +28,29 @@ pub fn init_tracing() {
 pub fn setup_server() -> MockServer {
     init_tracing();
     MockServer::start()
+}
+
+#[must_use]
+pub fn is_daily_max_period_query(request: &HttpMockRequest) -> bool {
+    let params = request.query_params_map();
+    let period = params
+        .get("period1")
+        .and_then(|value| value.parse::<i64>().ok())
+        .zip(
+            params
+                .get("period2")
+                .and_then(|value| value.parse::<i64>().ok()),
+        );
+
+    !params.contains_key("range")
+        && params.get("interval").is_some_and(|value| value == "1d")
+        && period.is_some_and(|(start, end)| {
+            end.checked_sub(start) == Some(DAILY_MAX_PERIOD_SPAN_SECONDS)
+                && end.rem_euclid(SECONDS_PER_DAY) == 0
+                && end
+                    .checked_sub(chrono::Utc::now().timestamp())
+                    .is_some_and(|lead| (-60..=SECONDS_PER_DAY).contains(&lead))
+        })
 }
 
 fn fixture_dir() -> PathBuf {

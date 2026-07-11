@@ -34,3 +34,20 @@ async fn live_history_for_record() {
         .fetch()
         .await;
 }
+
+#[tokio::test]
+#[ignore = "exercise live Yahoo Finance API"]
+async fn live_intraday_history_for_record() {
+    if !crate::common::is_recording() {
+        return;
+    }
+
+    let client = yfinance_rs::YfClient::builder().build().unwrap();
+    let bars = yfinance_rs::HistoryBuilder::new(&client, "IBM")
+        .range(yfinance_rs::Range::D5)
+        .interval(yfinance_rs::Interval::I5m)
+        .fetch()
+        .await
+        .unwrap();
+    assert!(bars.len() > 100);
+}

@@ -83,9 +83,9 @@ async fn ticker_actions_include_dividends_and_splits() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path("/v8/finance/chart/TEST")
-            .query_param("range", "max")
             .query_param("interval", "1d")
-            .query_param("events", "div|split|capitalGains");
+            .query_param("events", "div|split|capitalGains")
+            .is_true(crate::common::is_daily_max_period_query);
         then.status(200)
             .header("content-type", "application/json")
             .body(body_with_actions());
@@ -128,9 +128,9 @@ async fn ticker_actions_respect_ticker_cache_bypass() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path("/v8/finance/chart/TEST")
-            .query_param("range", "max")
             .query_param("interval", "1d")
-            .query_param("events", "div|split|capitalGains");
+            .query_param("events", "div|split|capitalGains")
+            .is_true(crate::common::is_daily_max_period_query);
         then.status(200)
             .header("content-type", "application/json")
             .body(body_with_actions_and_currency());
@@ -187,9 +187,9 @@ async fn ticker_actions_skip_invalid_amounts_and_keep_valid_siblings() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path("/v8/finance/chart/TEST")
-            .query_param("range", "max")
             .query_param("interval", "1d")
-            .query_param("events", "div|split|capitalGains");
+            .query_param("events", "div|split|capitalGains")
+            .is_true(crate::common::is_daily_max_period_query);
         then.status(200)
             .header("content-type", "application/json")
             .body(body);

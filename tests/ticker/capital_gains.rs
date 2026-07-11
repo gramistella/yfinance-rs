@@ -11,9 +11,9 @@ async fn offline_capital_gains_from_history() {
     let mock = server.mock(|when, then| {
         when.method(GET)
             .path(format!("/v8/finance/chart/{sym}"))
-            .query_param("range", "max")
             .query_param("interval", "1d")
-            .query_param("events", "div|split|capitalGains");
+            .query_param("events", "div|split|capitalGains")
+            .is_true(crate::common::is_daily_max_period_query);
         then.status(200)
             .header("content-type", "application/json")
             .body(crate::common::fixture("history_chart", sym, "json"));

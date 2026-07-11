@@ -70,7 +70,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 Streaming is behind the `stream` feature:
 
 ```toml
-yfinance-rs = { version = "0.9.0", features = ["stream"] }
+yfinance-rs = { version = "0.9.1", features = ["stream"] }
 ```
 
 * **WebSocket Streaming**: Get live quote updates using WebSockets (preferred method).
@@ -118,7 +118,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.9.0"
+yfinance-rs = "0.9.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -126,7 +126,7 @@ To enable DataFrame conversions backed by Polars, turn on the optional `datafram
 
 ```toml
 [dependencies]
-yfinance-rs = { version = "0.9.0", features = ["dataframe"] }
+yfinance-rs = { version = "0.9.1", features = ["dataframe"] }
 polars = "0.53"
 ```
 

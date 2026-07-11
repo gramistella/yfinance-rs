@@ -33,7 +33,7 @@ pub struct ChartResult {
     pub(crate) events: Option<Events>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Default)]
 pub struct MetaNode {
     #[serde(default)]
     pub(crate) symbol: Option<String>,
@@ -53,6 +53,8 @@ pub struct MetaNode {
     pub(crate) currency: Option<String>,
     #[serde(default, rename = "priceHint")]
     pub(crate) price_hint: Option<i64>,
+    #[serde(default, rename = "dataGranularity")]
+    pub(crate) data_granularity: Option<String>,
 }
 
 #[derive(Deserialize)]
