@@ -1,4 +1,5 @@
 use httpmock::{Method::GET, MockServer};
+use paft::Decimal;
 use url::Url;
 use yfinance_rs::{EsgBuilder, ProjectionIssue, Ticker, YfClient, YfError, YfWarning};
 
@@ -133,7 +134,7 @@ async fn malformed_esg_raw_score_is_omitted_without_json_error() {
                     "result": [{
                       "esgScores": {
                         "environmentScore": { "raw": "not-a-number" },
-                        "socialScore": { "raw": 2.5 },
+                        "socialScore": { "raw": 0.1234567890123456789012345678 },
                         "governanceScore": { "raw": 3.5 }
                       }
                     }],
@@ -154,7 +155,10 @@ async fn malformed_esg_raw_score_is_omitted_without_json_error() {
         .scores
         .expect("valid siblings keep ESG scores");
     assert!(scores.environmental.is_none());
-    assert!(scores.social.is_some());
+    assert_eq!(
+        scores.social,
+        Some("0.1234567890123456789012345678".parse::<Decimal>().unwrap())
+    );
     assert!(scores.governance.is_some());
     assert!(response.diagnostics.warnings.iter().any(|warning| matches!(
         warning,

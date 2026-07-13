@@ -24,37 +24,16 @@ use crate::{
     },
 };
 
-/// Converts a finite `f64` value to `Decimal`.
-///
-/// Returns `None` if the value is non-finite or does not fit in the decimal
-/// backend.
-#[must_use]
-pub fn decimal_from_f64(value: f64) -> Option<Decimal> {
-    value
-        .is_finite()
-        .then_some(value)
-        .and_then(|value| Decimal::try_from(value).ok())
-}
-
 /// Converts a finite `f32` value to `Decimal`.
 ///
-/// Keep this path for Yahoo protobuf `float` fields. Widening the `f32` to `f64`
-/// first preserves binary artifacts such as `314.6000061035156`.
+/// Keep this path for Yahoo protobuf `float` fields, whose source precision is
+/// fixed by the schema rather than by JSON decoding.
 #[must_use]
 pub fn decimal_from_f32(value: f32) -> Option<Decimal> {
     value
         .is_finite()
         .then_some(value)
         .and_then(|value| Decimal::try_from(value).ok())
-}
-
-/// Convert a finite `f64` to `Money` with specified currency.
-///
-/// Returns `None` if the value is non-finite, does not fit in the decimal
-/// backend, or currency metadata is unavailable.
-#[must_use]
-pub fn money_from_f64(value: f64, currency: Currency) -> Option<Money> {
-    decimal_from_f64(value).and_then(|decimal| Money::new(decimal, currency).ok())
 }
 
 /// Convert i64 to Money with specified currency (no precision loss).
@@ -77,13 +56,6 @@ pub fn u64_to_money_with_currency(value: u64, currency: Currency) -> Result<Mone
     Ok(Money::new(decimal, currency)?)
 }
 
-/// Convert a finite `f64` to `Money` with a parsed currency string.
-#[must_use]
-pub fn money_from_f64_with_currency_str(value: f64, currency_str: Option<&str>) -> Option<Money> {
-    let unit = currency_str.and_then(ResolvedCurrencyUnit::from_code)?;
-    unit.money_from_f64(value)
-}
-
 /// Convert an exact decimal amount to `Money` with a parsed currency string.
 #[must_use]
 pub fn money_from_decimal_with_currency_str(
@@ -94,29 +66,14 @@ pub fn money_from_decimal_with_currency_str(
     unit.money_from_decimal(value).ok()
 }
 
-/// Convert a finite `f64` to `Price` with specified currency.
+/// Convert an exact decimal amount to `Price` with a parsed currency string.
 #[must_use]
-pub fn price_from_f64(value: f64, currency: Currency) -> Option<Price> {
-    decimal_from_f64(value).map(|decimal| Price::new(decimal, currency))
-}
-
-/// Convert a finite `f64` to a contextual price amount.
-#[must_use]
-pub fn price_amount_from_f64(value: f64) -> Option<PriceAmount> {
-    decimal_from_f64(value).map(PriceAmount::new)
-}
-
-/// Convert a finite `f32` to a contextual price amount.
-#[must_use]
-pub fn price_amount_from_f32(value: f32) -> Option<PriceAmount> {
-    decimal_from_f32(value).map(PriceAmount::new)
-}
-
-/// Convert a finite `f64` to `Price` with a parsed currency string.
-#[must_use]
-pub fn price_from_f64_with_currency_str(value: f64, currency_str: Option<&str>) -> Option<Price> {
+pub fn price_from_decimal_with_currency_str(
+    value: Decimal,
+    currency_str: Option<&str>,
+) -> Option<Price> {
     let unit = currency_str.and_then(ResolvedCurrencyUnit::from_code)?;
-    unit.price_from_f64(value)
+    unit.price_from_decimal(value)
 }
 
 /// Convert a non-negative integer volume/size to a contextual quantity amount.
@@ -205,18 +162,6 @@ impl CurrencyValue for MonetaryAmount {
     fn currency(&self) -> &Currency {
         self.currency()
     }
-}
-
-/// Convert a contextual price amount to f64.
-#[must_use]
-pub fn f64_from_price_amount(value: &PriceAmount) -> Option<f64> {
-    value.as_decimal().to_f64()
-}
-
-/// Convert a currency-denominated value to f64 (loses currency information).
-#[must_use]
-pub fn f64_from_currency_value(value: &impl CurrencyValue) -> Option<f64> {
-    value.amount().to_f64()
 }
 
 /// Test convenience for converting ordinary currency values to `f64`.

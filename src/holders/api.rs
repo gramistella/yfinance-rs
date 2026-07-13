@@ -13,13 +13,13 @@ use crate::core::{
         CurrencyPurpose, ResolvedCurrencyUnit, TradingCurrencyEvidence, project_currency_resolution,
     },
     diagnostics::{
-        WireProjection, nonempty_string, optional_decimal_f64,
-        optional_money_u64_with_currency_issue, optional_ratio_f64, required_nonempty_string,
-        required_parsed, required_wire_date,
+        WireProjection, nonempty_string, optional_money_u64_with_currency_issue,
+        optional_projected, required_nonempty_string, required_parsed, required_wire_date,
     },
     quotesummary,
 };
 use paft::fundamentals::holders::{InsiderPosition, TransactionType};
+use paft::{Decimal, Ratio};
 
 const INSTITUTION_OWNERSHIP_MODULE: &str = "institutionOwnership";
 const FUND_OWNERSHIP_MODULE: &str = "fundOwnership";
@@ -71,7 +71,7 @@ pub(super) async fn major_holders(
         None,
         "insidersPercentHeld",
     )?;
-    if let Some(value) = optional_ratio_f64(
+    if let Some(value) = optional_ratio_decimal(
         &mut ctx,
         "majorHoldersBreakdown.insidersPercentHeld",
         None,
@@ -89,7 +89,7 @@ pub(super) async fn major_holders(
         None,
         "institutionsPercentHeld",
     )?;
-    if let Some(value) = optional_ratio_f64(
+    if let Some(value) = optional_ratio_decimal(
         &mut ctx,
         "majorHoldersBreakdown.institutionsPercentHeld",
         None,
@@ -107,7 +107,7 @@ pub(super) async fn major_holders(
         None,
         "institutionsFloatPercentHeld",
     )?;
-    if let Some(value) = optional_ratio_f64(
+    if let Some(value) = optional_ratio_decimal(
         &mut ctx,
         "majorHoldersBreakdown.institutionsFloatPercentHeld",
         None,
@@ -223,7 +223,7 @@ async fn map_ownership_list(
             Some(holder.as_str()),
             "pctHeld",
         )?;
-        let pct_held = optional_ratio_f64(
+        let pct_held = optional_ratio_decimal(
             ctx,
             "ownershipList[].pctHeld",
             Some(holder.as_str()),
@@ -657,13 +657,19 @@ pub(super) async fn net_share_purchase_activity(
             period_key.as_deref(),
             "totalInsiderShares",
         )?,
-        net_percent_insider_shares: optional_decimal_f64(
-            &mut ctx,
-            "netSharePurchaseActivity.netPercentInsiderShares",
-            period_key.as_deref(),
-            net_percent_insider_shares,
-            "net percent insider shares",
-        )?,
+        net_percent_insider_shares,
     });
     Ok(ctx.finish(data))
+}
+
+fn optional_ratio_decimal(
+    ctx: &mut ProjectionContext,
+    path: &'static str,
+    key: Option<&str>,
+    value: Option<Decimal>,
+    target: &'static str,
+) -> Result<Option<Ratio>, YfError> {
+    optional_projected(ctx, path, key, value, |value| {
+        Ratio::new(value).map_err(|_| ProjectionIssue::ConversionFailed { target })
+    })
 }

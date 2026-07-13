@@ -1,5 +1,6 @@
 use httpmock::Method::{GET, POST};
 use httpmock::MockServer;
+use paft::Decimal;
 use serde_json::json;
 use std::time::Duration;
 use url::Url;
@@ -101,7 +102,7 @@ async fn predefined_screener_does_not_cache_successful_status_api_error_body() {
 }
 
 #[tokio::test]
-async fn predefined_screener_market_cap_preserves_large_integer_precision() {
+async fn predefined_screener_preserves_exact_financial_decimals() {
     let server = MockServer::start();
     let exact = 9_007_199_254_740_993_i64;
     let body = format!(
@@ -109,12 +110,13 @@ async fn predefined_screener_market_cap_preserves_large_integer_precision() {
       "finance": {{
         "error": null,
         "result": [{{
-          "count": 1,
+          "count": 1.0,
           "quotes": [{{
             "symbol": "BIG",
             "quoteType": "EQUITY",
             "shortName": "Big Inc.",
-            "regularMarketPrice": 10.0,
+            "regularMarketPrice": 1234567890.123456789012345678,
+            "regularMarketChangePercent": 0.031600002,
             "marketCap": {exact},
             "currency": "USD"
           }}]
@@ -154,6 +156,18 @@ async fn predefined_screener_market_cap_preserves_large_integer_precision() {
         .as_ref()
         .expect("market cap should map");
     assert_eq!(market_cap.amount(), paft::Decimal::from(exact));
+    assert_eq!(
+        response.results[0]
+            .price
+            .as_ref()
+            .expect("price should map")
+            .amount(),
+        "1234567890.123456789012345678".parse::<Decimal>().unwrap()
+    );
+    assert_eq!(
+        response.results[0].regular_market_change_percent,
+        Some(Decimal::new(31_600_002, 9))
+    );
 }
 
 #[tokio::test]
@@ -201,6 +215,7 @@ async fn predefined_screener_regular_market_volume_accepts_numeric_string() {
         .unwrap();
 
     mock.assert();
+    assert_eq!(response.count, Some(1));
     assert_eq!(response.results[0].regular_market_volume, Some(12_345));
 }
 
@@ -336,13 +351,13 @@ async fn screener_yahoo_exchange_codes_normalize_without_diagnostics() {
 }
 
 #[tokio::test]
-async fn malformed_screener_optional_field_is_omitted_without_losing_result() {
+async fn malformed_screener_optional_fields_are_omitted_without_losing_result() {
     let server = MockServer::start();
     let body = r#"{
       "finance": {
         "error": null,
         "result": [{
-          "count": 2,
+          "count": "not-a-count",
           "quotes": [
             {
               "symbol": "BADQUOTE",
@@ -386,6 +401,7 @@ async fn malformed_screener_optional_field_is_omitted_without_losing_result() {
         .unwrap();
 
     assert_eq!(response.data.results.len(), 2);
+    assert_eq!(response.data.count, None);
     assert_eq!(response.data.results[0].symbol.as_deref(), Some("BADQUOTE"));
     assert!(response.data.results[0].price.is_none());
     assert_eq!(response.data.results[1].symbol.as_deref(), Some("AAPL"));
@@ -400,6 +416,15 @@ async fn malformed_screener_optional_field_is_omitted_without_losing_result() {
                 ..
             },
         } if key == "BADQUOTE"
+    )));
+    assert!(response.diagnostics.warnings.iter().any(|warning| matches!(
+        warning,
+        YfWarning::OmittedPresentField {
+            endpoint: "screener",
+            path: "count",
+            key: None,
+            reason: ProjectionIssue::InvalidField { field: "count", .. },
+        }
     )));
 
     let err = ScreenerBuilder::predefined(&client, PredefinedScreener::DayGainers)
@@ -523,7 +548,9 @@ async fn offline_custom_equity_query_posts_python_wire_shape() {
 
     let client = YfClient::default();
     let query = EquityQuery::and(vec![
-        equity_fields::PERCENT_CHANGE.gt(yfinance_rs::PercentPoints::new(3.0).unwrap()),
+        equity_fields::PERCENT_CHANGE.gt(yfinance_rs::PercentPoints::new(
+            yfinance_rs::Decimal::new(30, 1),
+        )),
         equity_fields::REGION.eq(Region::Us),
     ])
     .unwrap();
@@ -580,7 +607,9 @@ async fn explicit_custom_screener_cache_mode_uses_post_body_cache() {
 
     for _ in 0..2 {
         let query = EquityQuery::and(vec![
-            equity_fields::PERCENT_CHANGE.gt(yfinance_rs::PercentPoints::new(3.0).unwrap()),
+            equity_fields::PERCENT_CHANGE.gt(yfinance_rs::PercentPoints::new(
+                yfinance_rs::Decimal::new(30, 1),
+            )),
             equity_fields::REGION.eq(Region::Us),
         ])
         .unwrap();
@@ -663,7 +692,9 @@ async fn custom_screener_403_with_stale_cached_crumb_refreshes_before_retry() {
         .build()
         .unwrap();
     let query = EquityQuery::and(vec![
-        equity_fields::PERCENT_CHANGE.gt(yfinance_rs::PercentPoints::new(3.0).unwrap()),
+        equity_fields::PERCENT_CHANGE.gt(yfinance_rs::PercentPoints::new(
+            yfinance_rs::Decimal::new(30, 1),
+        )),
         equity_fields::REGION.eq(Region::Us),
     ])
     .unwrap();

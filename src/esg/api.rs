@@ -1,8 +1,7 @@
 use crate::{
     core::{
         CallOptions, DataQuality, ProjectionContext, YfClient, YfError, YfResponse,
-        diagnostics::{WireProjection, optional_decimal_f64},
-        quotesummary,
+        diagnostics::WireProjection, quotesummary,
     },
     esg::wire::V10Result,
 };
@@ -54,27 +53,9 @@ fn map_esg_scores(
 
     // Map to paft types: paft::fundamentals::EsgScores now has only environmental/social/governance.
     let scores = EsgScores {
-        environmental: optional_decimal_f64(
-            &mut ctx,
-            "esgScores.environmentScore",
-            Some(symbol),
-            environmental,
-            "ESG score",
-        )?,
-        social: optional_decimal_f64(
-            &mut ctx,
-            "esgScores.socialScore",
-            Some(symbol),
-            social,
-            "ESG score",
-        )?,
-        governance: optional_decimal_f64(
-            &mut ctx,
-            "esgScores.governanceScore",
-            Some(symbol),
-            governance,
-            "ESG score",
-        )?,
+        environmental,
+        social,
+        governance,
     };
 
     // Collect involvement booleans as individual entries with simple categories.

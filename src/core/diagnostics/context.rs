@@ -62,20 +62,6 @@ impl ProjectionContext {
         })
     }
 
-    pub(crate) fn coerced_present_field(
-        &mut self,
-        path: &'static str,
-        key: Option<&str>,
-        coercion: String,
-    ) -> Result<(), YfError> {
-        self.record(YfWarning::CoercedPresentField {
-            endpoint: self.endpoint,
-            path,
-            key: key.map(str::to_owned),
-            coercion,
-        })
-    }
-
     pub(crate) fn suppressed_error(
         &mut self,
         operation: &'static str,

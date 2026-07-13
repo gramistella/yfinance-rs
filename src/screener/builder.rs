@@ -448,6 +448,7 @@ fn append_common_params(url: &mut Url) {
 
 #[cfg(test)]
 mod tests {
+    use paft::Decimal;
     use serde_json::json;
 
     use super::*;
@@ -457,7 +458,7 @@ mod tests {
     fn custom_body_matches_python_wire_shape() {
         let client = YfClient::default();
         let query = EquityQuery::and(vec![
-            equity_fields::PERCENT_CHANGE.gt(PercentPoints::new(3.0).unwrap()),
+            equity_fields::PERCENT_CHANGE.gt(PercentPoints::new(Decimal::new(30, 1))),
             equity_fields::REGION.eq(Region::Us),
         ])
         .unwrap();

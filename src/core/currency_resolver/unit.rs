@@ -1,4 +1,4 @@
-use crate::core::{YfError, conversions::decimal_from_f64};
+use crate::core::YfError;
 use paft::money::{Currency, Money, Price, PriceAmount};
 use rust_decimal::Decimal;
 use std::str::FromStr;
@@ -6,14 +6,20 @@ use std::str::FromStr;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ResolvedCurrencyUnit {
     currency: Currency,
-    scale: Decimal,
+    scale: PriceScale,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PriceScale {
+    Major,
+    Hundredth,
 }
 
 impl ResolvedCurrencyUnit {
     pub const fn from_currency(currency: Currency) -> Self {
         Self {
             currency,
-            scale: Decimal::ONE,
+            scale: PriceScale::Major,
         }
     }
 
@@ -24,10 +30,10 @@ impl ResolvedCurrencyUnit {
         }
 
         let (code, scale) = match trimmed {
-            "GBp" | "GBX" => ("GBP", Decimal::new(1, 2)),
-            "ZAc" => ("ZAR", Decimal::new(1, 2)),
-            "ILA" => ("ILS", Decimal::new(1, 2)),
-            _ => (trimmed, Decimal::ONE),
+            "GBp" | "GBX" => ("GBP", PriceScale::Hundredth),
+            "ZAc" => ("ZAR", PriceScale::Hundredth),
+            "ILA" => ("ILS", PriceScale::Hundredth),
+            _ => (trimmed, PriceScale::Major),
         };
 
         Currency::from_str(code)
@@ -47,35 +53,23 @@ impl ResolvedCurrencyUnit {
         &self.currency
     }
 
-    pub fn price_amount_from_f64(&self, value: f64) -> Option<PriceAmount> {
-        self.scaled_decimal_from_f64(value).map(PriceAmount::new)
-    }
-
     pub(crate) fn price_amount_rounded_at_provider_precision(
         &self,
         value: &PriceAmount,
         precision: u32,
     ) -> Option<PriceAmount> {
-        let provider_value = value.as_decimal().checked_div(self.scale)?;
-        provider_value
-            .round_dp(precision)
-            .checked_mul(self.scale)
+        let provider_value = self.provider_units_from_major(*value.as_decimal())?;
+        self.scaled_decimal(provider_value.round_dp(precision))
             .map(PriceAmount::new)
     }
 
-    #[cfg(feature = "stream")]
     pub fn price_amount_from_decimal(&self, value: Decimal) -> Option<PriceAmount> {
-        value.checked_mul(self.scale).map(PriceAmount::new)
+        self.scaled_decimal(value).map(PriceAmount::new)
     }
 
-    pub fn price_from_f64(&self, value: f64) -> Option<Price> {
-        self.scaled_decimal_from_f64(value)
+    pub fn price_from_decimal(&self, value: Decimal) -> Option<Price> {
+        self.scaled_decimal(value)
             .map(|decimal| Price::new(decimal, self.currency.clone()))
-    }
-
-    #[cfg_attr(not(any(test, feature = "test-mode")), allow(dead_code))]
-    pub fn money_from_f64(&self, value: f64) -> Option<Money> {
-        decimal_from_f64(value).and_then(|decimal| Money::new(decimal, self.currency.clone()).ok())
     }
 
     pub fn money_from_i64(&self, value: i64) -> Result<Money, YfError> {
@@ -92,7 +86,33 @@ impl ResolvedCurrencyUnit {
         Ok(Money::new(decimal, self.currency.clone())?)
     }
 
-    fn scaled_decimal_from_f64(&self, value: f64) -> Option<Decimal> {
-        decimal_from_f64(value).and_then(|decimal| decimal.checked_mul(self.scale))
+    fn scaled_decimal(&self, value: Decimal) -> Option<Decimal> {
+        match self.scale {
+            PriceScale::Major => Some(value),
+            PriceScale::Hundredth => checked_decimal_product(value, Decimal::new(1, 2)),
+        }
+    }
+
+    fn provider_units_from_major(&self, value: Decimal) -> Option<Decimal> {
+        match self.scale {
+            PriceScale::Major => Some(value),
+            PriceScale::Hundredth => checked_decimal_product(value, Decimal::from(100)),
+        }
+    }
+}
+
+fn checked_decimal_product(left: Decimal, right: Decimal) -> Option<Decimal> {
+    let mut mantissa = left.mantissa().checked_mul(right.mantissa())?;
+    let mut scale = left.scale().checked_add(right.scale())?;
+
+    loop {
+        if let Ok(value) = Decimal::try_from_i128_with_scale(mantissa, scale) {
+            return Some(value);
+        }
+        if scale == 0 || mantissa % 10 != 0 {
+            return None;
+        }
+        mantissa /= 10;
+        scale -= 1;
     }
 }

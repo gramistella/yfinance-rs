@@ -1,9 +1,76 @@
 use std::time::Duration;
 
 use httpmock::{Method::GET, MockServer};
-use paft::money::{Currency, IsoCurrency};
+use paft::{
+    Decimal,
+    money::{Currency, IsoCurrency},
+};
 use url::Url;
 use yfinance_rs::{FundamentalsBuilder, ProjectionIssue, Ticker, YfClient, YfError, YfWarning};
+
+#[tokio::test]
+async fn synthetic_earnings_eps_preserves_json_decimal_precision() {
+    let server = MockServer::start();
+    let sym = "PRECISE";
+    let actual = "1.234567890123456789012345678";
+    let estimate = "1.234567890123456789012345679";
+
+    let mock = server.mock(|when, then| {
+        when.method(GET)
+            .path(format!("/v10/finance/quoteSummary/{sym}"))
+            .query_param("modules", "earnings")
+            .query_param("crumb", "crumb");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(format!(
+                r#"{{
+                  "quoteSummary": {{
+                    "result": [{{
+                      "earnings": {{
+                        "financialsChart": {{ "yearly": [], "quarterly": [] }},
+                        "earningsChart": {{
+                          "quarterly": [{{
+                            "date": "2Q2025",
+                            "actual": {{ "raw": {actual} }},
+                            "estimate": {{ "raw": {estimate} }}
+                          }}]
+                        }}
+                      }}
+                    }}],
+                    "error": null
+                  }}
+                }}"#
+            ));
+    });
+
+    let client = YfClient::builder()
+        .base_quote_api(
+            Url::parse(&format!("{}/v10/finance/quoteSummary/", server.base_url())).unwrap(),
+        )
+        ._preauth("cookie", "crumb")
+        .build()
+        .unwrap();
+
+    let earnings = Ticker::new(&client, sym)
+        .earnings(Some(Currency::Iso(IsoCurrency::USD)))
+        .await
+        .unwrap();
+
+    mock.assert();
+    assert_eq!(earnings.quarterly_eps.len(), 1);
+    assert_eq!(
+        earnings.quarterly_eps[0].actual.as_ref().unwrap().amount(),
+        Decimal::from_str_exact(actual).unwrap()
+    );
+    assert_eq!(
+        earnings.quarterly_eps[0]
+            .estimate
+            .as_ref()
+            .unwrap()
+            .amount(),
+        Decimal::from_str_exact(estimate).unwrap()
+    );
+}
 
 #[tokio::test]
 async fn missing_earnings_module_is_provider_unavailable() {

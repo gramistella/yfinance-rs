@@ -3,9 +3,10 @@ use std::{fmt, marker::PhantomData};
 use paft::Decimal;
 use serde::{
     Deserialize, Deserializer,
-    de::{IgnoredAny, MapAccess, SeqAccess, Visitor},
+    de::{IgnoredAny, MapAccess, Visitor},
 };
-use serde_field_result::{Field, FieldDecode, invalid_seq};
+use serde_field_result::{Field, FieldDecode};
+use serde_json::value::RawValue;
 
 use super::{
     number::{JsonDecimal, JsonU64, de_decimal_from_json, de_u64_from_json},
@@ -40,7 +41,7 @@ pub struct RawNumU64 {
 
 impl<'de, T> FieldDecode<'de> for RawNum<T>
 where
-    T: FieldDecode<'de>,
+    T: for<'wire> FieldDecode<'wire>,
 {
     fn decode_field<D>(deserializer: D) -> Result<Field<Self>, D::Error>
     where
@@ -88,7 +89,23 @@ impl<'de> FieldDecode<'de> for RawNumU64 {
 fn decode_raw_map<'de, D, T>(deserializer: D) -> Result<Field<Option<T>>, D::Error>
 where
     D: Deserializer<'de>,
-    T: FieldDecode<'de>,
+    T: for<'wire> FieldDecode<'wire>,
+{
+    let raw = Box::<RawValue>::deserialize(deserializer)?;
+    Ok(match raw.get().as_bytes().first() {
+        None => invalid_raw("empty JSON value"),
+        Some(b'n') if raw.get() == "null" => Field::Missing,
+        Some(b'{') => decode_raw_object(raw.get()),
+        Some(b'[') => invalid_raw("array"),
+        Some(b'\"') => invalid_raw("string"),
+        Some(b't' | b'f') => invalid_raw("boolean"),
+        Some(_) => invalid_raw(format_args!("number `{}`", raw.get())),
+    })
+}
+
+fn decode_raw_object<T>(value: &str) -> Field<Option<T>>
+where
+    T: for<'wire> FieldDecode<'wire>,
 {
     struct RawMapVisitor<T>(PhantomData<T>);
 
@@ -100,14 +117,6 @@ where
 
         fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str(RAW_OBJECT)
-        }
-
-        fn visit_unit<E>(self) -> Result<Self::Value, E> {
-            Ok(Field::Missing)
-        }
-
-        fn visit_none<E>(self) -> Result<Self::Value, E> {
-            Ok(Field::Missing)
         }
 
         fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
@@ -136,40 +145,13 @@ where
 
             Ok(invalid.map_or_else(|| Field::Valid(raw), Field::Invalid))
         }
-
-        fn visit_bool<E>(self, value: bool) -> Result<Self::Value, E> {
-            Ok(invalid_raw(format_args!("boolean `{value}`")))
-        }
-
-        fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E> {
-            Ok(invalid_raw(format_args!("integer `{value}`")))
-        }
-
-        fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E> {
-            Ok(invalid_raw(format_args!("integer `{value}`")))
-        }
-
-        fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E> {
-            Ok(invalid_raw(format_args!("floating point `{value}`")))
-        }
-
-        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E> {
-            Ok(invalid_raw(format_args!("string `{value}`")))
-        }
-
-        fn visit_string<E>(self, value: String) -> Result<Self::Value, E> {
-            Ok(invalid_raw(format_args!("string `{value}`")))
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            invalid_seq(&mut seq, unexpected(RAW_OBJECT, "array"))
-        }
     }
 
-    deserializer.deserialize_any(RawMapVisitor::<T>(PhantomData))
+    let mut deserializer = serde_json::Deserializer::from_str(value);
+    match deserializer.deserialize_map(RawMapVisitor::<T>(PhantomData)) {
+        Ok(decoded) => decoded,
+        Err(error) => Field::invalid(error.to_string()),
+    }
 }
 
 const RAW_OBJECT: &str = "Yahoo raw value object";

@@ -263,6 +263,7 @@ async fn malformed_optional_search_name_is_omitted_without_losing_result() {
             .header("content-type", "application/json")
             .body(
                 r#"{
+                  "count": {"unexpected": true},
                   "quotes": [{
                     "symbol": "AAPL",
                     "quoteType": "EQUITY",

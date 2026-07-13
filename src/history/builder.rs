@@ -6,6 +6,7 @@ mod fetch;
 use crate::core::yahoo_vocab::{first_parsed_yahoo_exchange, parse_yahoo_quote_type};
 use crate::core::{
     CallOptions, DataQuality, ProjectionContext, ProjectionIssue, YfClient, YfError, YfResponse,
+    wire::{JsonDecimal, WireField, WireValue},
 };
 use crate::core::{
     client::normalize_symbol,
@@ -14,8 +15,8 @@ use crate::core::{
         TradingCurrencyEvidence, project_currency_resolution,
     },
 };
-use crate::history::YahooHistoryResponse;
 use crate::history::wire::MetaNode;
+use crate::history::{YahooHistoryResponse, round_candle_prices};
 use chrono_tz::Tz;
 use paft::domain::Instrument;
 use paft::market::action::Action;
@@ -25,7 +26,7 @@ use paft::market::responses::history::{
 };
 
 use actions::extract_actions;
-use adjust::{AdjustmentBasis, AdjustmentPlan, cumulative_split_after};
+use adjust::{AdjustmentBasis, AdjustmentPlan, SharedAdjustmentFactor, split_adjustments_after};
 use assemble::{adjustment_plan_for_series, assemble_candles};
 use fetch::{ChartFetchRequest, fetch_chart};
 
@@ -49,6 +50,8 @@ pub struct HistoryBuilder {
     #[doc(hidden)]
     pub(crate) auto_adjust: bool,
     #[doc(hidden)]
+    pub(crate) rounding: bool,
+    #[doc(hidden)]
     pub(crate) include_prepost: bool,
     #[doc(hidden)]
     pub(crate) include_actions: bool,
@@ -66,6 +69,7 @@ impl HistoryBuilder {
             period: None,
             interval: Interval::D1,
             auto_adjust: true,
+            rounding: false,
             include_prepost: false,
             include_actions: true,
             options: CallOptions::default(),
@@ -109,6 +113,16 @@ impl HistoryBuilder {
     #[must_use]
     pub const fn auto_adjust(mut self, yes: bool) -> Self {
         self.auto_adjust = yes;
+        self
+    }
+
+    /// Sets whether to round candle prices using Yahoo's chart `priceHint`. (Default: `false`)
+    ///
+    /// Rounding is applied after price adjustment. Without it, no display rounding is applied to
+    /// provider or computed candle values. Corporate-action amounts are always left exact.
+    #[must_use]
+    pub const fn rounding(mut self, yes: bool) -> Self {
+        self.rounding = yes;
         self
     }
 
@@ -240,12 +254,12 @@ impl HistoryBuilder {
         let (mut actions_out, split_events) =
             extract_actions(fetched.events.as_ref(), action_currency.as_ref(), &mut ctx)?;
 
-        // 3) Cumulative split factors after each bar
-        let cum_split_after = cumulative_split_after(&fetched.ts, &split_events);
+        // 3) Exact rational split adjustments after each bar
+        let split_adjustments = split_adjustments_after(&fetched.ts, &split_events);
 
         // 4) Assemble candles (+ raw close) with/without adjustments
         let mut adjustment_basis = None;
-        let candles = if let Some(currency) = currency.as_ref() {
+        let mut candles = if let Some(currency) = currency.as_ref() {
             let adjustment_plan = history_adjustment_plan(
                 self.auto_adjust,
                 &fetched.quote,
@@ -258,7 +272,7 @@ impl HistoryBuilder {
                 &fetched.ts,
                 &fetched.quote,
                 adjustment_plan.as_ref(),
-                &cum_split_after,
+                &split_adjustments,
                 currency,
                 &mut ctx,
             )?
@@ -284,7 +298,12 @@ impl HistoryBuilder {
             .meta
             .as_ref()
             .and_then(|meta| u32::try_from(meta.price_hint?).ok());
-        let price_basis = history_price_basis(adjustment_basis, &cum_split_after);
+        if self.rounding
+            && let Some(price_hint) = price_hint
+        {
+            round_candle_prices(&mut candles, price_hint, currency.as_ref());
+        }
+        let price_basis = history_price_basis(adjustment_basis, &split_adjustments);
 
         Ok(ctx.finish(YahooHistoryResponse {
             response: HistoryResponse {
@@ -305,20 +324,24 @@ impl HistoryBuilder {
 
 fn has_complete_ohlc_row(quote: &crate::history::wire::QuoteBlock, len: usize) -> bool {
     (0..len).any(|idx| {
-        quote.open.get(idx).and_then(|value| *value).is_some()
-            && quote.high.get(idx).and_then(|value| *value).is_some()
-            && quote.low.get(idx).and_then(|value| *value).is_some()
-            && quote.close.get(idx).and_then(|value| *value).is_some()
+        quote.open.get(idx).and_then(WireValue::as_ref).is_some()
+            && quote.high.get(idx).and_then(WireValue::as_ref).is_some()
+            && quote.low.get(idx).and_then(WireValue::as_ref).is_some()
+            && quote.close.get(idx).and_then(WireValue::as_ref).is_some()
     })
 }
 
 fn has_any_ohlc_value(quote: &crate::history::wire::QuoteBlock, len: usize) -> bool {
     (0..len).any(|idx| {
-        quote.open.get(idx).and_then(|value| *value).is_some()
-            || quote.high.get(idx).and_then(|value| *value).is_some()
-            || quote.low.get(idx).and_then(|value| *value).is_some()
-            || quote.close.get(idx).and_then(|value| *value).is_some()
+        field_is_present(quote.open.get(idx))
+            || field_is_present(quote.high.get(idx))
+            || field_is_present(quote.low.get(idx))
+            || field_is_present(quote.close.get(idx))
     })
+}
+
+fn field_is_present(field: Option<&WireValue<JsonDecimal>>) -> bool {
+    field.is_some_and(|field| field.as_ref().is_some() || field.invalid_details().is_some())
 }
 
 const fn action_sort_key(action: &Action) -> (bool, chrono::NaiveDate) {
@@ -332,16 +355,17 @@ const fn action_sort_key(action: &Action) -> (bool, chrono::NaiveDate) {
 
 fn history_price_basis(
     adjustment_basis: Option<AdjustmentBasis>,
-    cum_split_after: &[f64],
+    split_adjustments: &[Option<SharedAdjustmentFactor>],
 ) -> OhlcPriceBasis {
     match adjustment_basis {
         Some(AdjustmentBasis::ProviderAdjusted) => {
             OhlcPriceBasis::uniform(PriceBasis::provider_latest_adjusted())
         }
         Some(AdjustmentBasis::SplitAdjusted)
-            if cum_split_after
+            if split_adjustments
                 .iter()
-                .any(|factor| (*factor - 1.0).abs() > f64::EPSILON) =>
+                .flatten()
+                .any(|factor| !factor.is_identity()) =>
         {
             OhlcPriceBasis::uniform(PriceBasis::split_adjusted_latest())
         }
@@ -375,7 +399,7 @@ fn store_history_side_effects(
 fn history_adjustment_plan(
     auto_adjust: bool,
     quote: &crate::history::wire::QuoteBlock,
-    adjclose: &[Option<f64>],
+    adjclose: &[WireValue<JsonDecimal>],
     len: usize,
     ctx: &mut ProjectionContext,
 ) -> Result<Option<AdjustmentPlan>, YfError> {
@@ -474,13 +498,13 @@ fn events_need_default_currency(events: Option<&crate::history::wire::Events>) -
     };
 
     events.dividends.as_ref().is_some_and(|events| {
-        events
-            .values()
-            .any(|event| event.amount.is_some() && is_missing_currency(event.currency.as_deref()))
+        events.values().any(|event| {
+            event.amount.as_ref().is_some() && is_missing_currency(event.currency.as_deref())
+        })
     }) || events.capital_gains.as_ref().is_some_and(|events| {
-        events
-            .values()
-            .any(|event| event.amount.is_some() && is_missing_currency(event.currency.as_deref()))
+        events.values().any(|event| {
+            event.amount.as_ref().is_some() && is_missing_currency(event.currency.as_deref())
+        })
     })
 }
 

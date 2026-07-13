@@ -1,4 +1,4 @@
-use crate::core::wire::{RawDate, RawNum, WireValue};
+use crate::core::wire::{RawDate, RawDecimal, RawNum, WireValue};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -35,7 +35,7 @@ pub struct InstitutionalHolderNode {
     pub(crate) date_reported: WireValue<RawDate>,
     #[serde(rename = "pctHeld")]
     #[serde(default)]
-    pub(crate) pct_held: WireValue<RawNum<f64>>,
+    pub(crate) pct_held: WireValue<RawDecimal>,
     #[serde(default)]
     pub(crate) value: WireValue<RawNum<u64>>,
 }
@@ -44,13 +44,13 @@ pub struct InstitutionalHolderNode {
 pub struct MajorHoldersBreakdownNode {
     #[serde(rename = "insidersPercentHeld")]
     #[serde(default)]
-    pub(crate) insiders: WireValue<RawNum<f64>>,
+    pub(crate) insiders: WireValue<RawDecimal>,
     #[serde(rename = "institutionsPercentHeld")]
     #[serde(default)]
-    pub(crate) institutions: WireValue<RawNum<f64>>,
+    pub(crate) institutions: WireValue<RawDecimal>,
     #[serde(rename = "institutionsFloatPercentHeld")]
     #[serde(default)]
-    pub(crate) institutions_float: WireValue<RawNum<f64>>,
+    pub(crate) institutions_float: WireValue<RawDecimal>,
 }
 
 #[derive(Deserialize)]
@@ -125,5 +125,5 @@ pub struct NetSharePurchaseActivityNode {
     pub(crate) total_insider_shares: WireValue<RawNum<u64>>,
     #[serde(rename = "netPercentInsiderShares")]
     #[serde(default)]
-    pub(crate) net_percent_insider_shares: WireValue<RawNum<f64>>,
+    pub(crate) net_percent_insider_shares: WireValue<RawDecimal>,
 }

@@ -1,16 +1,23 @@
 use httpmock::{Method::GET, Mock, MockServer};
+use paft::Decimal;
 use paft::fundamentals::profile::Profile;
 use std::time::Duration;
 use url::Url;
 use yfinance_rs::{
     ProjectionIssue, Ticker, YfClient, YfWarning,
-    core::{
-        client::{Backoff, CacheMode, RetryConfig},
-        conversions::money_to_f64,
-    },
+    core::client::{Backoff, CacheMode, RetryConfig},
 };
 
 const INFO_QUOTE_SUMMARY_MODULES: &str = "summaryDetail,defaultKeyStatistics,assetProfile,quoteType,fundProfile,financialData,recommendationTrend,calendarEvents";
+
+fn json_decimal(value: &serde_json::Value) -> Decimal {
+    value
+        .as_number()
+        .expect("fixture decimal")
+        .to_string()
+        .parse()
+        .expect("valid fixture decimal")
+}
 
 fn mock_info_quote<'a>(server: &'a MockServer, sym: &'a str) -> Mock<'a> {
     server.mock(|when, then| {
@@ -138,17 +145,17 @@ async fn offline_info_uses_recorded_fixtures() {
             &key_statistics_fixture
         ))
     );
-    assert!(
-        (money_to_f64(info.moving_averages.fifty_day.as_ref().unwrap())
-            - raw_quote["fiftyDayAverage"].as_f64().unwrap())
-        .abs()
-            < 0.01
+    assert_eq!(
+        info.moving_averages.fifty_day.as_ref().unwrap().amount(),
+        json_decimal(&raw_quote["fiftyDayAverage"])
     );
-    assert!(
-        (money_to_f64(info.moving_averages.two_hundred_day.as_ref().unwrap())
-            - raw_quote["twoHundredDayAverage"].as_f64().unwrap())
-        .abs()
-            < 0.01
+    assert_eq!(
+        info.moving_averages
+            .two_hundred_day
+            .as_ref()
+            .unwrap()
+            .amount(),
+        json_decimal(&raw_quote["twoHundredDayAverage"])
     );
     assert!(
         info.calendar
@@ -283,10 +290,17 @@ async fn ticker_info_backfills_moving_averages_from_summary_detail() {
 
     quote_mock.assert();
     info_mock.assert();
-    assert!((money_to_f64(info.moving_averages.fifty_day.as_ref().unwrap()) - 190.25).abs() < 1e-9);
-    assert!(
-        (money_to_f64(info.moving_averages.two_hundred_day.as_ref().unwrap()) - 180.75).abs()
-            < 1e-9
+    assert_eq!(
+        info.moving_averages.fifty_day.as_ref().unwrap().amount(),
+        Decimal::new(19025, 2)
+    );
+    assert_eq!(
+        info.moving_averages
+            .two_hundred_day
+            .as_ref()
+            .unwrap()
+            .amount(),
+        Decimal::new(18075, 2)
     );
 }
 

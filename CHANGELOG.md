@@ -6,6 +6,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-XX
+
+### Breaking Changes
+
+- `ScreenerNumber::new` and `PercentPoints::new` now take exact `Decimal`
+  values and are infallible. `ScreenerResult::regular_market_change_percent`
+  is now `Option<Decimal>`; integer screener operands retain their `From`
+  conversions.
+- Removed `YfWarning::CoercedPresentField`; fractional provider counters are
+  now invalid and diagnosed instead of being rounded to a nearby integer.
+- Removed the remaining doc-hidden `f64`-to-decimal conversion helpers; JSON
+  provider mappings now require exact decimal or integer wire types.
+
+### Added
+
+- Added `HistoryBuilder::rounding()` for opt-in chart `priceHint` rounding,
+  matching the existing `DownloadBuilder` control. Rounding remains disabled
+  by default so exact provider precision is preserved.
+
+### Dependencies
+
+- Enabled serde_json's `arbitrary_precision` support so buffered JSON values
+  retain their original numeric lexemes.
+- Added `num-bigint` for exact, overflow-free history adjustment factors and
+  intermediate rational arithmetic.
+
+### Fixed
+
+- Yahoo JSON prices, ratios, percentages, analyst values, monetary amounts,
+  and counters now parse directly from their numeric lexemes into `Decimal` or
+  exact integers across quotes, quoteSummary, history, analysis,
+  fundamentals, options, holders, ESG, screeners, and polling streams.
+- Decimal wire parsing now rejects values outside `Decimal`'s exact capacity
+  instead of accepting rust_decimal's rounded string conversion, including
+  exact handling of representable exponent forms, numeric strings, and wire
+  scale such as the trailing zero in `189.50`.
+- Provider-adjusted history uses arbitrary-precision reduced rational factors,
+  preserves Yahoo adjusted close exactly, cross-cancels values before
+  multiplication, and rounds nonterminating adjusted OHLC results once with
+  round-half-to-even at the `Decimal` output boundary. Split factors remain
+  exact through temporarily unrepresentable cumulative products so later
+  inverse splits can recover.
+- Explicit history/download rounding now covers every candle price, including
+  `close_unadj`, and applies Yahoo `priceHint` before converting subunit quote
+  currencies such as `GBp` into major currency amounts. Corporate-action
+  amounts remain exact rather than being treated as display prices.
+- WebSocket `float` prices now use the protobuf `price_hint` to remove binary
+  float noise before exact decimal currency conversion.
+- Yahoo subunit prices such as GBp, ZAc, and ILA now use exact coefficient
+  scaling and diagnose values that would underflow Decimal instead of rounding
+  them silently.
+- Screener result counts now accept exact integral numeric forms and report a
+  malformed optional count without discarding otherwise valid quotes.
+- News RFC 3339 timestamps now preserve provider subsecond precision.
+
 ## [0.9.1] - 2026-07-11
 
 ### Fixed
@@ -756,7 +811,8 @@ Yahoo Finance appears to have removed or relocated the ESG data endpoint. As a r
 - Analysis tools: `recommendations`, `sustainability`, `major_holders`, `institutional_holders`.
 - Utilities: `DownloadBuilder`, `StreamBuilder`, `SearchBuilder`.
 
-[Unreleased]: https://github.com/gramistella/yfinance-rs/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/gramistella/yfinance-rs/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/gramistella/yfinance-rs/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/gramistella/yfinance-rs/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/gramistella/yfinance-rs/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/gramistella/yfinance-rs/compare/v0.7.2...v0.8.0

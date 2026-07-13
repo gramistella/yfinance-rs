@@ -1,10 +1,10 @@
 use std::fmt::Display;
 
 use yfinance_rs::{
-    EquityQuery, EtfCategory, EtfQuery, FundCategory, FundQuery, PercentPoints, PredefinedScreener,
-    Rating, Region, ResultOffset, ScreenerBuilder, ScreenerCount, ScreenerResponse, ScreenerResult,
-    SortDirection, YahooExchangeCode, YfClient, YfError, equity_fields, etf_fields, fund_fields,
-    screen,
+    Decimal, EquityQuery, EtfCategory, EtfQuery, FundCategory, FundQuery, PercentPoints,
+    PredefinedScreener, Rating, Region, ResultOffset, ScreenerBuilder, ScreenerCount,
+    ScreenerResponse, ScreenerResult, SortDirection, YahooExchangeCode, YfClient, YfError,
+    equity_fields, etf_fields, fund_fields, screen,
 };
 
 fn display_opt<T: Display>(value: Option<&T>) -> String {
@@ -54,7 +54,7 @@ async fn custom_equity_screen(client: &YfClient) -> Result<(), YfError> {
         exchange_filter,
         equity_fields::INTRADAY_PRICE.gte(5),
         equity_fields::INTRADAY_MARKET_CAP.gte(2_000_000_000_u64),
-        equity_fields::PERCENT_CHANGE.gt(PercentPoints::new(2.0)?),
+        equity_fields::PERCENT_CHANGE.gt(PercentPoints::new(Decimal::new(20, 1))),
     ])?;
 
     let response = ScreenerBuilder::equity(client, query)

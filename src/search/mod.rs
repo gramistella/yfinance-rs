@@ -344,8 +344,6 @@ const DEFAULT_BASE_SEARCH_V1: &str = "https://query2.finance.yahoo.com/v1/financ
 struct V1SearchEnvelope {
     #[allow(dead_code)]
     explains: Option<serde_json::Value>,
-    #[allow(dead_code)]
-    count: Option<i64>,
     quotes: Option<Vec<Value>>,
 }
 

@@ -1,8 +1,7 @@
-use crate::core::wire::decimal_from_json_value;
+use crate::core::wire::{JsonDecimal, WireValue};
 use paft::Decimal;
 use serde::Deserialize;
 use serde::Deserializer;
-use serde_json::Value;
 use std::collections::BTreeMap;
 
 #[derive(Deserialize)]
@@ -68,13 +67,13 @@ pub struct Indicators {
 #[derive(Deserialize, Clone)]
 pub struct QuoteBlock {
     #[serde(default)]
-    pub(crate) open: Vec<Option<f64>>,
+    pub(crate) open: Vec<WireValue<JsonDecimal>>,
     #[serde(default)]
-    pub(crate) high: Vec<Option<f64>>,
+    pub(crate) high: Vec<WireValue<JsonDecimal>>,
     #[serde(default)]
-    pub(crate) low: Vec<Option<f64>>,
+    pub(crate) low: Vec<WireValue<JsonDecimal>>,
     #[serde(default)]
-    pub(crate) close: Vec<Option<f64>>,
+    pub(crate) close: Vec<WireValue<JsonDecimal>>,
     #[serde(default)]
     pub(crate) volume: Vec<Option<u64>>,
 }
@@ -82,7 +81,7 @@ pub struct QuoteBlock {
 #[derive(Deserialize, Clone)]
 pub struct AdjCloseBlock {
     #[serde(default)]
-    pub(crate) adjclose: Vec<Option<f64>>,
+    pub(crate) adjclose: Vec<WireValue<JsonDecimal>>,
 }
 
 #[derive(Deserialize, Default, Clone)]
@@ -97,7 +96,8 @@ pub struct Events {
 
 #[derive(Deserialize, Clone)]
 pub struct DividendEvent {
-    pub(crate) amount: Option<f64>,
+    #[serde(default)]
+    pub(crate) amount: WireValue<JsonDecimal>,
     pub(crate) date: Option<i64>,
     pub(crate) currency: Option<String>,
 }
@@ -115,7 +115,8 @@ pub struct SplitEvent {
 
 #[derive(Deserialize, Clone)]
 pub struct CapitalGainEvent {
-    pub(crate) amount: Option<f64>,
+    #[serde(default)]
+    pub(crate) amount: WireValue<JsonDecimal>,
     pub(crate) date: Option<i64>,
     pub(crate) currency: Option<String>,
 }
@@ -129,9 +130,13 @@ fn de_opt_decimal_from_mixed<'de, D>(deserializer: D) -> Result<Option<Decimal>,
 where
     D: Deserializer<'de>,
 {
-    Option::<Value>::deserialize(deserializer).map(|value| {
-        value
-            .filter(|value| !value.is_null())
-            .and_then(|value| decimal_from_json_value(value).ok())
-    })
+    de_opt_decimal(deserializer)
+}
+
+fn de_opt_decimal<'de, D>(deserializer: D) -> Result<Option<Decimal>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    WireValue::<JsonDecimal>::deserialize(deserializer)
+        .map(|value| value.into_option().map(JsonDecimal::into_decimal))
 }

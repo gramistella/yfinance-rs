@@ -35,6 +35,7 @@ use crate::{
     core::yahoo_vocab::{parse_yahoo_quote_type, yahoo_exchange_to_listing_currency},
     core::{error::RedactedHttpError, redaction::RedactedUrl},
 };
+use paft::Decimal;
 use paft::domain::{AssetKind, Instrument};
 use paft::market::quote::QuoteUpdate;
 use paft::money::{PriceAmount, QuantityAmount};
@@ -614,7 +615,7 @@ async fn run_websocket_stream_with_fallback(
     timeouts: WebsocketTimeouts,
 ) {
     let mut ticker = tokio::time::interval(cfg.interval);
-    let mut last_price: HashMap<String, Option<f64>> = HashMap::new();
+    let mut last_price: HashMap<String, Option<Decimal>> = HashMap::new();
     let mut websocket_failures = 0_u32;
 
     loop {
@@ -678,7 +679,7 @@ struct PollReconnectContext<'a> {
 async fn poll_until_websocket_reconnect(
     reconnect: PollReconnectContext<'_>,
     stop_rx: &mut tokio::sync::oneshot::Receiver<()>,
-    last_price: &mut HashMap<String, Option<f64>>,
+    last_price: &mut HashMap<String, Option<Decimal>>,
     ticker: &mut tokio::time::Interval,
 ) -> bool {
     let reconnect_at = tokio::time::Instant::now() + reconnect.delay;
@@ -915,7 +916,7 @@ async fn run_polling_stream(
     options: &CallOptions,
 ) {
     let mut ticker = tokio::time::interval(cfg.interval);
-    let mut last_price: HashMap<String, Option<f64>> = HashMap::new();
+    let mut last_price: HashMap<String, Option<Decimal>> = HashMap::new();
 
     loop {
         if !wait_for_poll_tick(&mut ticker, &tx, stop_rx).await {
@@ -955,7 +956,7 @@ async fn poll_stream_once(
     tx: &tokio::sync::mpsc::Sender<QuoteUpdate>,
     stop_rx: &mut tokio::sync::oneshot::Receiver<()>,
     options: &CallOptions,
-    last_price: &mut HashMap<String, Option<f64>>,
+    last_price: &mut HashMap<String, Option<Decimal>>,
 ) -> bool {
     if tx.is_closed() {
         return false;
@@ -986,7 +987,7 @@ async fn handle_polling_quotes(
     client: &crate::core::YfClient,
     tx: &tokio::sync::mpsc::Sender<QuoteUpdate>,
     diff_only: bool,
-    last_price: &mut HashMap<String, Option<f64>>,
+    last_price: &mut HashMap<String, Option<Decimal>>,
     quotes: Vec<crate::core::quotes::V7QuoteNode>,
 ) -> bool {
     for q in quotes {
@@ -999,8 +1000,12 @@ async fn handle_polling_quotes(
         let lp = q
             .regular_market_price
             .as_ref()
-            .copied()
-            .or_else(|| q.regular_market_previous_close.as_ref().copied());
+            .map(|value| value.into_decimal())
+            .or_else(|| {
+                q.regular_market_previous_close
+                    .as_ref()
+                    .map(|value| value.into_decimal())
+            });
 
         let price_changed = if diff_only {
             last_price.get(&sym_s) != Some(&lp)
@@ -1036,11 +1041,10 @@ async fn handle_polling_quotes(
             .send(QuoteUpdate {
                 instrument,
                 currency: currency_unit.currency().clone(),
-                price: lp.and_then(|v| currency_unit.price_amount_from_f64(v)),
-                previous_close: q
-                    .regular_market_previous_close
-                    .as_ref()
-                    .and_then(|v| currency_unit.price_amount_from_f64(*v)),
+                price: lp.and_then(|value| currency_unit.price_amount_from_decimal(value)),
+                previous_close: q.regular_market_previous_close.as_ref().and_then(|value| {
+                    currency_unit.price_amount_from_decimal(value.into_decimal())
+                }),
                 volume: q
                     .regular_market_volume
                     .as_ref()

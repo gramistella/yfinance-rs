@@ -43,6 +43,20 @@ const MALFORMED_NEWS_STREAM_BODY: &str = r#"{
   }
 }"#;
 
+const SYNTHETIC_SUBSECOND_NEWS_STREAM_BODY: &str = r#"{
+  "data": {
+    "tickerStream": {
+      "stream": [{
+        "id": "subsecond-news",
+        "content": {
+          "title": "Precise publication time",
+          "pubDate": "2025-01-01T00:00:00.123456789Z"
+        }
+      }]
+    }
+  }
+}"#;
+
 #[tokio::test]
 async fn offline_news_uses_recorded_fixture() {
     let server = MockServer::start();
@@ -88,6 +102,36 @@ async fn offline_news_uses_recorded_fixture() {
     assert!(!first.uuid.is_empty());
     assert!(!first.title.is_empty());
     assert!(first.published_at.timestamp() > 0);
+}
+
+#[tokio::test]
+async fn synthetic_news_preserves_rfc3339_subsecond_precision() {
+    let server = MockServer::start();
+    let sym = "AAPL";
+
+    let mock = server.mock(|when, then| {
+        when.method(POST)
+            .path("/xhr/ncp")
+            .query_param("queryRef", "latestNews")
+            .query_param("serviceKey", "ncp_fin");
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(SYNTHETIC_SUBSECOND_NEWS_STREAM_BODY);
+    });
+
+    let client = YfClient::builder()
+        .base_news(Url::parse(&server.base_url()).unwrap())
+        .build()
+        .unwrap();
+
+    let articles = Ticker::new(&client, sym).news().await.unwrap();
+
+    mock.assert();
+    assert_eq!(articles.len(), 1);
+    assert_eq!(
+        articles[0].published_at.timestamp_subsec_nanos(),
+        123_456_789
+    );
 }
 
 #[tokio::test]

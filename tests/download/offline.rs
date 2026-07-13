@@ -673,6 +673,9 @@ async fn rounding_uses_recorded_price_hint() {
             assert!(!has_more_than_decimals(money_to_f64(&c.ohlc.high), 2));
             assert!(!has_more_than_decimals(money_to_f64(&c.ohlc.low), 2));
             assert!(!has_more_than_decimals(money_to_f64(&c.ohlc.close), 2));
+            if let Some(close_unadj) = c.close_unadj.as_ref() {
+                assert!(!has_more_than_decimals(money_to_f64(close_unadj), 2));
+            }
         }
     }
 }
@@ -759,5 +762,10 @@ fn scale_first_rounded_minor_unit_field(
 }
 
 fn provider_decimal_field(quote: &serde_json::Value, field: &str) -> Decimal {
-    Decimal::try_from(quote[field][0].as_f64().unwrap()).unwrap()
+    quote[field][0]
+        .as_number()
+        .expect("fixture field should be numeric")
+        .to_string()
+        .parse()
+        .expect("fixture field should fit Decimal")
 }

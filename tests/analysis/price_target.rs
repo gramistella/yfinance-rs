@@ -1,12 +1,15 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use paft::Decimal;
 use paft::money::{Currency, IsoCurrency, Price};
 use url::Url;
-use yfinance_rs::core::conversions::price_from_f64;
 use yfinance_rs::{Ticker, YfClient};
 
-fn usd_price(value: f64) -> Price {
-    price_from_f64(value, Currency::Iso(IsoCurrency::USD)).expect("known-good USD price")
+fn usd_price(value: &str) -> Price {
+    Price::new(
+        value.parse::<Decimal>().expect("known-good decimal price"),
+        Currency::Iso(IsoCurrency::USD),
+    )
 }
 
 fn fixture(endpoint: &str, symbol: &str) -> String {
@@ -14,7 +17,7 @@ fn fixture(endpoint: &str, symbol: &str) -> String {
 }
 
 #[tokio::test]
-async fn offline_price_target_happy() {
+async fn offline_price_target_preserves_exact_decimals() {
     let server = MockServer::start();
     let sym = "AAPL";
 
@@ -22,8 +25,8 @@ async fn offline_price_target_happy() {
       "quoteSummary": {
         "result": [{
           "financialData": {
-            "targetMeanPrice": { "raw": 200.0 },
-            "targetHighPrice": { "raw": 250.0 },
+            "targetMeanPrice": { "raw": 1234567890.123456789012345678 },
+            "targetHighPrice": { "raw": 250.031600002 },
             "targetLowPrice":  { "raw": 150.0 },
             "numberOfAnalystOpinions": { "raw": 31 }
           }
@@ -65,9 +68,9 @@ async fn offline_price_target_happy() {
     mock.assert();
     quote_mock.assert();
 
-    assert_eq!(pt.mean, Some(usd_price(200.0)));
-    assert_eq!(pt.high, Some(usd_price(250.0)));
-    assert_eq!(pt.low, Some(usd_price(150.0)));
+    assert_eq!(pt.mean, Some(usd_price("1234567890.123456789012345678")));
+    assert_eq!(pt.high, Some(usd_price("250.031600002")));
+    assert_eq!(pt.low, Some(usd_price("150.0")));
     assert_eq!(pt.number_of_analysts, Some(31));
 }
 
@@ -151,8 +154,8 @@ async fn price_target_invalid_crumb_then_retry_succeeds() {
     ok.assert();
     quote_mock.assert();
 
-    assert_eq!(pt.mean, Some(usd_price(123.45)));
-    assert_eq!(pt.high, Some(usd_price(150.0)));
-    assert_eq!(pt.low, Some(usd_price(100.0)));
+    assert_eq!(pt.mean, Some(usd_price("123.45")));
+    assert_eq!(pt.high, Some(usd_price("150.0")));
+    assert_eq!(pt.low, Some(usd_price("100.0")));
     assert_eq!(pt.number_of_analysts, Some(20));
 }

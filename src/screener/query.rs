@@ -1,5 +1,6 @@
-use std::{fmt, marker::PhantomData};
+use std::marker::PhantomData;
 
+use paft::Decimal;
 use paft::domain::AssetKind;
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -130,106 +131,68 @@ impl ResultOffset {
     }
 }
 
-/// A finite numeric filter value.
-///
-/// Use [`ScreenerNumber::new`] for floating-point values. Integer values can be
-/// passed directly to numeric field builders.
-#[derive(Clone, Copy, PartialEq)]
-pub struct ScreenerNumber(ScreenerNumberKind);
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum ScreenerNumberKind {
-    Float(FiniteF64),
-    Unsigned(u64),
-    Signed(i64),
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct FiniteF64(f64);
-
-impl FiniteF64 {
-    fn new(value: f64) -> Result<Self, YfError> {
-        if !value.is_finite() {
-            return Err(YfError::InvalidParams(
-                "screener numeric value must be finite".into(),
-            ));
-        }
-
-        Ok(Self(value))
-    }
-
-    fn into_json_number(self) -> serde_json::Number {
-        serde_json::Number::from_f64(self.0).expect("FiniteF64 stores finite values")
-    }
-}
+/// An exact decimal screener filter value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScreenerNumber(Decimal);
 
 impl ScreenerNumber {
-    /// Builds a finite screener number.
-    ///
-    /// # Errors
-    ///
-    /// Returns `YfError::InvalidParams` for `NaN` or infinite values.
-    pub fn new(value: f64) -> Result<Self, YfError> {
-        Ok(Self(ScreenerNumberKind::Float(FiniteF64::new(value)?)))
+    /// Builds an exact decimal screener number.
+    #[must_use]
+    pub const fn new(value: Decimal) -> Self {
+        Self(value)
     }
 
     fn to_value(self) -> Value {
-        match self.0 {
-            ScreenerNumberKind::Float(value) => Value::Number(value.into_json_number()),
-            ScreenerNumberKind::Unsigned(value) => Value::Number(serde_json::Number::from(value)),
-            ScreenerNumberKind::Signed(value) => Value::Number(serde_json::Number::from(value)),
-        }
+        Value::Number(
+            self.0
+                .to_string()
+                .parse()
+                .expect("Decimal always has a valid JSON number representation"),
+        )
     }
 }
 
-impl fmt::Debug for ScreenerNumber {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            ScreenerNumberKind::Float(value) => f.debug_tuple("Float").field(&value.0).finish(),
-            ScreenerNumberKind::Unsigned(value) => f.debug_tuple("Unsigned").field(&value).finish(),
-            ScreenerNumberKind::Signed(value) => f.debug_tuple("Signed").field(&value).finish(),
-        }
+impl From<Decimal> for ScreenerNumber {
+    fn from(value: Decimal) -> Self {
+        Self(value)
     }
 }
 
 impl From<u32> for ScreenerNumber {
     fn from(value: u32) -> Self {
-        Self(ScreenerNumberKind::Unsigned(u64::from(value)))
+        Self(Decimal::from(value))
     }
 }
 
 impl From<i32> for ScreenerNumber {
     fn from(value: i32) -> Self {
-        Self(ScreenerNumberKind::Signed(i64::from(value)))
+        Self(Decimal::from(value))
     }
 }
 
 impl From<u64> for ScreenerNumber {
     fn from(value: u64) -> Self {
-        Self(ScreenerNumberKind::Unsigned(value))
+        Self(Decimal::from(value))
     }
 }
 
 impl From<i64> for ScreenerNumber {
     fn from(value: i64) -> Self {
-        Self(ScreenerNumberKind::Signed(value))
+        Self(Decimal::from(value))
     }
 }
 
 /// Percent-point filter value.
 ///
 /// Yahoo screener percent fields expect `3` for 3%, not `0.03`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PercentPoints(ScreenerNumber);
 
 impl PercentPoints {
-    /// Builds a finite percent-point value.
-    ///
-    /// # Errors
-    ///
-    /// Returns `YfError::InvalidParams` for `NaN` or infinite values.
-    pub fn new(value: f64) -> Result<Self, YfError> {
-        Ok(Self(ScreenerNumber::new(value)?))
+    /// Builds an exact decimal percent-point value.
+    #[must_use]
+    pub const fn new(value: Decimal) -> Self {
+        Self(ScreenerNumber::new(value))
     }
 }
 
@@ -925,8 +888,8 @@ mod tests {
     }
 
     #[test]
-    fn screener_number_serializes_validated_float() {
-        let query = equity_fields::INTRADAY_PRICE.gt(ScreenerNumber::new(12.5).unwrap());
+    fn screener_number_serializes_exact_decimal() {
+        let query = equity_fields::INTRADAY_PRICE.gt(ScreenerNumber::new(Decimal::new(125, 1)));
 
         assert_eq!(
             query.into_wire_value(),
@@ -941,8 +904,19 @@ mod tests {
     fn bounded_values_reject_invalid_inputs() {
         assert!(ScreenerCount::new(0).is_err());
         assert!(ScreenerCount::new(251).is_err());
-        assert!(ScreenerNumber::new(f64::NAN).is_err());
-        assert!(ScreenerNumber::new(f64::INFINITY).is_err());
         assert!(ResultOffset::try_from_i64(-1).is_err());
+    }
+
+    #[test]
+    fn screener_number_preserves_more_than_f64_precision() {
+        let exact: Decimal = "1234567890.123456789012345678"
+            .parse()
+            .expect("valid decimal");
+        let query = equity_fields::INTRADAY_PRICE.gt(ScreenerNumber::new(exact));
+
+        assert_eq!(
+            query.into_wire_value()["operands"][1].to_string(),
+            "1234567890.123456789012345678"
+        );
     }
 }

@@ -1,12 +1,11 @@
 use crate::common;
 use httpmock::Method::GET;
 use httpmock::MockServer;
-use paft::money::PriceAmount;
+use paft::{Decimal, money::PriceAmount};
 use url::Url;
-use yfinance_rs::core::conversions::price_amount_from_f64;
 
-fn usd_price(value: f64) -> PriceAmount {
-    price_amount_from_f64(value).expect("known-good USD price")
+fn usd_price(value: i64) -> PriceAmount {
+    PriceAmount::new(Decimal::from(value))
 }
 
 #[tokio::test]
@@ -81,8 +80,8 @@ async fn batch_quotes_401_then_retry_with_crumb_succeeds() {
         .iter()
         .find(|q| q.instrument.symbol.as_str() == "MSFT")
         .unwrap();
-    assert_eq!(aapl.price, Some(usd_price(123.0)));
-    assert_eq!(msft.price, Some(usd_price(456.0)));
+    assert_eq!(aapl.price, Some(usd_price(123)));
+    assert_eq!(msft.price, Some(usd_price(456)));
     assert_eq!(
         aapl.instrument
             .exchange
@@ -162,5 +161,5 @@ async fn batch_quotes_401_with_stale_cached_crumb_refreshes_before_retry() {
     crumb.assert();
     ok.assert();
     assert_eq!(quotes.len(), 1);
-    assert_eq!(quotes[0].price, Some(usd_price(123.0)));
+    assert_eq!(quotes[0].price, Some(usd_price(123)));
 }

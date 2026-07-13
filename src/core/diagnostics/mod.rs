@@ -17,11 +17,10 @@ pub(crate) use context::ProjectionContext;
 pub use currency::{YfCurrencyInference, YfCurrencyPurpose};
 pub use issue::ProjectionIssue;
 pub(crate) use monetary::{
-    optional_decimal_f64, optional_money_decimal_with_currency_issue,
-    optional_money_i64_with_currency_issue, optional_money_u64_with_currency_issue,
-    optional_price_f64_with_currency_issue, optional_ratio_f64,
+    optional_money_decimal_with_currency_issue, optional_money_i64_with_currency_issue,
+    optional_money_u64_with_currency_issue, optional_price_decimal_with_currency_issue,
 };
-pub(crate) use numeric::{optional_u32_from_i64, optional_u32_from_raw_f64};
+pub(crate) use numeric::optional_u32_from_i64;
 pub(crate) use projection::{
     WireProjection, diagnostic_key, nonempty, nonempty_string, optional_parsed, optional_projected,
     optional_wire_cloned, optional_wire_value, parse_optional, required_nonempty_string,

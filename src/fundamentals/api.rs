@@ -13,7 +13,7 @@ use crate::{
         },
         diagnostics::{
             WireProjection, optional_money_decimal_with_currency_issue,
-            optional_price_f64_with_currency_issue, required_period, required_timestamp,
+            optional_price_decimal_with_currency_issue, required_period, required_timestamp,
         },
         wire::{BorrowedWireValue, RawDate, RawDecimal, RawNumU64, WireField, WireValue},
     },
@@ -1014,7 +1014,7 @@ fn earnings_has_monetary_values(earnings: &crate::fundamentals::wire::EarningsNo
     let decimal_present = |value: &WireValue<crate::core::wire::RawDecimal>| {
         value.as_ref().and_then(|v| v.raw.as_ref()).is_some()
     };
-    let f64_present = |value: &WireValue<crate::core::wire::RawNum<f64>>| {
+    let eps_present = |value: &WireValue<crate::core::wire::RawDecimal>| {
         value.as_ref().and_then(|v| v.raw.as_ref()).is_some()
     };
 
@@ -1029,7 +1029,7 @@ fn earnings_has_monetary_values(earnings: &crate::fundamentals::wire::EarningsNo
     }) || earnings.earnings_chart.as_ref().is_some_and(|chart| {
         chart.quarterly.as_ref().is_some_and(|rows| {
             rows.iter()
-                .any(|row| f64_present(&row.actual) || f64_present(&row.estimate))
+                .any(|row| eps_present(&row.actual) || eps_present(&row.estimate))
         })
     })
 }
@@ -1279,7 +1279,7 @@ pub(super) async fn earnings(
                 .and_then(|raw| raw.raw);
             quarterly_eps.push(EarningsQuarterEps {
                 period,
-                actual: optional_price_f64_with_currency_issue(
+                actual: optional_price_decimal_with_currency_issue(
                     &mut ctx,
                     "earningsChart.quarterly[].actual",
                     period_key.as_deref(),
@@ -1288,7 +1288,7 @@ pub(super) async fn earnings(
                     actual,
                     "earnings price value",
                 )?,
-                estimate: optional_price_f64_with_currency_issue(
+                estimate: optional_price_decimal_with_currency_issue(
                     &mut ctx,
                     "earningsChart.quarterly[].estimate",
                     period_key.as_deref(),

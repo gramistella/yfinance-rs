@@ -305,13 +305,10 @@ impl<'a> JsDataParser<'a> {
         let start = self.pos;
         self.consume_digits();
 
-        let mut is_float = false;
         if self.consume_byte(b'.') {
-            is_float = true;
             self.consume_digits();
         }
         if matches!(self.peek_byte(), Some(b'e' | b'E')) {
-            is_float = true;
             self.pos += 1;
             if matches!(self.peek_byte(), Some(b'+' | b'-')) {
                 self.pos += 1;
@@ -320,11 +317,7 @@ impl<'a> JsDataParser<'a> {
         }
 
         let raw = &self.source[start..self.pos];
-        if is_float {
-            Number::from_f64(raw.parse().ok()?).map(Value::Number)
-        } else {
-            Some(Value::Number(Number::from(raw.parse::<i64>().ok()?)))
-        }
+        raw.parse::<Number>().ok().map(Value::Number)
     }
 
     fn parse_string(&mut self) -> Option<String> {
@@ -538,4 +531,27 @@ fn is_high_surrogate(value: u32) -> bool {
 
 fn is_low_surrogate(value: u32) -> bool {
     (0xdc00..=0xdfff).contains(&value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::JsDataParser;
+
+    #[test]
+    fn jsonp_parser_preserves_numeric_lexemes() {
+        let args = JsDataParser::new(
+            "mmSuggestDeliver(0.1234567890123456789012345678, new Array(), new Array(), 1.234567890123456789e+20, 0);",
+        )
+        .parse_mm_suggest_deliver_args()
+        .expect("valid callback");
+
+        assert_eq!(
+            args[0].as_number().map(ToString::to_string).as_deref(),
+            Some("0.1234567890123456789012345678")
+        );
+        assert_eq!(
+            args[3].as_number().map(ToString::to_string).as_deref(),
+            Some("1.234567890123456789e+20")
+        );
+    }
 }

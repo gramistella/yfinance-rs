@@ -2,25 +2,22 @@ use futures::{StreamExt, stream};
 
 use crate::{
     core::client::normalize_symbols,
-    core::conversions::f64_from_price_amount,
     core::{
         CallOptions, Candle, Interval, ProjectionContext, ProjectionIssue, Range, YfClient,
         YfError, YfResponse, currency_resolver::ResolvedCurrencyUnit,
     },
-    history::{HistoryBuilder, YahooHistoryResponse},
+    history::{HistoryBuilder, YahooHistoryResponse, round_candle_prices},
 };
 use paft::domain::{AssetKind, Instrument};
 use paft::market::responses::{
     download::{DownloadEntry, DownloadResponse},
     history::{OhlcPriceBasis, PriceBasis},
 };
-use paft::money::PriceAmount;
 type DateRange = (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>);
 type MaybeDateRange = Option<DateRange>;
 type DownloadFetchSuccess = (usize, String, YfResponse<YahooHistoryResponse>);
 type DownloadFetchFailure = (usize, String, YfError);
 type DownloadFetchResult = Result<DownloadFetchSuccess, DownloadFetchFailure>;
-const MAX_DECIMAL_SCALE: u32 = 28;
 const UNTYPED_DOWNLOAD_ASSET_KIND: &str = "YAHOO_DOWNLOAD_UNTYPED";
 
 /// Maximum number of per-symbol history requests a [`DownloadBuilder`] runs at once.
@@ -158,9 +155,7 @@ impl DownloadBuilder {
             return;
         }
         for c in rows.iter_mut() {
-            if let Some(rc) = c.close_unadj.as_ref()
-                && f64_from_price_amount(rc).is_some_and(f64::is_finite)
-            {
+            if let Some(rc) = c.close_unadj.as_ref() {
                 c.ohlc.close = rc.clone();
             }
         }
@@ -189,12 +184,7 @@ impl DownloadBuilder {
             return;
         };
 
-        for c in rows {
-            c.ohlc.open = rounded_price(&c.ohlc.open, price_hint, currency_unit);
-            c.ohlc.high = rounded_price(&c.ohlc.high, price_hint, currency_unit);
-            c.ohlc.low = rounded_price(&c.ohlc.low, price_hint, currency_unit);
-            c.ohlc.close = rounded_price(&c.ohlc.close, price_hint, currency_unit);
-        }
+        round_candle_prices(rows, price_hint, currency_unit);
     }
 
     fn process_joined_results(
@@ -348,6 +338,8 @@ impl DownloadBuilder {
     }
 
     /// Sets whether to round prices using Yahoo's chart `priceHint`. (Default: `false`)
+    ///
+    /// This rounds candle price fields after adjustment. Corporate-action amounts are left exact.
     #[must_use]
     pub const fn rounding(mut self, yes: bool) -> Self {
         self.rounding = yes;
@@ -429,21 +421,6 @@ impl DownloadBuilder {
 }
 
 /* ---------------- internal helpers ---------------- */
-
-fn rounded_price(
-    price: &PriceAmount,
-    price_hint: u32,
-    currency_unit: Option<&ResolvedCurrencyUnit>,
-) -> PriceAmount {
-    let price_hint = price_hint.min(MAX_DECIMAL_SCALE);
-    if let Some(rounded) = currency_unit
-        .and_then(|currency| currency.price_amount_rounded_at_provider_precision(price, price_hint))
-    {
-        return rounded;
-    }
-
-    PriceAmount::new(price.as_decimal().round_dp(price_hint))
-}
 
 fn resolve_download_instrument(
     instrument: Option<Instrument>,

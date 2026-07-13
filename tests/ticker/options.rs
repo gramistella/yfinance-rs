@@ -1,7 +1,8 @@
+use paft::Decimal;
 use paft::domain::AssetKind;
 use serde_json::Value;
 use url::Url;
-use yfinance_rs::core::conversions::{money_to_currency_str, money_to_f64};
+use yfinance_rs::core::conversions::money_to_currency_str;
 use yfinance_rs::{ProjectionIssue, Ticker, YfClient, YfError, YfWarning};
 
 const OPTIONS_WITH_BAD_STRIKES_AND_OPTIONAL_FIELDS: &str = r#"{
@@ -520,7 +521,7 @@ async fn option_chain_missing_currency_uses_resolver_inference_after_quote_failu
         money_to_currency_str(&contract.key.strike).as_deref(),
         Some("GBP")
     );
-    assert!((money_to_f64(&contract.key.strike) - 4.441).abs() < 1e-9);
+    assert_eq!(contract.key.strike.amount(), Decimal::new(4441, 3));
 }
 
 #[tokio::test]
@@ -592,13 +593,72 @@ async fn option_chain_skips_bad_strikes_and_keeps_valid_contracts() {
     }
 
     let call = calls[0];
-    assert!((money_to_f64(&call.key.strike) - 180.0).abs() < 1e-9);
+    assert_eq!(call.key.strike.amount(), Decimal::from(180));
     assert_eq!(call.price, None, "invalid optional last price becomes None");
     assert!(call.bid.is_some(), "valid optional bid survives");
     assert_eq!(call.ask, None, "invalid optional ask becomes None");
     assert_eq!(
         call.implied_volatility, None,
         "invalid optional IV becomes None"
+    );
+}
+
+#[tokio::test]
+async fn option_chain_preserves_exact_price_and_volatility_decimals() {
+    let server = crate::common::setup_server();
+    let date = 1_737_072_000_i64;
+    let body = r#"{
+      "optionChain": {
+        "result": [{
+          "underlyingSymbol": "AAPL",
+          "quote": { "symbol": "AAPL", "quoteType": "EQUITY", "currency": "USD" },
+          "options": [{
+            "expirationDate": 1737072000,
+            "calls": [{
+              "contractSymbol": "AAPL250117C00180000",
+              "strike": 1234567890.123456789012345678,
+              "expiration": 1737072000,
+              "lastPrice": 0.031600002,
+              "bid": 0.01,
+              "ask": 0.02,
+              "impliedVolatility": 3.6171884570312502
+            }]
+          }]
+        }],
+        "error": null
+      }
+    }"#;
+    let mock = server.mock(|when, then| {
+        when.method(httpmock::Method::GET)
+            .path("/v7/finance/options/AAPL")
+            .query_param("date", date.to_string());
+        then.status(200)
+            .header("content-type", "application/json")
+            .body(body);
+    });
+
+    let client = YfClient::builder()
+        .base_options_v7(Url::parse(&format!("{}/v7/finance/options/", server.base_url())).unwrap())
+        .build()
+        .unwrap();
+    let chain = Ticker::new(&client, "AAPL")
+        .option_chain(Some(date))
+        .await
+        .unwrap();
+
+    mock.assert();
+    let call = chain.calls().next().expect("exact-decimal call");
+    assert_eq!(
+        call.key.strike.amount(),
+        "1234567890.123456789012345678".parse::<Decimal>().unwrap()
+    );
+    assert_eq!(
+        call.price.as_ref().unwrap().as_decimal(),
+        &Decimal::new(31_600_002, 9)
+    );
+    assert_eq!(
+        call.implied_volatility.as_ref().unwrap().as_decimal(),
+        &"3.6171884570312502".parse::<Decimal>().unwrap()
     );
 }
 

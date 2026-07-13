@@ -1,4 +1,5 @@
 use httpmock::{Method::GET, MockServer};
+use paft::Decimal;
 use paft::fundamentals::holders::TransactionType;
 use url::Url;
 use yfinance_rs::{HoldersBuilder, ProjectionIssue, Ticker, YfClient, YfError, YfWarning};
@@ -536,7 +537,7 @@ async fn blank_no_cash_insider_transaction_is_inferred_as_exercise() {
 }
 
 #[tokio::test]
-async fn major_holder_decimal_conversion_failure_is_reported() {
+async fn major_holder_preserves_exact_ratio_and_reports_unrepresentable_decimal() {
     let sym = "MAJOR";
     let server = MockServer::start();
 
@@ -553,7 +554,7 @@ async fn major_holder_decimal_conversion_failure_is_reported() {
                     "result": [{
                       "majorHoldersBreakdown": {
                         "insidersPercentHeld": { "raw": 1e30 },
-                        "institutionsPercentHeld": { "raw": 0.25 },
+                        "institutionsPercentHeld": { "raw": 0.1234567890123456789012345678 },
                         "institutionsCount": { "raw": 42 }
                       }
                     }],
@@ -584,12 +585,17 @@ async fn major_holder_decimal_conversion_failure_is_reported() {
             .iter()
             .any(|holder| { holder.category.contains("% of Shares Held by Institutions") })
     );
+    assert_eq!(
+        response.data[0].value.as_decimal(),
+        &"0.1234567890123456789012345678".parse::<Decimal>().unwrap()
+    );
     assert!(response.diagnostics.warnings.iter().any(|warning| matches!(
         warning,
         YfWarning::OmittedPresentField {
             path: "majorHoldersBreakdown.insidersPercentHeld",
-            reason: ProjectionIssue::ConversionFailed {
-                target: "major holder percent"
+            reason: ProjectionIssue::InvalidField {
+                field: "insidersPercentHeld",
+                ..
             },
             ..
         }
@@ -691,7 +697,7 @@ async fn strict_net_share_purchase_activity_errors_on_missing_period() {
 }
 
 #[tokio::test]
-async fn net_share_purchase_activity_percent_conversion_failure_is_reported() {
+async fn net_share_purchase_activity_unrepresentable_percent_is_reported() {
     let sym = "NETPCT";
     let server = MockServer::start();
 
@@ -741,8 +747,9 @@ async fn net_share_purchase_activity_percent_conversion_failure_is_reported() {
         response.diagnostics.warnings.first(),
         Some(YfWarning::OmittedPresentField {
             path: "netSharePurchaseActivity.netPercentInsiderShares",
-            reason: ProjectionIssue::ConversionFailed {
-                target: "net percent insider shares"
+            reason: ProjectionIssue::InvalidField {
+                field: "netPercentInsiderShares",
+                ..
             },
             ..
         })

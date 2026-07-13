@@ -1,8 +1,17 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use paft::Decimal;
 use url::Url;
-use yfinance_rs::core::conversions::money_to_f64;
 use yfinance_rs::{ProjectionIssue, Ticker, YfClient, YfError, YfWarning};
+
+fn json_decimal(value: &serde_json::Value) -> Decimal {
+    value
+        .as_number()
+        .expect("fixture decimal")
+        .to_string()
+        .parse()
+        .expect("valid fixture decimal")
+}
 
 #[tokio::test]
 async fn fast_info_uses_previous_close_when_price_missing() {
@@ -41,11 +50,9 @@ async fn fast_info_uses_previous_close_when_price_missing() {
     mock.assert();
 
     assert_eq!(fi.snapshot.instrument.symbol.as_str(), "AAPL");
-    assert!(
-        (yfinance_rs::core::conversions::money_to_f64(&fi.snapshot.previous_close.unwrap())
-            - 199.5)
-            .abs()
-            < 1e-9
+    assert_eq!(
+        fi.snapshot.previous_close.unwrap().as_decimal(),
+        &Decimal::new(1995, 1)
     );
     assert_eq!(
         fi.snapshot
@@ -190,23 +197,17 @@ async fn fast_info_maps_snapshot_session_fields_from_v7_quote() {
     mock.assert();
 
     let snapshot = &fast_info.snapshot;
-    let open = money_to_f64(snapshot.open.as_ref().unwrap());
-    let expected_open = raw_quote["regularMarketOpen"].as_f64().unwrap();
-    assert!(
-        (open - expected_open).abs() < 0.01,
-        "expected open near {expected_open} after USD money rounding, got {open}"
+    assert_eq!(
+        snapshot.open.as_ref().unwrap().as_decimal(),
+        &json_decimal(&raw_quote["regularMarketOpen"])
     );
-    assert!(
-        (money_to_f64(snapshot.day_high.as_ref().unwrap())
-            - raw_quote["regularMarketDayHigh"].as_f64().unwrap())
-        .abs()
-            < 0.01
+    assert_eq!(
+        snapshot.day_high.as_ref().unwrap().as_decimal(),
+        &json_decimal(&raw_quote["regularMarketDayHigh"])
     );
-    assert!(
-        (money_to_f64(snapshot.day_low.as_ref().unwrap())
-            - raw_quote["regularMarketDayLow"].as_f64().unwrap())
-        .abs()
-            < 0.01
+    assert_eq!(
+        snapshot.day_low.as_ref().unwrap().as_decimal(),
+        &json_decimal(&raw_quote["regularMarketDayLow"])
     );
     assert_eq!(
         snapshot.volume.as_ref().map(ToString::to_string),
@@ -215,17 +216,23 @@ async fn fast_info_maps_snapshot_session_fields_from_v7_quote() {
             .map(|value| value.to_string())
     );
 
-    assert!(
-        (money_to_f64(fast_info.moving_averages.fifty_day.as_ref().unwrap())
-            - raw_quote["fiftyDayAverage"].as_f64().unwrap())
-        .abs()
-            < 0.01
+    assert_eq!(
+        fast_info
+            .moving_averages
+            .fifty_day
+            .as_ref()
+            .unwrap()
+            .amount(),
+        json_decimal(&raw_quote["fiftyDayAverage"])
     );
-    assert!(
-        (money_to_f64(fast_info.moving_averages.two_hundred_day.as_ref().unwrap())
-            - raw_quote["twoHundredDayAverage"].as_f64().unwrap())
-        .abs()
-            < 0.01
+    assert_eq!(
+        fast_info
+            .moving_averages
+            .two_hundred_day
+            .as_ref()
+            .unwrap()
+            .amount(),
+        json_decimal(&raw_quote["twoHundredDayAverage"])
     );
 
     #[cfg(feature = "dataframe")]

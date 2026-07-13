@@ -1,8 +1,8 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use paft::Decimal;
 use paft::money::{Currency, IsoCurrency, Money};
 use url::Url;
-use yfinance_rs::core::conversions::money_from_f64;
 use yfinance_rs::{FundamentalsBuilder, Ticker, YfClient};
 
 fn date_from_ts(timestamp: i64) -> chrono::NaiveDate {
@@ -27,8 +27,9 @@ fn make_ticker(server: &MockServer, symbol: &str) -> Ticker {
     Ticker::new(&client, symbol)
 }
 
-fn usd(value: f64) -> Money {
-    money_from_f64(value, Currency::Iso(IsoCurrency::USD)).expect("known-good USD literal")
+fn usd(value: i64) -> Money {
+    Money::new(Decimal::from(value), Currency::Iso(IsoCurrency::USD))
+        .expect("known-good USD literal")
 }
 
 fn usd_i64(value: i64) -> Money {
@@ -200,12 +201,9 @@ async fn income_statement_new_fields_are_mapped_to_paft_names() {
 
     mock.assert();
     let row = rows.first().expect("statement row should be present");
-    assert_eq!(row.interest_expense, Some(usd(-3_930_000_000.0)));
-    assert_eq!(row.income_tax_expense, Some(usd(29_749_000_000.0)));
-    assert_eq!(
-        row.depreciation_and_amortization,
-        Some(usd(11_445_000_000.0))
-    );
+    assert_eq!(row.interest_expense, Some(usd(-3_930_000_000)));
+    assert_eq!(row.income_tax_expense, Some(usd(29_749_000_000)));
+    assert_eq!(row.depreciation_and_amortization, Some(usd(11_445_000_000)));
 }
 
 #[tokio::test]
@@ -426,17 +424,14 @@ async fn balance_sheet_new_fields_are_mapped_to_paft_names() {
 
     mock.assert();
     let row = rows.first().expect("statement row should be present");
-    assert_eq!(row.current_assets, Some(usd(150_000_000_000.0)));
-    assert_eq!(row.current_liabilities, Some(usd(90_000_000_000.0)));
-    assert_eq!(row.accounts_receivable, Some(usd(45_000_000_000.0)));
-    assert_eq!(row.inventory, Some(usd(2_500_000_000.0)));
-    assert_eq!(row.accounts_payable, Some(usd(18_000_000_000.0)));
-    assert_eq!(
-        row.net_property_plant_equipment,
-        Some(usd(120_000_000_000.0))
-    );
-    assert_eq!(row.goodwill, Some(usd(60_000_000_000.0)));
-    assert_eq!(row.intangible_assets, Some(usd(10_000_000_000.0)));
+    assert_eq!(row.current_assets, Some(usd(150_000_000_000)));
+    assert_eq!(row.current_liabilities, Some(usd(90_000_000_000)));
+    assert_eq!(row.accounts_receivable, Some(usd(45_000_000_000)));
+    assert_eq!(row.inventory, Some(usd(2_500_000_000)));
+    assert_eq!(row.accounts_payable, Some(usd(18_000_000_000)));
+    assert_eq!(row.net_property_plant_equipment, Some(usd(120_000_000_000)));
+    assert_eq!(row.goodwill, Some(usd(60_000_000_000)));
+    assert_eq!(row.intangible_assets, Some(usd(10_000_000_000)));
 }
 
 #[tokio::test]
@@ -471,8 +466,5 @@ async fn cashflow_new_fields_are_mapped_to_paft_names() {
 
     mock.assert();
     let row = rows.first().expect("statement row should be present");
-    assert_eq!(
-        row.depreciation_and_amortization,
-        Some(usd(14_000_000_000.0))
-    );
+    assert_eq!(row.depreciation_and_amortization, Some(usd(14_000_000_000)));
 }

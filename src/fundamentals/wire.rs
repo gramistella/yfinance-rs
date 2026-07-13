@@ -1,4 +1,4 @@
-use crate::core::wire::{BorrowedWireValue, RawDate, RawDecimal, RawNum, RawNumU64, WireValue};
+use crate::core::wire::{BorrowedWireValue, RawDate, RawDecimal, RawNumU64, WireValue};
 use serde::{
     Deserialize, Deserializer,
     de::{MapAccess, Visitor},
@@ -108,9 +108,9 @@ pub struct EpsQuarterNode {
     #[serde(default)]
     pub(crate) date: WireValue<String>,
     #[serde(default)]
-    pub(crate) actual: WireValue<RawNum<f64>>,
+    pub(crate) actual: WireValue<RawDecimal>,
     #[serde(default)]
-    pub(crate) estimate: WireValue<RawNum<f64>>,
+    pub(crate) estimate: WireValue<RawDecimal>,
 }
 
 /* --- calendar --- */

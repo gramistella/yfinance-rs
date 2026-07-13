@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::core::wire::{BorrowedWireValue, RawNum, WireValue};
+use crate::core::wire::{BorrowedWireValue, RawDecimal, RawNum, RawNumU64, WireValue};
 
 /* ---------------- Serde mapping (only what we need) ---------------- */
 
@@ -88,19 +88,19 @@ pub struct FinancialDataNode {
     pub(crate) financial_currency: WireValue<String>,
     #[serde(rename = "targetMeanPrice")]
     #[serde(default)]
-    pub(crate) target_mean_price: WireValue<RawNum<f64>>,
+    pub(crate) target_mean_price: WireValue<RawDecimal>,
     #[serde(rename = "targetHighPrice")]
     #[serde(default)]
-    pub(crate) target_high_price: WireValue<RawNum<f64>>,
+    pub(crate) target_high_price: WireValue<RawDecimal>,
     #[serde(rename = "targetLowPrice")]
     #[serde(default)]
-    pub(crate) target_low_price: WireValue<RawNum<f64>>,
+    pub(crate) target_low_price: WireValue<RawDecimal>,
     #[serde(rename = "numberOfAnalystOpinions")]
     #[serde(default)]
-    pub(crate) number_of_analyst_opinions: WireValue<RawNum<f64>>,
+    pub(crate) number_of_analyst_opinions: WireValue<RawNumU64>,
     #[serde(rename = "recommendationMean")]
     #[serde(default)]
-    pub(crate) recommendation_mean: WireValue<RawNum<f64>>,
+    pub(crate) recommendation_mean: WireValue<RawDecimal>,
     #[serde(rename = "recommendationKey")]
     #[serde(default)]
     pub(crate) recommendation_key: WireValue<String>,
@@ -117,7 +117,7 @@ pub struct EarningsTrendItemNode<'a> {
     #[serde(default)]
     pub(crate) period: WireValue<String>,
     #[serde(default)]
-    pub(crate) growth: WireValue<RawNum<f64>>,
+    pub(crate) growth: WireValue<RawDecimal>,
     #[serde(rename = "earningsEstimate", default, borrow)]
     pub(crate) earnings_estimate: BorrowedWireValue<'a, EarningsEstimateNode>,
     #[serde(rename = "revenueEstimate", default, borrow)]
@@ -134,19 +134,19 @@ pub struct EarningsEstimateNode {
     #[serde(default)]
     pub(crate) earnings_currency: WireValue<String>,
     #[serde(default)]
-    pub(crate) avg: WireValue<RawNum<f64>>,
+    pub(crate) avg: WireValue<RawDecimal>,
     #[serde(default)]
-    pub(crate) low: WireValue<RawNum<f64>>,
+    pub(crate) low: WireValue<RawDecimal>,
     #[serde(default)]
-    pub(crate) high: WireValue<RawNum<f64>>,
+    pub(crate) high: WireValue<RawDecimal>,
     #[serde(rename = "yearAgoEps")]
     #[serde(default)]
-    pub(crate) year_ago_eps: WireValue<RawNum<f64>>,
+    pub(crate) year_ago_eps: WireValue<RawDecimal>,
     #[serde(rename = "numberOfAnalysts")]
     #[serde(default)]
-    pub(crate) num_analysts: WireValue<RawNum<f64>>,
+    pub(crate) num_analysts: WireValue<RawNumU64>,
     #[serde(default)]
-    pub(crate) growth: WireValue<RawNum<f64>>,
+    pub(crate) growth: WireValue<RawDecimal>,
 }
 
 #[derive(Deserialize)]
@@ -165,9 +165,9 @@ pub struct RevenueEstimateNode {
     pub(crate) year_ago_revenue: WireValue<RawNum<i64>>,
     #[serde(rename = "numberOfAnalysts")]
     #[serde(default)]
-    pub(crate) num_analysts: WireValue<RawNum<f64>>,
+    pub(crate) num_analysts: WireValue<RawNumU64>,
     #[serde(default)]
-    pub(crate) growth: WireValue<RawNum<f64>>,
+    pub(crate) growth: WireValue<RawDecimal>,
 }
 
 #[derive(Deserialize)]
@@ -176,19 +176,19 @@ pub struct EpsTrendNode {
     #[serde(default)]
     pub(crate) eps_trend_currency: WireValue<String>,
     #[serde(default)]
-    pub(crate) current: WireValue<RawNum<f64>>,
+    pub(crate) current: WireValue<RawDecimal>,
     #[serde(rename = "7daysAgo")]
     #[serde(default)]
-    pub(crate) seven_days_ago: WireValue<RawNum<f64>>,
+    pub(crate) seven_days_ago: WireValue<RawDecimal>,
     #[serde(rename = "30daysAgo")]
     #[serde(default)]
-    pub(crate) thirty_days_ago: WireValue<RawNum<f64>>,
+    pub(crate) thirty_days_ago: WireValue<RawDecimal>,
     #[serde(rename = "60daysAgo")]
     #[serde(default)]
-    pub(crate) sixty_days_ago: WireValue<RawNum<f64>>,
+    pub(crate) sixty_days_ago: WireValue<RawDecimal>,
     #[serde(rename = "90daysAgo")]
     #[serde(default)]
-    pub(crate) ninety_days_ago: WireValue<RawNum<f64>>,
+    pub(crate) ninety_days_ago: WireValue<RawDecimal>,
 }
 
 #[derive(Deserialize)]
@@ -196,14 +196,14 @@ pub struct EpsTrendNode {
 pub struct EpsRevisionsNode {
     #[serde(rename = "upLast7days")]
     #[serde(default)]
-    pub(crate) up_last_7_days: WireValue<RawNum<f64>>,
+    pub(crate) up_last_7_days: WireValue<RawNumU64>,
     #[serde(rename = "upLast30days")]
     #[serde(default)]
-    pub(crate) up_last_30_days: WireValue<RawNum<f64>>,
+    pub(crate) up_last_30_days: WireValue<RawNumU64>,
     #[serde(rename = "downLast7days", alias = "downLast7Days")]
     #[serde(default)]
-    pub(crate) down_last_7_days: WireValue<RawNum<f64>>,
+    pub(crate) down_last_7_days: WireValue<RawNumU64>,
     #[serde(rename = "downLast30days", alias = "downLast30Days")]
     #[serde(default)]
-    pub(crate) down_last_30_days: WireValue<RawNum<f64>>,
+    pub(crate) down_last_30_days: WireValue<RawNumU64>,
 }

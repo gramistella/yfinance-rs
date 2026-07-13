@@ -1,17 +1,23 @@
 use crate::core::conversions::{i64_to_datetime, quantity_from_u64};
+use crate::core::currency_resolver::ResolvedCurrencyUnit;
+use crate::core::diagnostics::WireProjection;
+use crate::core::wire::{JsonDecimal, WireField, WireValue};
 use crate::core::{ProjectionContext, ProjectionIssue, YfError};
-use crate::core::{conversions::decimal_from_f64, currency_resolver::ResolvedCurrencyUnit};
 use crate::history::wire::QuoteBlock;
+use paft::Decimal;
 use paft::market::responses::history::{Candle, Ohlc};
 use paft::money::PriceAmount;
 
-use super::adjust::{AdjustmentPlan, provider_adjustment_factor};
+use super::adjust::{
+    AdjustmentError, AdjustmentFactor, AdjustmentPlan, SharedAdjustmentFactor,
+    provider_adjustment_factor,
+};
 
 pub fn assemble_candles(
     ts: &[i64],
     q: &QuoteBlock,
     adjustment_plan: Option<&AdjustmentPlan>,
-    cum_split_after: &[f64],
+    split_adjustments: &[Option<SharedAdjustmentFactor>],
     currency: &ResolvedCurrencyUnit,
     ctx: &mut ProjectionContext,
 ) -> Result<Vec<Candle>, YfError> {
@@ -33,26 +39,21 @@ pub fn assemble_candles(
                 continue;
             }
         };
-        let getter_f64 = |v: &Vec<Option<f64>>| v.get(i).and_then(|x| *x);
-        let open = getter_f64(&q.open);
-        let high = getter_f64(&q.high);
-        let low = getter_f64(&q.low);
-        let close = getter_f64(&q.close);
         let volume0 = q.volume.get(i).and_then(|x| *x);
 
-        let (mut open, mut high, mut low, mut close) = match raw_ohlc_values(open, high, low, close)
-        {
-            Ok(values) => values,
-            Err(reason) => {
-                let key = t.to_string();
-                ctx.dropped_item("candle", Some(&key), reason)?;
-                continue;
-            }
-        };
+        let (mut open, mut high, mut low, mut close) =
+            match raw_ohlc_values(q.open.get(i), q.high.get(i), q.low.get(i), q.close.get(i)) {
+                Ok(values) => values,
+                Err(reason) => {
+                    let key = t.to_string();
+                    ctx.dropped_item("candle", Some(&key), reason)?;
+                    continue;
+                }
+            };
         let raw_close = close;
 
         if let Some(adjustment_plan) = adjustment_plan {
-            let Some(pf) = adjustment_plan.factor_for_row(i, cum_split_after) else {
+            let Some(factor) = adjustment_plan.factor_for_row(i, split_adjustments) else {
                 let key = t.to_string();
                 ctx.dropped_item(
                     "candle",
@@ -65,10 +66,21 @@ pub fn assemble_candles(
                 continue;
             };
 
-            open *= pf;
-            high *= pf;
-            low *= pf;
-            close *= pf;
+            let adjusted = match checked_adjust_ohlc(open, high, low, close, factor) {
+                Ok(adjusted) => adjusted,
+                Err(error) => {
+                    let key = t.to_string();
+                    ctx.dropped_item(
+                        "candle",
+                        Some(&key),
+                        ProjectionIssue::ConversionFailed {
+                            target: error.diagnostic_target(),
+                        },
+                    )?;
+                    continue;
+                }
+            };
+            (open, high, low, close) = adjusted;
         }
 
         let Some((open, high, low, close)) = candle_prices(open, high, low, close, currency) else {
@@ -82,7 +94,7 @@ pub fn assemble_candles(
             )?;
             continue;
         };
-        let close_unadj = currency.price_amount_from_f64(raw_close);
+        let close_unadj = currency.price_amount_from_decimal(raw_close);
         if close_unadj.is_none() {
             let key = t.to_string();
             ctx.omitted_present_field(
@@ -108,7 +120,7 @@ pub fn assemble_candles(
 
 pub fn adjustment_plan_for_series(
     q: &QuoteBlock,
-    adj: &[Option<f64>],
+    adj: &[WireValue<JsonDecimal>],
     len: usize,
     ctx: &mut ProjectionContext,
 ) -> Result<AdjustmentPlan, YfError> {
@@ -117,19 +129,23 @@ pub fn adjustment_plan_for_series(
     let mut row_factors = vec![None; len];
 
     for (i, row_factor) in row_factors.iter_mut().enumerate().take(len) {
-        let open = q.open.get(i).and_then(|value| *value);
-        let high = q.high.get(i).and_then(|value| *value);
-        let low = q.low.get(i).and_then(|value| *value);
-        let close = q.close.get(i).and_then(|value| *value);
-
-        let Ok((_, _, _, close)) = raw_ohlc_values(open, high, low, close) else {
+        let Ok((_, _, _, close)) =
+            raw_ohlc_values(q.open.get(i), q.high.get(i), q.low.get(i), q.close.get(i))
+        else {
             continue;
         };
 
         emitted_rows += 1;
-        if let Some(factor) =
-            provider_adjustment_factor(adj.get(i).and_then(|value| *value), Some(close))
-        {
+        let key = i.to_string();
+        let adjclose = adj.get(i).map_or(Ok(None), |value| {
+            value.optional_copied_map(
+                ctx,
+                "chart.indicators.adjclose",
+                Some(&key),
+                JsonDecimal::into_decimal,
+            )
+        })?;
+        if let Some(factor) = provider_adjustment_factor(adjclose, Some(close)) {
             *row_factor = Some(factor);
             provider_adjusted_rows += 1;
         }
@@ -159,11 +175,16 @@ fn candle_capacity_upper_bound(ts: &[i64], q: &QuoteBlock) -> usize {
 }
 
 fn raw_ohlc_values(
-    open: Option<f64>,
-    high: Option<f64>,
-    low: Option<f64>,
-    close: Option<f64>,
-) -> Result<(f64, f64, f64, f64), ProjectionIssue> {
+    open: Option<&WireValue<JsonDecimal>>,
+    high: Option<&WireValue<JsonDecimal>>,
+    low: Option<&WireValue<JsonDecimal>>,
+    close: Option<&WireValue<JsonDecimal>>,
+) -> Result<(Decimal, Decimal, Decimal, Decimal), ProjectionIssue> {
+    let open = decimal_value("open", open)?;
+    let high = decimal_value("high", high)?;
+    let low = decimal_value("low", low)?;
+    let close = decimal_value("close", close)?;
+
     let mut missing = Vec::with_capacity(4);
     if open.is_none() {
         missing.push("open");
@@ -182,34 +203,57 @@ fn raw_ohlc_values(
     }
 
     Ok((
-        valid_decimal_value("open", open.expect("checked above"))?,
-        valid_decimal_value("high", high.expect("checked above"))?,
-        valid_decimal_value("low", low.expect("checked above"))?,
-        valid_decimal_value("close", close.expect("checked above"))?,
+        open.expect("checked above"),
+        high.expect("checked above"),
+        low.expect("checked above"),
+        close.expect("checked above"),
     ))
 }
 
-fn valid_decimal_value(field: &'static str, value: f64) -> Result<f64, ProjectionIssue> {
-    decimal_from_f64(value)
-        .map(|_| value)
-        .ok_or_else(|| ProjectionIssue::InvalidField {
+fn decimal_value(
+    field: &'static str,
+    value: Option<&WireValue<JsonDecimal>>,
+) -> Result<Option<Decimal>, ProjectionIssue> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    if let Some(details) = value.invalid_details() {
+        return Err(ProjectionIssue::InvalidField {
             field,
-            details: format!("non-finite or not representable as Decimal: {value}"),
-        })
+            details: details.into_owned(),
+        });
+    }
+
+    Ok(value.as_ref().copied().map(JsonDecimal::into_decimal))
 }
 
 fn candle_prices(
-    open: f64,
-    high: f64,
-    low: f64,
-    close: f64,
+    open: Decimal,
+    high: Decimal,
+    low: Decimal,
+    close: Decimal,
     currency: &ResolvedCurrencyUnit,
 ) -> Option<(PriceAmount, PriceAmount, PriceAmount, PriceAmount)> {
     Some((
-        currency.price_amount_from_f64(open)?,
-        currency.price_amount_from_f64(high)?,
-        currency.price_amount_from_f64(low)?,
-        currency.price_amount_from_f64(close)?,
+        currency.price_amount_from_decimal(open)?,
+        currency.price_amount_from_decimal(high)?,
+        currency.price_amount_from_decimal(low)?,
+        currency.price_amount_from_decimal(close)?,
+    ))
+}
+
+fn checked_adjust_ohlc(
+    open: Decimal,
+    high: Decimal,
+    low: Decimal,
+    close: Decimal,
+    factor: &AdjustmentFactor,
+) -> Result<(Decimal, Decimal, Decimal, Decimal), AdjustmentError> {
+    Ok((
+        factor.apply(open)?,
+        factor.apply(high)?,
+        factor.apply(low)?,
+        factor.apply(close)?,
     ))
 }
 
@@ -219,36 +263,44 @@ mod tests {
 
     #[test]
     fn candle_capacity_upper_bound_uses_shortest_required_array() {
-        let quote = QuoteBlock {
-            open: vec![Some(1.0), Some(2.0), Some(3.0)],
-            high: vec![Some(1.0), Some(2.0)],
-            low: vec![Some(1.0), Some(2.0), Some(3.0), Some(4.0)],
-            close: vec![Some(1.0)],
-            volume: vec![Some(1), Some(2), Some(3), Some(4), Some(5)],
-        };
+        let quote: QuoteBlock = serde_json::from_str(
+            r#"{
+                "open":[1,2,3],
+                "high":[1,2],
+                "low":[1,2,3,4],
+                "close":[1],
+                "volume":[1,2,3,4,5]
+            }"#,
+        )
+        .unwrap();
 
         assert_eq!(candle_capacity_upper_bound(&[1, 2, 3, 4, 5], &quote), 1);
     }
 
     #[test]
     fn provider_adjustment_plan_carries_row_factors() {
-        let quote = QuoteBlock {
-            open: vec![Some(100.0), Some(101.0)],
-            high: vec![Some(100.0), Some(101.0)],
-            low: vec![Some(100.0), Some(101.0)],
-            close: vec![Some(100.0), Some(101.0)],
-            volume: vec![Some(1), Some(1)],
-        };
+        let quote: QuoteBlock = serde_json::from_str(
+            r#"{
+                "open":[100,101],
+                "high":[100,101],
+                "low":[100,101],
+                "close":[100,101],
+                "volume":[1,1]
+            }"#,
+        )
+        .unwrap();
+        let adjclose: Vec<WireValue<JsonDecimal>> = serde_json::from_str("[50,101]").unwrap();
         let mut ctx = ProjectionContext::new("history_chart", crate::core::DataQuality::BestEffort);
 
-        let plan =
-            adjustment_plan_for_series(&quote, &[Some(50.0), Some(101.0)], 2, &mut ctx).unwrap();
+        let plan = adjustment_plan_for_series(&quote, &adjclose, 2, &mut ctx).unwrap();
+        let first = AdjustmentFactor::new(50.into(), 100.into());
+        let second = AdjustmentFactor::new(101.into(), 101.into());
 
         assert_eq!(
-            plan.factor_for_row(0, &[1.0, 1.0]),
-            Some(0.5),
-            "provider factor should be computed while selecting the provider-adjusted plan"
+            plan.factor_for_row(0, &[]),
+            first.as_ref(),
+            "provider ratio should stay intact while selecting the provider-adjusted plan"
         );
-        assert_eq!(plan.factor_for_row(1, &[1.0, 1.0]), Some(1.0));
+        assert_eq!(plan.factor_for_row(1, &[]), second.as_ref());
     }
 }

@@ -96,12 +96,15 @@ pub fn quote_summary_beta(fixture: &str) -> paft::Decimal {
         .as_array()
         .and_then(|results| results.first())
         .expect("quoteSummary fixture should contain a result");
-    let beta = result["summaryDetail"]["beta"]["raw"]
-        .as_f64()
-        .or_else(|| result["defaultKeyStatistics"]["beta"]["raw"].as_f64())
-        .expect("quoteSummary fixture should contain beta");
+    let beta = [
+        &result["summaryDetail"]["beta"]["raw"],
+        &result["defaultKeyStatistics"]["beta"]["raw"],
+    ]
+    .into_iter()
+    .find_map(serde_json::Value::as_number)
+    .expect("quoteSummary fixture should contain beta");
 
-    paft::Decimal::try_from(beta).unwrap()
+    beta.to_string().parse().expect("beta should be a decimal")
 }
 
 #[must_use]

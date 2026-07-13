@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use paft::Decimal;
 use paft::domain::{Exchange, Instrument};
 use paft::money::{Money, Price};
 use serde::{Deserialize, Serialize};
@@ -11,7 +12,7 @@ use crate::{
     core::{
         ProjectionContext,
         currency_resolver::ResolvedCurrencyUnit,
-        diagnostics::{WireProjection, optional_u32_from_i64},
+        diagnostics::{WireProjection, optional_projected},
         wire::{JsonDecimal, JsonU64, WireValue},
         yahoo_vocab::{parse_yahoo_exchange, parse_yahoo_quote_type},
     },
@@ -52,7 +53,7 @@ pub struct ScreenerResult {
     /// Last market price.
     pub price: Option<Price>,
     /// Regular market change percent, in percentage points.
-    pub regular_market_change_percent: Option<f64>,
+    pub regular_market_change_percent: Option<Decimal>,
     /// Regular market volume.
     pub regular_market_volume: Option<u64>,
     /// Market capitalization as money when Yahoo supplies currency.
@@ -75,7 +76,15 @@ pub(super) fn parse_screener_body_with_diagnostics(
         .and_then(|result| result.into_iter().next())
         .ok_or_else(|| YfError::MissingData("screener result missing".into()))?;
 
-    let count = optional_u32_from_i64(&mut ctx, "count", None, "count", result.count)?;
+    let count = result
+        .count
+        .optional_copied_map(&mut ctx, "count", None, JsonU64::into_u64)?;
+    let count = optional_projected(&mut ctx, "count", None, count, |value| {
+        u32::try_from(value).map_err(|_| ProjectionIssue::InvalidField {
+            field: "count",
+            details: format!("expected integer count in 0..={}, got {value}", u32::MAX),
+        })
+    })?;
     let mut results = Vec::new();
     for (idx, quote) in result
         .quotes
@@ -130,7 +139,8 @@ struct WireFinance {
 
 #[derive(Debug, Deserialize)]
 struct WireResult {
-    count: Option<i64>,
+    #[serde(default)]
+    count: WireValue<JsonU64>,
     quotes: Option<Vec<Value>>,
 }
 
@@ -157,10 +167,10 @@ struct WireQuote {
     type_display: WireValue<String>,
     #[serde(rename = "regularMarketPrice")]
     #[serde(default)]
-    regular_market_price: WireValue<f64>,
+    regular_market_price: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketChangePercent")]
     #[serde(default)]
-    regular_market_change_percent: WireValue<f64>,
+    regular_market_change_percent: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketVolume")]
     #[serde(default)]
     regular_market_volume: WireValue<JsonU64>,
@@ -181,8 +191,8 @@ struct ScreenerWireFields {
     exchange_raw: Option<String>,
     exchange_display: Option<String>,
     type_display: Option<String>,
-    regular_market_price: Option<f64>,
-    regular_market_change_percent: Option<f64>,
+    regular_market_price: Option<Decimal>,
+    regular_market_change_percent: Option<Decimal>,
     regular_market_volume: Option<u64>,
     market_cap: Option<paft::Decimal>,
     currency_raw: Option<String>,
@@ -204,15 +214,17 @@ impl WireQuote {
                 .exchange_display
                 .optional_cloned(ctx, "exchDisp", key)?,
             type_display: self.type_display.optional_cloned(ctx, "typeDisp", key)?,
-            regular_market_price: self.regular_market_price.optional_copied(
+            regular_market_price: self.regular_market_price.optional_copied_map(
                 ctx,
                 "regularMarketPrice",
                 key,
+                JsonDecimal::into_decimal,
             )?,
-            regular_market_change_percent: self.regular_market_change_percent.optional_copied(
+            regular_market_change_percent: self.regular_market_change_percent.optional_copied_map(
                 ctx,
                 "regularMarketChangePercent",
                 key,
+                JsonDecimal::into_decimal,
             )?,
             regular_market_volume: self.regular_market_volume.optional_copied_map(
                 ctx,
@@ -397,7 +409,7 @@ fn optional_screener_price(
     path: &'static str,
     key: Option<&str>,
     currency: ScreenerCurrencyRef<'_>,
-    value: Option<f64>,
+    value: Option<Decimal>,
     target: &'static str,
 ) -> Result<Option<Price>, YfError> {
     optional_screener_currency_value(
@@ -407,7 +419,7 @@ fn optional_screener_price(
         currency,
         value,
         target,
-        ResolvedCurrencyUnit::price_from_f64,
+        ResolvedCurrencyUnit::price_from_decimal,
     )
 }
 

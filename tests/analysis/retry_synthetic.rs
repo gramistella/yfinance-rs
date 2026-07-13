@@ -1,7 +1,7 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
 use url::Url;
-use yfinance_rs::{Ticker, YfClient, core::conversions::decimal_from_f64};
+use yfinance_rs::{Decimal, Ticker, YfClient};
 
 #[tokio::test]
 async fn analysis_invalid_crumb_then_retry_succeeds() {
@@ -66,6 +66,6 @@ async fn analysis_invalid_crumb_then_retry_succeeds() {
     crumb.assert();
     ok.assert();
 
-    assert_eq!(s.mean, decimal_from_f64(2.5));
+    assert_eq!(s.mean, Some(Decimal::new(25, 1)));
     assert_eq!(s.mean_rating_text.as_deref(), Some("buy"));
 }

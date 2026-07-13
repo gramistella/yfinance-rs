@@ -5,6 +5,7 @@ use super::query::{
     Rating, Region, SortDirection, YahooExchangeCode,
 };
 use crate::YfError;
+use paft::Decimal;
 
 /// Known Yahoo predefined screeners.
 ///
@@ -95,7 +96,7 @@ impl PredefinedScreener {
                 eq::PERCENT_CHANGE_SORT,
                 SortDirection::Desc,
                 EquityQuery::and(vec![
-                    eq::PERCENT_CHANGE.gt(PercentPoints::new(3.0)?),
+                    eq::PERCENT_CHANGE.gt(PercentPoints::new(Decimal::new(30, 1))),
                     eq::REGION.eq(Region::Us),
                     eq::INTRADAY_MARKET_CAP.gte(2_000_000_000_u64),
                     eq::INTRADAY_PRICE.gte(5),
@@ -106,7 +107,7 @@ impl PredefinedScreener {
                 eq::PERCENT_CHANGE_SORT,
                 SortDirection::Asc,
                 EquityQuery::and(vec![
-                    eq::PERCENT_CHANGE.lt(PercentPoints::new(-2.5)?),
+                    eq::PERCENT_CHANGE.lt(PercentPoints::new(Decimal::new(-25, 1))),
                     eq::REGION.eq(Region::Us),
                     eq::INTRADAY_MARKET_CAP.gte(2_000_000_000_u64),
                     eq::INTRADAY_PRICE.gte(5),

@@ -5,7 +5,7 @@ use paft::money::{Currency, IsoCurrency};
 use serde_json::Value;
 use std::str::FromStr;
 use url::Url;
-use yfinance_rs::core::conversions::{CurrencyValue, DecimalValue, money_to_f64};
+use yfinance_rs::core::conversions::CurrencyValue;
 use yfinance_rs::{ProjectionIssue, Ticker, YfClient, YfWarning};
 
 struct CurrencyScaleCase {
@@ -93,22 +93,17 @@ fn major_currency_code(code: &str) -> &str {
     }
 }
 
-fn quote_unit_scale(code: &str) -> f64 {
+fn quote_unit_scale(code: &str) -> Decimal {
     match code {
-        "GBp" | "GBX" | "ZAc" | "ILA" => 0.01,
-        _ => 1.0,
+        "GBp" | "GBX" | "ZAc" | "ILA" => Decimal::new(1, 2),
+        _ => Decimal::ONE,
     }
 }
 
 fn raw_decimal(raw: &Value) -> Option<Decimal> {
-    raw.as_i64()
-        .map(Decimal::from)
-        .or_else(|| raw.as_u64().map(Decimal::from))
-        .or_else(|| raw.as_f64().and_then(|value| Decimal::try_from(value).ok()))
-}
-
-fn raw_summary_f64(module: &Value, field: &str) -> Option<f64> {
-    module[field]["raw"].as_f64()
+    raw.as_number()
+        .and_then(|number| Decimal::from_str(&number.to_string()).ok())
+        .or_else(|| raw.as_str().and_then(|value| Decimal::from_str(value).ok()))
 }
 
 fn raw_summary_decimal(module: &Value, field: &str) -> Option<Decimal> {
@@ -195,9 +190,9 @@ async fn key_statistics_from_bodies(
     stats
 }
 
-fn assert_currency_value<T: CurrencyValue + DecimalValue>(
+fn assert_currency_value<T: CurrencyValue>(
     value: &T,
-    expected_amount: f64,
+    expected_amount: Decimal,
     expected_currency: &str,
     symbol: &str,
     field: &str,
@@ -207,17 +202,12 @@ fn assert_currency_value<T: CurrencyValue + DecimalValue>(
         expected_currency,
         "{symbol} {field} currency"
     );
-    let actual = money_to_f64(value);
-    let tolerance = (expected_amount.abs() * 1e-9).max(1e-9);
-    assert!(
-        (actual - expected_amount).abs() <= tolerance,
-        "{symbol} {field} expected {expected_amount}, got {actual}"
-    );
+    assert_eq!(value.amount(), expected_amount, "{symbol} {field} amount");
 }
 
-fn assert_quote_price<T: CurrencyValue + DecimalValue>(
+fn assert_quote_price<T: CurrencyValue>(
     value: Option<&T>,
-    raw: Option<f64>,
+    raw: Option<Decimal>,
     currency: &str,
     symbol: &str,
     field: &str,
@@ -237,9 +227,9 @@ fn assert_quote_price<T: CurrencyValue + DecimalValue>(
     );
 }
 
-fn assert_major_price<T: CurrencyValue + DecimalValue>(
+fn assert_major_price<T: CurrencyValue>(
     value: Option<&T>,
-    raw: Option<f64>,
+    raw: Option<Decimal>,
     currency: &str,
     symbol: &str,
     field: &str,
@@ -283,49 +273,37 @@ fn assert_v7_key_statistics(stats: &KeyStatistics, raw_quote: &serde_json::Value
         stats.average_daily_volume_3m,
         raw_quote["averageDailyVolume3Month"].as_u64()
     );
-    assert!(
-        (money_to_f64(stats.market_cap.as_ref().unwrap())
-            - raw_quote["marketCap"].as_f64().unwrap())
-        .abs()
-            < 0.1
+    assert_eq!(
+        stats.market_cap.as_ref().unwrap().amount(),
+        raw_decimal(&raw_quote["marketCap"]).unwrap()
     );
-    assert!(
-        (money_to_f64(stats.eps_trailing_twelve_months.as_ref().unwrap())
-            - raw_quote["epsTrailingTwelveMonths"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.eps_trailing_twelve_months.as_ref().unwrap().amount(),
+        raw_decimal(&raw_quote["epsTrailingTwelveMonths"]).unwrap()
     );
-    assert!(
-        (money_to_f64(stats.dividend_per_share_forward.as_ref().unwrap())
-            - raw_quote["dividendRate"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.dividend_per_share_forward.as_ref().unwrap().amount(),
+        raw_decimal(&raw_quote["dividendRate"]).unwrap()
     );
-    assert!(
-        (money_to_f64(stats.fifty_two_week_high.as_ref().unwrap())
-            - raw_quote["fiftyTwoWeekHigh"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.fifty_two_week_high.as_ref().unwrap().amount(),
+        raw_decimal(&raw_quote["fiftyTwoWeekHigh"]).unwrap()
     );
-    assert!(
-        (money_to_f64(stats.fifty_two_week_low.as_ref().unwrap())
-            - raw_quote["fiftyTwoWeekLow"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.fifty_two_week_low.as_ref().unwrap().amount(),
+        raw_decimal(&raw_quote["fiftyTwoWeekLow"]).unwrap()
     );
     assert_eq!(
         stats.pe_trailing_twelve_months,
-        paft::Decimal::try_from(raw_quote["trailingPE"].as_f64().unwrap()).ok()
+        raw_decimal(&raw_quote["trailingPE"])
     );
     assert_eq!(
         stats.dividend_yield_trailing,
-        paft::Decimal::try_from(raw_quote["trailingAnnualDividendYield"].as_f64().unwrap()).ok()
+        raw_decimal(&raw_quote["trailingAnnualDividendYield"])
     );
     assert_eq!(
         stats.dividend_yield_forward,
-        paft::Decimal::try_from(raw_quote["dividendYield"].as_f64().unwrap())
-            .ok()
-            .map(|v| v / paft::Decimal::from(100))
+        raw_decimal(&raw_quote["dividendYield"]).map(|value| value / paft::Decimal::from(100))
     );
 }
 
@@ -365,17 +343,13 @@ fn assert_quote_summary_valuation_fields(
         stats.shares_outstanding,
         default_key_statistics["sharesOutstanding"]["raw"].as_u64()
     );
-    assert!(
-        (money_to_f64(stats.eps_trailing_twelve_months.as_ref().unwrap())
-            - default_key_statistics["trailingEps"]["raw"]
-                .as_f64()
-                .unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.eps_trailing_twelve_months.as_ref().unwrap().amount(),
+        raw_summary_decimal(default_key_statistics, "trailingEps").unwrap()
     );
     assert_eq!(
         stats.pe_trailing_twelve_months,
-        paft::Decimal::try_from(summary_detail["trailingPE"]["raw"].as_f64().unwrap()).ok()
+        raw_summary_decimal(summary_detail, "trailingPE")
     );
 }
 
@@ -384,24 +358,17 @@ fn assert_quote_summary_dividend_fields(
     summary_detail: &serde_json::Value,
     fixture: &str,
 ) {
-    assert!(
-        (money_to_f64(stats.dividend_per_share_forward.as_ref().unwrap())
-            - summary_detail["dividendRate"]["raw"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.dividend_per_share_forward.as_ref().unwrap().amount(),
+        raw_summary_decimal(summary_detail, "dividendRate").unwrap()
     );
     assert_eq!(
         stats.dividend_yield_trailing,
-        paft::Decimal::try_from(
-            summary_detail["trailingAnnualDividendYield"]["raw"]
-                .as_f64()
-                .unwrap()
-        )
-        .ok()
+        raw_summary_decimal(summary_detail, "trailingAnnualDividendYield")
     );
     assert_eq!(
         stats.dividend_yield_forward,
-        paft::Decimal::try_from(summary_detail["dividendYield"]["raw"].as_f64().unwrap()).ok()
+        raw_summary_decimal(summary_detail, "dividendYield")
     );
     assert_eq!(
         stats.ex_dividend_date,
@@ -410,17 +377,13 @@ fn assert_quote_summary_dividend_fields(
 }
 
 fn assert_quote_summary_range_fields(stats: &KeyStatistics, summary_detail: &serde_json::Value) {
-    assert!(
-        (money_to_f64(stats.fifty_two_week_high.as_ref().unwrap())
-            - summary_detail["fiftyTwoWeekHigh"]["raw"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.fifty_two_week_high.as_ref().unwrap().amount(),
+        raw_summary_decimal(summary_detail, "fiftyTwoWeekHigh").unwrap()
     );
-    assert!(
-        (money_to_f64(stats.fifty_two_week_low.as_ref().unwrap())
-            - summary_detail["fiftyTwoWeekLow"]["raw"].as_f64().unwrap())
-        .abs()
-            < 1e-9
+    assert_eq!(
+        stats.fifty_two_week_low.as_ref().unwrap().amount(),
+        raw_summary_decimal(summary_detail, "fiftyTwoWeekLow").unwrap()
     );
 }
 
@@ -481,28 +444,28 @@ async fn key_statistics_market_cap_uses_major_units_for_minor_unit_quote_currenc
     key_statistics_mock.assert();
     let market_cap = stats.market_cap.as_ref().expect("market cap should map");
     assert_eq!(market_cap.currency(), &Currency::Iso(IsoCurrency::GBP));
-    assert!((money_to_f64(market_cap) - 28_024_838_144.0).abs() < 0.1);
+    assert_eq!(market_cap.amount(), Decimal::from(28_024_838_144_u64));
 
     let eps = stats
         .eps_trailing_twelve_months
         .as_ref()
         .expect("EPS should map");
     assert_eq!(eps.currency(), &Currency::Iso(IsoCurrency::GBP));
-    assert!((money_to_f64(eps) - 0.27).abs() < 1e-9);
+    assert_eq!(eps.amount(), Decimal::new(27, 2));
 
     let dividend = stats
         .dividend_per_share_forward
         .as_ref()
         .expect("dividend should map");
     assert_eq!(dividend.currency(), &Currency::Iso(IsoCurrency::GBP));
-    assert!((money_to_f64(dividend) - 0.15).abs() < 1e-9);
+    assert_eq!(dividend.amount(), Decimal::new(15, 2));
 
     let high = stats
         .fifty_two_week_high
         .as_ref()
         .expect("52-week high should map");
     assert_eq!(high.currency(), &Currency::Iso(IsoCurrency::GBP));
-    assert!((money_to_f64(high) - 4.55).abs() < 1e-9);
+    assert_eq!(high.amount(), Decimal::new(455, 2));
 }
 
 #[tokio::test]
@@ -712,9 +675,8 @@ async fn key_statistics_v7_dividend_yield_units_are_fixture_locked() {
     let crumb = "test-crumb";
     let (fixture, raw_fixture) = recorded_quote(sym);
     let raw_quote = first_quote(&raw_fixture, sym);
-    let trailing_raw =
-        Decimal::try_from(raw_quote["trailingAnnualDividendYield"].as_f64().unwrap()).unwrap();
-    let forward_raw = Decimal::try_from(raw_quote["dividendYield"].as_f64().unwrap()).unwrap();
+    let trailing_raw = raw_decimal(&raw_quote["trailingAnnualDividendYield"]).unwrap();
+    let forward_raw = raw_decimal(&raw_quote["dividendYield"]).unwrap();
     assert!(
         forward_raw > Decimal::new(1, 2),
         "fixture should keep v7 dividendYield in percent points"
@@ -763,11 +725,10 @@ async fn aapl_dividend_yield_conventions_reconcile_across_recorded_paths() {
     let quote_summary = quote_summary_result(&raw_key_statistics_fixture, sym);
     let summary_detail = &quote_summary["summaryDetail"];
 
-    let v7_percent_points = Decimal::try_from(raw_quote["dividendYield"].as_f64().unwrap())
+    let v7_percent_points = raw_decimal(&raw_quote["dividendYield"])
         .expect("quote_v7 fixture should contain dividendYield");
-    let quote_summary_fraction =
-        Decimal::try_from(summary_detail["dividendYield"]["raw"].as_f64().unwrap())
-            .expect("quoteSummary fixture should contain summaryDetail.dividendYield.raw");
+    let quote_summary_fraction = raw_summary_decimal(summary_detail, "dividendYield")
+        .expect("quoteSummary fixture should contain summaryDetail.dividendYield.raw");
     let displayed_fraction =
         displayed_percent_points(summary_detail, "dividendYield") / Decimal::from(100);
     let yield_tolerance = Decimal::new(1, 8);
@@ -895,7 +856,7 @@ async fn key_statistics_recorded_v7_currency_units_are_field_scoped() {
         );
         assert_major_price(
             stats.eps_trailing_twelve_months.as_ref(),
-            raw_quote["epsTrailingTwelveMonths"].as_f64(),
+            raw_decimal(&raw_quote["epsTrailingTwelveMonths"]),
             financial_currency,
             case.symbol,
             "epsTrailingTwelveMonths",
@@ -903,7 +864,7 @@ async fn key_statistics_recorded_v7_currency_units_are_field_scoped() {
         );
         assert_major_price(
             stats.dividend_per_share_forward.as_ref(),
-            raw_quote["dividendRate"].as_f64(),
+            raw_decimal(&raw_quote["dividendRate"]),
             quote_currency,
             case.symbol,
             "dividendRate",
@@ -911,7 +872,7 @@ async fn key_statistics_recorded_v7_currency_units_are_field_scoped() {
         );
         assert_quote_price(
             stats.fifty_two_week_high.as_ref(),
-            raw_quote["fiftyTwoWeekHigh"].as_f64(),
+            raw_decimal(&raw_quote["fiftyTwoWeekHigh"]),
             quote_currency,
             case.symbol,
             "fiftyTwoWeekHigh",
@@ -919,7 +880,7 @@ async fn key_statistics_recorded_v7_currency_units_are_field_scoped() {
         );
         assert_quote_price(
             stats.fifty_two_week_low.as_ref(),
-            raw_quote["fiftyTwoWeekLow"].as_f64(),
+            raw_decimal(&raw_quote["fiftyTwoWeekLow"]),
             quote_currency,
             case.symbol,
             "fiftyTwoWeekLow",
@@ -988,7 +949,7 @@ async fn key_statistics_recorded_quote_summary_currency_units_are_field_scoped()
         );
         assert_major_price(
             stats.eps_trailing_twelve_months.as_ref(),
-            raw_summary_f64(default_key_statistics, "trailingEps"),
+            raw_summary_decimal(default_key_statistics, "trailingEps"),
             summary_currency,
             case.symbol,
             "defaultKeyStatistics.trailingEps",
@@ -996,7 +957,7 @@ async fn key_statistics_recorded_quote_summary_currency_units_are_field_scoped()
         );
         assert_major_price(
             stats.dividend_per_share_forward.as_ref(),
-            raw_summary_f64(summary_detail, "dividendRate"),
+            raw_summary_decimal(summary_detail, "dividendRate"),
             summary_currency,
             case.symbol,
             "summaryDetail.dividendRate",
@@ -1004,7 +965,7 @@ async fn key_statistics_recorded_quote_summary_currency_units_are_field_scoped()
         );
         assert_quote_price(
             stats.fifty_two_week_high.as_ref(),
-            raw_summary_f64(summary_detail, "fiftyTwoWeekHigh"),
+            raw_summary_decimal(summary_detail, "fiftyTwoWeekHigh"),
             summary_currency,
             case.symbol,
             "summaryDetail.fiftyTwoWeekHigh",
@@ -1012,7 +973,7 @@ async fn key_statistics_recorded_quote_summary_currency_units_are_field_scoped()
         );
         assert_quote_price(
             stats.fifty_two_week_low.as_ref(),
-            raw_summary_f64(summary_detail, "fiftyTwoWeekLow"),
+            raw_summary_decimal(summary_detail, "fiftyTwoWeekLow"),
             summary_currency,
             case.symbol,
             "summaryDetail.fiftyTwoWeekLow",

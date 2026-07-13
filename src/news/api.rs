@@ -5,7 +5,6 @@ use crate::{
     core::{
         CallOptions, ProjectionContext, ProjectionIssue, YfClient, YfError,
         client::{CacheEndpoint, normalize_symbol},
-        conversions::i64_to_datetime,
         diagnostics::{optional_wire_cloned, optional_wire_value, required_wire_value},
         net,
     },
@@ -133,22 +132,8 @@ pub(super) async fn fetch_news(
             continue;
         };
 
-        let timestamp = match chrono::DateTime::parse_from_rfc3339(pub_date_str) {
-            Ok(date) => date.timestamp(),
-            Err(err) => {
-                ctx.dropped_item(
-                    "news_article",
-                    key,
-                    ProjectionIssue::InvalidField {
-                        field: "pubDate",
-                        details: err.to_string(),
-                    },
-                )?;
-                continue;
-            }
-        };
-        let published_at = match i64_to_datetime(timestamp) {
-            Ok(date) => date,
+        let published_at = match chrono::DateTime::parse_from_rfc3339(pub_date_str) {
+            Ok(date) => date.with_timezone(&chrono::Utc),
             Err(err) => {
                 ctx.dropped_item(
                     "news_article",

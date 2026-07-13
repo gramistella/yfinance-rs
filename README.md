@@ -70,7 +70,7 @@ An ergonomic, async-first Rust client for the unofficial Yahoo Finance API. It p
 Streaming is behind the `stream` feature:
 
 ```toml
-yfinance-rs = { version = "0.9.1", features = ["stream"] }
+yfinance-rs = { version = "0.10.0", features = ["stream"] }
 ```
 
 * **WebSocket Streaming**: Get live quote updates using WebSockets (preferred method).
@@ -118,7 +118,7 @@ To get started, add `yfinance-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yfinance-rs = "0.9.1"
+yfinance-rs = "0.10.0"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -126,7 +126,7 @@ To enable DataFrame conversions backed by Polars, turn on the optional `datafram
 
 ```toml
 [dependencies]
-yfinance-rs = { version = "0.9.1", features = ["dataframe"] }
+yfinance-rs = { version = "0.10.0", features = ["dataframe"] }
 polars = "0.53"
 ```
 
@@ -211,7 +211,7 @@ Use predefined Yahoo screeners or build strongly typed custom equity, ETF, and f
 
 ```rust
 use yfinance_rs::{
-    EquityQuery, PercentPoints, PredefinedScreener, Region, ScreenerBuilder, YfClient,
+    Decimal, EquityQuery, PercentPoints, PredefinedScreener, Region, ScreenerBuilder, YfClient,
     equity_fields, screen,
 };
 
@@ -225,7 +225,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let query = EquityQuery::and(vec![
         equity_fields::REGION.eq(Region::Us),
         equity_fields::INTRADAY_PRICE.gte(5),
-        equity_fields::PERCENT_CHANGE.gt(PercentPoints::new(2.0)?),
+        equity_fields::PERCENT_CHANGE.gt(PercentPoints::new(Decimal::new(20, 1))),
     ])?;
 
     let custom = ScreenerBuilder::equity(&client, query).fetch().await?;

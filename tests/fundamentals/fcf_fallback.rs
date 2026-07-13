@@ -1,16 +1,18 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use paft::Decimal;
 use paft::money::{Currency, IsoCurrency, Money};
 use url::Url;
-use yfinance_rs::core::conversions::money_from_f64;
 use yfinance_rs::{FundamentalsBuilder, ProjectionIssue, Ticker, YfClient, YfError, YfWarning};
 
-fn usd(value: f64) -> Money {
-    money_from_f64(value, Currency::Iso(IsoCurrency::USD)).expect("known-good USD literal")
+fn usd(value: i64) -> Money {
+    Money::new(Decimal::from(value), Currency::Iso(IsoCurrency::USD))
+        .expect("known-good USD literal")
 }
 
-fn gbp(value: f64) -> Money {
-    money_from_f64(value, Currency::Iso(IsoCurrency::GBP)).expect("known-good GBP literal")
+fn gbp(value: i64) -> Money {
+    Money::new(Decimal::from(value), Currency::Iso(IsoCurrency::GBP))
+        .expect("known-good GBP literal")
 }
 
 #[tokio::test]
@@ -72,14 +74,14 @@ async fn cashflow_computes_fcf_when_missing() {
     let rows = response.data;
 
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0].operating_cashflow, Some(usd(100.0)));
-    assert_eq!(rows[0].capital_expenditures, Some(usd(-30.0)));
+    assert_eq!(rows[0].operating_cashflow, Some(usd(100)));
+    assert_eq!(rows[0].capital_expenditures, Some(usd(-30)));
     assert_eq!(
         rows[0].free_cash_flow,
-        Some(usd(70.0)),
+        Some(usd(70)),
         "fcf = ocf + capex (where capex is negative)"
     );
-    assert_eq!(rows[0].net_income, Some(usd(65.0)));
+    assert_eq!(rows[0].net_income, Some(usd(65)));
     assert!(response.diagnostics.warnings.iter().any(|warning| matches!(
         warning,
         YfWarning::RepairedData {
@@ -192,8 +194,8 @@ async fn statements_use_first_valid_currency_code_and_compare_units() {
         .unwrap();
 
     assert!(invalid.total_revenue.is_none());
-    assert_eq!(first_valid.total_revenue, Some(gbp(42.0)));
-    assert_eq!(equivalent.total_revenue, Some(gbp(43.0)));
+    assert_eq!(first_valid.total_revenue, Some(gbp(42)));
+    assert_eq!(equivalent.total_revenue, Some(gbp(43)));
     assert!(response.diagnostics.warnings.iter().any(|warning| matches!(
         warning,
         YfWarning::OmittedPresentField {

@@ -13,12 +13,10 @@ use crate::{
         client::{CacheEndpoint, normalize_symbols},
         conversions::{i64_to_date, i64_to_datetime, quantity_from_u64},
         currency_resolver::{CurrencyHints, ResolvedCurrencyUnit},
-        diagnostics::{WireProjection, optional_decimal_f64},
+        diagnostics::{WireProjection, optional_projected},
         models::{FastInfo, MovingAverages},
         net, quotesummary,
-        wire::{
-            JsonDecimal, JsonU64, RawDate, RawDecimal, RawNum, RawNumU64, WireField, WireValue,
-        },
+        wire::{JsonDecimal, JsonU64, RawDate, RawDecimal, RawNumU64, WireField, WireValue},
         yahoo_vocab::{first_parsed_yahoo_exchange, parse_yahoo_exchange, parse_yahoo_quote_type},
     },
 };
@@ -70,29 +68,29 @@ pub struct V7QuoteNode {
     pub(crate) long_name: WireValue<String>,
     #[serde(rename = "regularMarketPrice")]
     #[serde(default)]
-    pub(crate) regular_market_price: WireValue<f64>,
+    pub(crate) regular_market_price: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketOpen")]
     #[serde(default)]
-    pub(crate) regular_market_open: WireValue<f64>,
+    pub(crate) regular_market_open: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketDayHigh")]
     #[serde(default)]
-    pub(crate) regular_market_day_high: WireValue<f64>,
+    pub(crate) regular_market_day_high: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketDayLow")]
     #[serde(default)]
-    pub(crate) regular_market_day_low: WireValue<f64>,
+    pub(crate) regular_market_day_low: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketPreviousClose")]
     #[serde(default)]
-    pub(crate) regular_market_previous_close: WireValue<f64>,
+    pub(crate) regular_market_previous_close: WireValue<JsonDecimal>,
     #[serde(rename = "regularMarketVolume")]
     #[serde(default)]
     pub(crate) regular_market_volume: WireValue<JsonU64>,
     #[serde(default)]
-    pub(crate) bid: WireValue<f64>,
+    pub(crate) bid: WireValue<JsonDecimal>,
     #[serde(rename = "bidSize")]
     #[serde(default)]
     pub(crate) bid_size: WireValue<JsonU64>,
     #[serde(default)]
-    pub(crate) ask: WireValue<f64>,
+    pub(crate) ask: WireValue<JsonDecimal>,
     #[serde(rename = "askSize")]
     #[serde(default)]
     pub(crate) ask_size: WireValue<JsonU64>,
@@ -104,16 +102,16 @@ pub struct V7QuoteNode {
     pub(crate) average_daily_volume_3_month: WireValue<JsonU64>,
     #[serde(rename = "fiftyDayAverage")]
     #[serde(default)]
-    pub(crate) fifty_day_average: WireValue<f64>,
+    pub(crate) fifty_day_average: WireValue<JsonDecimal>,
     #[serde(rename = "twoHundredDayAverage")]
     #[serde(default)]
-    pub(crate) two_hundred_day_average: WireValue<f64>,
+    pub(crate) two_hundred_day_average: WireValue<JsonDecimal>,
     #[serde(rename = "fiftyTwoWeekHigh")]
     #[serde(default)]
-    pub(crate) fifty_two_week_high: WireValue<f64>,
+    pub(crate) fifty_two_week_high: WireValue<JsonDecimal>,
     #[serde(rename = "fiftyTwoWeekLow")]
     #[serde(default)]
-    pub(crate) fifty_two_week_low: WireValue<f64>,
+    pub(crate) fifty_two_week_low: WireValue<JsonDecimal>,
     #[serde(rename = "marketCap")]
     #[serde(default)]
     pub(crate) market_cap: WireValue<JsonDecimal>,
@@ -122,21 +120,21 @@ pub struct V7QuoteNode {
     pub(crate) shares_outstanding: WireValue<JsonU64>,
     #[serde(rename = "epsTrailingTwelveMonths")]
     #[serde(default)]
-    pub(crate) eps_trailing_twelve_months: WireValue<f64>,
+    pub(crate) eps_trailing_twelve_months: WireValue<JsonDecimal>,
     #[serde(rename = "trailingPE")]
     #[serde(default)]
-    pub(crate) trailing_pe: WireValue<f64>,
+    pub(crate) trailing_pe: WireValue<JsonDecimal>,
     #[serde(rename = "trailingAnnualDividendYield")]
     #[serde(default)]
-    pub(crate) trailing_annual_dividend_yield: WireValue<f64>,
+    pub(crate) trailing_annual_dividend_yield: WireValue<JsonDecimal>,
     #[serde(rename = "dividendRate")]
     #[serde(default)]
-    pub(crate) dividend_rate: WireValue<f64>,
+    pub(crate) dividend_rate: WireValue<JsonDecimal>,
     #[serde(rename = "dividendYield")]
     #[serde(default)]
-    pub(crate) dividend_yield: WireValue<f64>,
+    pub(crate) dividend_yield: WireValue<JsonDecimal>,
     #[serde(default)]
-    pub(crate) beta: WireValue<f64>,
+    pub(crate) beta: WireValue<JsonDecimal>,
     #[serde(rename = "dividendDate")]
     #[serde(default)]
     pub(crate) dividend_date: WireValue<i64>,
@@ -179,15 +177,15 @@ fn required_wire_str_projection<'a>(
 struct V7KeyStatisticsFields {
     market_cap: Option<Decimal>,
     shares_outstanding: Option<u64>,
-    eps_trailing_twelve_months: Option<f64>,
-    trailing_pe: Option<f64>,
-    dividend_rate: Option<f64>,
-    trailing_annual_dividend_yield: Option<f64>,
-    dividend_yield: Option<f64>,
-    fifty_two_week_high: Option<f64>,
-    fifty_two_week_low: Option<f64>,
+    eps_trailing_twelve_months: Option<Decimal>,
+    trailing_pe: Option<Decimal>,
+    dividend_rate: Option<Decimal>,
+    trailing_annual_dividend_yield: Option<Decimal>,
+    dividend_yield: Option<Decimal>,
+    fifty_two_week_high: Option<Decimal>,
+    fifty_two_week_low: Option<Decimal>,
     average_daily_volume_3m: Option<u64>,
-    beta: Option<f64>,
+    beta: Option<Decimal>,
 }
 
 impl V7QuoteNode {
@@ -324,10 +322,10 @@ impl V7QuoteNode {
         ctx: &mut ProjectionContext,
         path: &'static str,
         key: Option<&str>,
-        price: Option<f64>,
+        price: Option<Decimal>,
         size: Option<u64>,
     ) -> Result<Option<BookLevel>, YfError> {
-        let Some(price) = price.filter(|p| p.is_finite() && *p > 0.0) else {
+        let Some(price) = price.filter(|price| *price > Decimal::ZERO) else {
             return Ok(None);
         };
         let price = self.currency_units().quote_price_amount(
@@ -411,26 +409,36 @@ impl V7QuoteNode {
             .or(self
                 .short_name
                 .optional_cloned(ctx, "shortName", key.as_deref())?);
-        let regular_market_price =
-            self.regular_market_price
-                .optional_copied(ctx, "regularMarketPrice", key.as_deref())?;
-        let regular_market_previous_close = self.regular_market_previous_close.optional_copied(
+        let regular_market_price = self.regular_market_price.optional_copied_map(
             ctx,
-            "regularMarketPreviousClose",
+            "regularMarketPrice",
             key.as_deref(),
+            JsonDecimal::into_decimal,
         )?;
-        let regular_market_open =
-            self.regular_market_open
-                .optional_copied(ctx, "regularMarketOpen", key.as_deref())?;
-        let regular_market_day_high = self.regular_market_day_high.optional_copied(
+        let regular_market_previous_close =
+            self.regular_market_previous_close.optional_copied_map(
+                ctx,
+                "regularMarketPreviousClose",
+                key.as_deref(),
+                JsonDecimal::into_decimal,
+            )?;
+        let regular_market_open = self.regular_market_open.optional_copied_map(
+            ctx,
+            "regularMarketOpen",
+            key.as_deref(),
+            JsonDecimal::into_decimal,
+        )?;
+        let regular_market_day_high = self.regular_market_day_high.optional_copied_map(
             ctx,
             "regularMarketDayHigh",
             key.as_deref(),
+            JsonDecimal::into_decimal,
         )?;
-        let regular_market_day_low = self.regular_market_day_low.optional_copied(
+        let regular_market_day_low = self.regular_market_day_low.optional_copied_map(
             ctx,
             "regularMarketDayLow",
             key.as_deref(),
+            JsonDecimal::into_decimal,
         )?;
         let regular_market_volume = self.regular_market_volume.optional_copied_map(
             ctx,
@@ -501,13 +509,17 @@ impl V7QuoteNode {
     ) -> Result<MovingAverages, YfError> {
         let key = self.symbol_key();
         let currencies = self.currency_units();
-        let fifty_day =
-            self.fifty_day_average
-                .optional_copied(ctx, "fiftyDayAverage", key.as_deref())?;
-        let two_hundred_day = self.two_hundred_day_average.optional_copied(
+        let fifty_day = self.fifty_day_average.optional_copied_map(
+            ctx,
+            "fiftyDayAverage",
+            key.as_deref(),
+            JsonDecimal::into_decimal,
+        )?;
+        let two_hundred_day = self.two_hundred_day_average.optional_copied_map(
             ctx,
             "twoHundredDayAverage",
             key.as_deref(),
+            JsonDecimal::into_decimal,
         )?;
 
         Ok(MovingAverages {
@@ -535,6 +547,26 @@ impl V7QuoteNode {
         let currencies = self.currency_units();
         let key = self.symbol_key();
         let fields = self.key_statistics_fields(ctx, key.as_deref())?;
+        let dividend_yield_forward = optional_projected(
+            ctx,
+            "dividendYield",
+            key.as_deref(),
+            fields.dividend_yield,
+            |value| {
+                let fraction = value.checked_div(Decimal::from(100)).ok_or(
+                    ProjectionIssue::ConversionFailed {
+                        target: "forward dividend yield fraction",
+                    },
+                )?;
+                if fraction.checked_mul(Decimal::from(100)) == Some(value) {
+                    Ok(fraction)
+                } else {
+                    Err(ProjectionIssue::ConversionFailed {
+                        target: "exact forward dividend yield fraction",
+                    })
+                }
+            },
+        )?;
 
         Ok(KeyStatistics {
             as_of: self.as_of_with_context(ctx, key.as_deref())?,
@@ -553,13 +585,7 @@ impl V7QuoteNode {
                 fields.eps_trailing_twelve_months,
                 "trailing EPS",
             )?,
-            pe_trailing_twelve_months: optional_decimal_f64(
-                ctx,
-                "trailingPE",
-                key.as_deref(),
-                fields.trailing_pe,
-                "trailing PE",
-            )?,
+            pe_trailing_twelve_months: fields.trailing_pe,
             dividend_per_share_forward: currencies.quote_major_price(
                 ctx,
                 "dividendRate",
@@ -567,23 +593,10 @@ impl V7QuoteNode {
                 fields.dividend_rate,
                 "forward dividend per share",
             )?,
-            dividend_yield_trailing: optional_decimal_f64(
-                ctx,
-                "trailingAnnualDividendYield",
-                key.as_deref(),
-                fields.trailing_annual_dividend_yield,
-                "trailing dividend yield",
-            )?,
+            dividend_yield_trailing: fields.trailing_annual_dividend_yield,
             // Yahoo v7 returns trailingAnnualDividendYield as a decimal fraction,
             // but dividendYield as percent points. Keep this asymmetry fixture-locked.
-            dividend_yield_forward: optional_decimal_f64(
-                ctx,
-                "dividendYield",
-                key.as_deref(),
-                fields.dividend_yield,
-                "forward dividend yield",
-            )?
-            .map(|value| value / Decimal::from(100)),
+            dividend_yield_forward,
             ex_dividend_date: None,
             fifty_two_week_high: currencies.quote_price(
                 ctx,
@@ -600,7 +613,7 @@ impl V7QuoteNode {
                 "52-week low",
             )?,
             average_daily_volume_3m: fields.average_daily_volume_3m,
-            beta: optional_decimal_f64(ctx, "beta", key.as_deref(), fields.beta, "beta")?,
+            beta: fields.beta,
         })
     }
 
@@ -622,32 +635,49 @@ impl V7QuoteNode {
                 key,
                 JsonU64::into_u64,
             )?,
-            eps_trailing_twelve_months: self.eps_trailing_twelve_months.optional_copied(
+            eps_trailing_twelve_months: self.eps_trailing_twelve_months.optional_copied_map(
                 ctx,
                 "epsTrailingTwelveMonths",
                 key,
+                JsonDecimal::into_decimal,
             )?,
-            trailing_pe: self.trailing_pe.optional_copied(ctx, "trailingPE", key)?,
-            dividend_rate: self
-                .dividend_rate
-                .optional_copied(ctx, "dividendRate", key)?,
-            trailing_annual_dividend_yield: self.trailing_annual_dividend_yield.optional_copied(
+            trailing_pe: self.trailing_pe.optional_copied_map(
                 ctx,
-                "trailingAnnualDividendYield",
+                "trailingPE",
                 key,
+                JsonDecimal::into_decimal,
             )?,
-            dividend_yield: self
-                .dividend_yield
-                .optional_copied(ctx, "dividendYield", key)?,
-            fifty_two_week_high: self.fifty_two_week_high.optional_copied(
+            dividend_rate: self.dividend_rate.optional_copied_map(
+                ctx,
+                "dividendRate",
+                key,
+                JsonDecimal::into_decimal,
+            )?,
+            trailing_annual_dividend_yield: self
+                .trailing_annual_dividend_yield
+                .optional_copied_map(
+                    ctx,
+                    "trailingAnnualDividendYield",
+                    key,
+                    JsonDecimal::into_decimal,
+                )?,
+            dividend_yield: self.dividend_yield.optional_copied_map(
+                ctx,
+                "dividendYield",
+                key,
+                JsonDecimal::into_decimal,
+            )?,
+            fifty_two_week_high: self.fifty_two_week_high.optional_copied_map(
                 ctx,
                 "fiftyTwoWeekHigh",
                 key,
+                JsonDecimal::into_decimal,
             )?,
-            fifty_two_week_low: self.fifty_two_week_low.optional_copied(
+            fifty_two_week_low: self.fifty_two_week_low.optional_copied_map(
                 ctx,
                 "fiftyTwoWeekLow",
                 key,
+                JsonDecimal::into_decimal,
             )?,
             average_daily_volume_3m: self.average_daily_volume_3_month.optional_copied_map(
                 ctx,
@@ -655,7 +685,9 @@ impl V7QuoteNode {
                 key,
                 JsonU64::into_u64,
             )?,
-            beta: self.beta.optional_copied(ctx, "beta", key)?,
+            beta: self
+                .beta
+                .optional_copied_map(ctx, "beta", key, JsonDecimal::into_decimal)?,
         })
     }
 
@@ -768,7 +800,7 @@ impl QuoteCurrencyUnits {
         ctx: &mut ProjectionContext,
         path: &'static str,
         key: Option<&str>,
-        value: Option<f64>,
+        value: Option<Decimal>,
         target: &'static str,
     ) -> Result<Option<paft::money::Price>, YfError> {
         optional_with_unit(
@@ -778,7 +810,7 @@ impl QuoteCurrencyUnits {
             self.quote_unit(),
             value,
             target,
-            ResolvedCurrencyUnit::price_from_f64,
+            ResolvedCurrencyUnit::price_from_decimal,
         )
     }
 
@@ -787,7 +819,7 @@ impl QuoteCurrencyUnits {
         ctx: &mut ProjectionContext,
         path: &'static str,
         key: Option<&str>,
-        value: Option<f64>,
+        value: Option<Decimal>,
         target: &'static str,
     ) -> Result<Option<PriceAmount>, YfError> {
         optional_with_unit(
@@ -797,7 +829,7 @@ impl QuoteCurrencyUnits {
             self.quote_unit(),
             value,
             target,
-            ResolvedCurrencyUnit::price_amount_from_f64,
+            ResolvedCurrencyUnit::price_amount_from_decimal,
         )
     }
 
@@ -825,7 +857,7 @@ impl QuoteCurrencyUnits {
         ctx: &mut ProjectionContext,
         path: &'static str,
         key: Option<&str>,
-        value: Option<f64>,
+        value: Option<Decimal>,
         target: &'static str,
     ) -> Result<Option<paft::money::Price>, YfError> {
         optional_with_unit(
@@ -835,7 +867,7 @@ impl QuoteCurrencyUnits {
             self.quote_major_unit(),
             value,
             target,
-            ResolvedCurrencyUnit::price_from_f64,
+            ResolvedCurrencyUnit::price_from_decimal,
         )
     }
 
@@ -844,7 +876,7 @@ impl QuoteCurrencyUnits {
         ctx: &mut ProjectionContext,
         path: &'static str,
         key: Option<&str>,
-        value: Option<f64>,
+        value: Option<Decimal>,
         target: &'static str,
     ) -> Result<Option<paft::money::Price>, YfError> {
         optional_with_unit(
@@ -854,7 +886,7 @@ impl QuoteCurrencyUnits {
             self.financial_unit(),
             value,
             target,
-            ResolvedCurrencyUnit::price_from_f64,
+            ResolvedCurrencyUnit::price_from_decimal,
         )
     }
 
@@ -966,37 +998,37 @@ struct SummaryDetailNode {
     #[serde(default)]
     currency: WireValue<String>,
     #[serde(default)]
-    beta: WireValue<RawNum<f64>>,
+    beta: WireValue<RawDecimal>,
     #[serde(rename = "marketCap")]
     #[serde(default)]
     market_cap: WireValue<RawDecimal>,
     #[serde(rename = "trailingPE")]
     #[serde(default)]
-    trailing_pe: WireValue<RawNum<f64>>,
+    trailing_pe: WireValue<RawDecimal>,
     #[serde(rename = "dividendRate")]
     #[serde(default)]
-    dividend_rate: WireValue<RawNum<f64>>,
+    dividend_rate: WireValue<RawDecimal>,
     #[serde(rename = "dividendYield")]
     #[serde(default)]
-    dividend_yield: WireValue<RawNum<f64>>,
+    dividend_yield: WireValue<RawDecimal>,
     #[serde(rename = "trailingAnnualDividendYield")]
     #[serde(default)]
-    trailing_annual_dividend_yield: WireValue<RawNum<f64>>,
+    trailing_annual_dividend_yield: WireValue<RawDecimal>,
     #[serde(rename = "exDividendDate")]
     #[serde(default)]
     ex_dividend_date: WireValue<RawDate>,
     #[serde(rename = "fiftyDayAverage")]
     #[serde(default)]
-    fifty_day_average: WireValue<RawNum<f64>>,
+    fifty_day_average: WireValue<RawDecimal>,
     #[serde(rename = "twoHundredDayAverage")]
     #[serde(default)]
-    two_hundred_day_average: WireValue<RawNum<f64>>,
+    two_hundred_day_average: WireValue<RawDecimal>,
     #[serde(rename = "fiftyTwoWeekHigh")]
     #[serde(default)]
-    fifty_two_week_high: WireValue<RawNum<f64>>,
+    fifty_two_week_high: WireValue<RawDecimal>,
     #[serde(rename = "fiftyTwoWeekLow")]
     #[serde(default)]
-    fifty_two_week_low: WireValue<RawNum<f64>>,
+    fifty_two_week_low: WireValue<RawDecimal>,
     #[serde(rename = "averageVolume")]
     #[serde(default)]
     average_volume: WireValue<RawNumU64>,
@@ -1005,30 +1037,30 @@ struct SummaryDetailNode {
 #[derive(Default, Deserialize)]
 struct DefaultKeyStatisticsNode {
     #[serde(default)]
-    beta: WireValue<RawNum<f64>>,
+    beta: WireValue<RawDecimal>,
     #[serde(rename = "sharesOutstanding")]
     #[serde(default)]
     shares_outstanding: WireValue<RawNumU64>,
     #[serde(rename = "trailingEps")]
     #[serde(default)]
-    trailing_eps: WireValue<RawNum<f64>>,
+    trailing_eps: WireValue<RawDecimal>,
 }
 
 struct QuoteSummaryKeyStatisticsFields {
     summary_currency: Option<String>,
-    beta: Option<f64>,
-    fifty_day_average: Option<f64>,
-    two_hundred_day_average: Option<f64>,
+    beta: Option<Decimal>,
+    fifty_day_average: Option<Decimal>,
+    two_hundred_day_average: Option<Decimal>,
     market_cap: Option<Decimal>,
     shares_outstanding: Option<u64>,
-    trailing_eps: Option<f64>,
-    trailing_pe: Option<f64>,
-    dividend_rate: Option<f64>,
-    trailing_annual_dividend_yield: Option<f64>,
-    dividend_yield: Option<f64>,
+    trailing_eps: Option<Decimal>,
+    trailing_pe: Option<Decimal>,
+    dividend_rate: Option<Decimal>,
+    trailing_annual_dividend_yield: Option<Decimal>,
+    dividend_yield: Option<Decimal>,
     ex_dividend_date: Option<i64>,
-    fifty_two_week_high: Option<f64>,
-    fifty_two_week_low: Option<f64>,
+    fifty_two_week_high: Option<Decimal>,
+    fifty_two_week_low: Option<Decimal>,
     average_volume: Option<u64>,
 }
 
@@ -1186,13 +1218,7 @@ impl QuoteSummaryKeyStatistics {
                 fields.trailing_eps,
                 "trailing EPS",
             )?,
-            pe_trailing_twelve_months: optional_decimal_f64(
-                ctx,
-                "summaryDetail.trailingPE",
-                key,
-                fields.trailing_pe,
-                "trailing PE",
-            )?,
+            pe_trailing_twelve_months: fields.trailing_pe,
             dividend_per_share_forward: currencies.quote_major_price(
                 ctx,
                 "summaryDetail.dividendRate",
@@ -1200,20 +1226,8 @@ impl QuoteSummaryKeyStatistics {
                 fields.dividend_rate,
                 "forward dividend per share",
             )?,
-            dividend_yield_trailing: optional_decimal_f64(
-                ctx,
-                "summaryDetail.trailingAnnualDividendYield",
-                key,
-                fields.trailing_annual_dividend_yield,
-                "trailing dividend yield",
-            )?,
-            dividend_yield_forward: optional_decimal_f64(
-                ctx,
-                "summaryDetail.dividendYield",
-                key,
-                fields.dividend_yield,
-                "forward dividend yield",
-            )?,
+            dividend_yield_trailing: fields.trailing_annual_dividend_yield,
+            dividend_yield_forward: fields.dividend_yield,
             ex_dividend_date: optional_date(
                 ctx,
                 "summaryDetail.exDividendDate",
@@ -1235,7 +1249,7 @@ impl QuoteSummaryKeyStatistics {
                 "52-week low",
             )?,
             average_daily_volume_3m: fields.average_volume,
-            beta: optional_decimal_f64(ctx, "beta", Some(symbol), fields.beta, "beta")?,
+            beta: fields.beta,
             as_of: None,
         };
 
@@ -1780,22 +1794,31 @@ impl V7QuoteNode {
             .long_name
             .optional_cloned(ctx, "longName", key)?
             .or(self.short_name.optional_cloned(ctx, "shortName", key)?);
-        let regular_market_price =
-            self.regular_market_price
-                .optional_copied(ctx, "regularMarketPrice", key)?;
-        let bid = self.bid.optional_copied(ctx, "bid", key)?;
+        let regular_market_price = self.regular_market_price.optional_copied_map(
+            ctx,
+            "regularMarketPrice",
+            key,
+            JsonDecimal::into_decimal,
+        )?;
+        let bid = self
+            .bid
+            .optional_copied_map(ctx, "bid", key, JsonDecimal::into_decimal)?;
         let bid_size = self
             .bid_size
             .optional_copied_map(ctx, "bidSize", key, JsonU64::into_u64)?;
-        let ask = self.ask.optional_copied(ctx, "ask", key)?;
+        let ask = self
+            .ask
+            .optional_copied_map(ctx, "ask", key, JsonDecimal::into_decimal)?;
         let ask_size = self
             .ask_size
             .optional_copied_map(ctx, "askSize", key, JsonU64::into_u64)?;
-        let regular_market_previous_close = self.regular_market_previous_close.optional_copied(
-            ctx,
-            "regularMarketPreviousClose",
-            key,
-        )?;
+        let regular_market_previous_close =
+            self.regular_market_previous_close.optional_copied_map(
+                ctx,
+                "regularMarketPreviousClose",
+                key,
+                JsonDecimal::into_decimal,
+            )?;
         let regular_market_volume = self.regular_market_volume.optional_copied_map(
             ctx,
             "regularMarketVolume",

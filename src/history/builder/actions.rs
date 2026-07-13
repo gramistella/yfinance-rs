@@ -1,6 +1,6 @@
 use crate::core::{
     ProjectionContext, ProjectionIssue, YfError, conversions::i64_to_date,
-    currency_resolver::ResolvedCurrencyUnit,
+    currency_resolver::ResolvedCurrencyUnit, diagnostics::required_wire_value, wire::JsonDecimal,
 };
 use crate::history::wire::Events;
 use paft::Decimal;
@@ -16,7 +16,7 @@ pub(super) struct SplitRatio {
 }
 
 impl SplitRatio {
-    const fn new(numerator: NonZeroU32, denominator: NonZeroU32) -> Self {
+    pub(super) const fn new(numerator: NonZeroU32, denominator: NonZeroU32) -> Self {
         Self {
             numerator,
             denominator,
@@ -29,10 +29,6 @@ impl SplitRatio {
 
     pub(super) const fn denominator(self) -> NonZeroU32 {
         self.denominator
-    }
-
-    pub(super) fn as_f64(self) -> f64 {
-        f64::from(self.numerator.get()) / f64::from(self.denominator.get())
     }
 }
 
@@ -73,12 +69,7 @@ pub fn extract_actions(
                     continue;
                 }
             };
-            let Some(amount) = d.amount else {
-                ctx.dropped_item(
-                    "dividend",
-                    Some(k.as_str()),
-                    ProjectionIssue::MissingRequiredField { field: "amount" },
-                )?;
+            let Some(amount) = required_action_amount(ctx, "dividend", k, &d.amount)? else {
                 continue;
             };
             let currency = match event_currency(d.currency.as_deref(), default_currency) {
@@ -96,7 +87,7 @@ pub fn extract_actions(
                     continue;
                 }
             };
-            let Some(amount) = currency.price_from_f64(amount) else {
+            let Some(amount) = currency.price_from_decimal(amount) else {
                 ctx.dropped_item(
                     "dividend",
                     Some(k.as_str()),
@@ -134,12 +125,7 @@ pub fn extract_actions(
                     continue;
                 }
             };
-            let Some(amount) = g.amount else {
-                ctx.dropped_item(
-                    "capital_gain",
-                    Some(k.as_str()),
-                    ProjectionIssue::MissingRequiredField { field: "amount" },
-                )?;
+            let Some(amount) = required_action_amount(ctx, "capital_gain", k, &g.amount)? else {
                 continue;
             };
             let currency = match event_currency(g.currency.as_deref(), default_currency) {
@@ -157,7 +143,7 @@ pub fn extract_actions(
                     continue;
                 }
             };
-            let Some(gain) = currency.price_from_f64(amount) else {
+            let Some(gain) = currency.price_from_decimal(amount) else {
                 ctx.dropped_item(
                     "capital_gain",
                     Some(k.as_str()),
@@ -247,6 +233,17 @@ fn event_currency(
         })
 }
 
+fn required_action_amount(
+    ctx: &mut ProjectionContext,
+    item: &'static str,
+    key: &str,
+    amount: &crate::core::wire::WireValue<JsonDecimal>,
+) -> Result<Option<Decimal>, YfError> {
+    Ok(required_wire_value(ctx, item, Some(key), "amount", amount)?
+        .copied()
+        .map(JsonDecimal::into_decimal))
+}
+
 fn event_timestamp(key: &str, date: Option<i64>) -> Option<i64> {
     key.parse::<i64>().ok().or(date)
 }
@@ -276,14 +273,7 @@ fn normalize_split_ratio(ratio: &str) -> Option<SplitRatio> {
 }
 
 fn parse_split_component(value: &str) -> Option<Decimal> {
-    let value = value.trim();
-    if value.is_empty() {
-        return None;
-    }
-    value
-        .parse::<Decimal>()
-        .or_else(|_| Decimal::from_scientific(value))
-        .ok()
+    crate::core::wire::parse_decimal_lexeme(value).ok()
 }
 
 fn normalize_split_pair(numerator: Decimal, denominator: Decimal) -> Option<SplitRatio> {
@@ -324,4 +314,18 @@ const fn gcd(mut a: u128, mut b: u128) -> u128 {
         b = remainder;
     }
     a
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn split_ratio_text_uses_exact_decimal_parsing() {
+        let ratio = normalize_split_ratio("1.0e2/2.0e1").expect("exact exponent ratio");
+        assert_eq!(ratio.numerator().get(), 5);
+        assert_eq!(ratio.denominator().get(), 1);
+
+        assert!(normalize_split_ratio("1.23456789012345678901234567895/1").is_none());
+    }
 }

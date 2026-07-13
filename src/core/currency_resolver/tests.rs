@@ -641,12 +641,25 @@ async fn listing_inference_uses_yahoo_quote_units() {
         .await
         .expect("listing fallback currency");
     let price = unit
-        .price_from_f64(123.0)
+        .price_from_decimal(Decimal::from(123))
         .expect("scaled listing fallback price");
 
     assert!(quote_mock.calls() >= 1);
     assert_eq!(price.currency(), &Currency::Iso(IsoCurrency::GBP));
     assert_eq!(price.amount(), Decimal::new(123, 2));
+}
+
+#[test]
+fn subunit_scaling_never_rounds_at_the_decimal_scale_boundary() {
+    let unit = ResolvedCurrencyUnit::from_code("GBp").unwrap();
+
+    assert!(unit.price_from_decimal(Decimal::new(1, 28)).is_none());
+    assert_eq!(
+        unit.price_from_decimal(Decimal::new(100, 28))
+            .unwrap()
+            .amount(),
+        Decimal::new(1, 28)
+    );
 }
 
 #[tokio::test]

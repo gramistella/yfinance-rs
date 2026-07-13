@@ -38,3 +38,6 @@ mod retry_synthetic;
 
 #[path = "history/caching_synthetic.rs"]
 mod caching_synthetic;
+
+#[path = "history/decimal_precision_synthetic.rs"]
+mod decimal_precision_synthetic;

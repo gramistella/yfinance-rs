@@ -12,12 +12,11 @@ use crate::{
             project_currency_resolution,
         },
         diagnostics::{
-            WireProjection, diagnostic_key, nonempty, optional_decimal_f64,
-            optional_money_i64_with_currency_issue, optional_parsed,
-            optional_price_f64_with_currency_issue, optional_u32_from_i64,
-            optional_u32_from_raw_f64, parse_optional, required_period,
+            WireProjection, diagnostic_key, nonempty, optional_money_i64_with_currency_issue,
+            optional_parsed, optional_price_decimal_with_currency_issue, optional_projected,
+            optional_u32_from_i64, parse_optional, required_period,
         },
-        wire::{BorrowedWireValue, RawNum, WireField, WireValue},
+        wire::{BorrowedWireValue, RawNumU64, WireField, WireValue},
     },
 };
 
@@ -27,6 +26,7 @@ use super::wire::{
     EarningsEstimateNode, EarningsTrendItemNode, EpsRevisionsNode, EpsTrendNode, FinancialDataNode,
     RecommendationNode, RecommendationTrendNode, RevenueEstimateNode,
 };
+use paft::Decimal;
 use paft::domain::ReportingPeriod;
 use paft::fundamentals::analysis::{
     EarningsEstimate, EpsRevisions, EpsTrend, RecommendationAction, RecommendationGrade,
@@ -367,14 +367,6 @@ fn map_recommendation_summary(
     } else {
         (None, None)
     };
-    let mean = optional_decimal_f64(
-        &mut ctx,
-        "financialData.recommendationMean",
-        Some(symbol),
-        mean,
-        "recommendation mean",
-    )?;
-
     Ok(ctx.finish(RecommendationSummary {
         latest_period,
         strong_buy: sb,
@@ -627,7 +619,7 @@ async fn map_analyst_price_target(
         (None, None)
     };
 
-    let mean = optional_price_f64_with_currency_issue(
+    let mean = optional_price_decimal_with_currency_issue(
         &mut ctx,
         "financialData.targetMeanPrice",
         Some(symbol),
@@ -636,7 +628,7 @@ async fn map_analyst_price_target(
         mean,
         "analyst price value",
     )?;
-    let high = optional_price_f64_with_currency_issue(
+    let high = optional_price_decimal_with_currency_issue(
         &mut ctx,
         "financialData.targetHighPrice",
         Some(symbol),
@@ -645,7 +637,7 @@ async fn map_analyst_price_target(
         high,
         "analyst price value",
     )?;
-    let low = optional_price_f64_with_currency_issue(
+    let low = optional_price_decimal_with_currency_issue(
         &mut ctx,
         "financialData.targetLowPrice",
         Some(symbol),
@@ -661,7 +653,7 @@ async fn map_analyst_price_target(
         Some(symbol),
         "numberOfAnalystOpinions",
     )?;
-    let number_of_analysts = optional_u32_from_raw_f64(
+    let number_of_analysts = optional_u32_from_raw_u64(
         &mut ctx,
         "financialData.numberOfAnalystOpinions",
         Some(symbol),
@@ -786,6 +778,21 @@ struct AnalystCurrencyRef<'a> {
     issue: Option<&'a ProjectionIssue>,
 }
 
+fn optional_u32_from_raw_u64(
+    ctx: &mut ProjectionContext,
+    path: &'static str,
+    key: Option<&str>,
+    field: &'static str,
+    value: Option<RawNumU64>,
+) -> Result<Option<u32>, YfError> {
+    optional_projected(ctx, path, key, value.and_then(|value| value.raw), |value| {
+        u32::try_from(value).map_err(|_| ProjectionIssue::InvalidField {
+            field,
+            details: format!("expected integer count in 0..={}, got {value}", u32::MAX),
+        })
+    })
+}
+
 #[derive(Clone, Copy)]
 enum AnalystCurrencyField {
     Earnings,
@@ -872,16 +879,16 @@ fn currency_group_key(code: Option<&str>) -> Option<String> {
 #[derive(Default)]
 struct RawEarningsEstimate {
     currency: Option<String>,
-    avg: Option<f64>,
-    low: Option<f64>,
-    high: Option<f64>,
-    year_ago_eps: Option<f64>,
-    num_analysts: Option<RawNum<f64>>,
-    growth: Option<f64>,
+    avg: Option<Decimal>,
+    low: Option<Decimal>,
+    high: Option<Decimal>,
+    year_ago_eps: Option<Decimal>,
+    num_analysts: Option<RawNumU64>,
+    growth: Option<Decimal>,
 }
 
 impl RawEarningsEstimate {
-    const fn price_values(&self) -> [Option<f64>; 4] {
+    const fn price_values(&self) -> [Option<Decimal>; 4] {
         [self.avg, self.low, self.high, self.year_ago_eps]
     }
 
@@ -954,8 +961,8 @@ struct RawRevenueEstimate {
     low: Option<i64>,
     high: Option<i64>,
     year_ago_revenue: Option<i64>,
-    num_analysts: Option<RawNum<f64>>,
-    growth: Option<f64>,
+    num_analysts: Option<RawNumU64>,
+    growth: Option<Decimal>,
 }
 
 impl RawRevenueEstimate {
@@ -1028,15 +1035,15 @@ impl RawRevenueEstimate {
 #[derive(Default)]
 struct RawEpsTrend {
     currency: Option<String>,
-    current: Option<f64>,
-    seven_days_ago: Option<f64>,
-    thirty_days_ago: Option<f64>,
-    sixty_days_ago: Option<f64>,
-    ninety_days_ago: Option<f64>,
+    current: Option<Decimal>,
+    seven_days_ago: Option<Decimal>,
+    thirty_days_ago: Option<Decimal>,
+    sixty_days_ago: Option<Decimal>,
+    ninety_days_ago: Option<Decimal>,
 }
 
 impl RawEpsTrend {
-    const fn price_values(&self) -> [Option<f64>; 5] {
+    const fn price_values(&self) -> [Option<Decimal>; 5] {
         [
             self.current,
             self.seven_days_ago,
@@ -1090,10 +1097,10 @@ impl RawEpsTrend {
 
 #[derive(Default)]
 struct RawEpsRevisions {
-    up_7d: Option<RawNum<f64>>,
-    up_30d: Option<RawNum<f64>>,
-    down_7d: Option<RawNum<f64>>,
-    down_30d: Option<RawNum<f64>>,
+    up_7d: Option<RawNumU64>,
+    up_30d: Option<RawNumU64>,
+    down_7d: Option<RawNumU64>,
+    down_30d: Option<RawNumU64>,
 }
 
 impl RawEpsRevisions {
@@ -1139,7 +1146,7 @@ impl RawEpsRevisions {
 
 struct RawEarningsTrendItem {
     period_key: Option<String>,
-    growth: Option<f64>,
+    growth: Option<Decimal>,
     earnings: RawEarningsEstimate,
     revenue: RawRevenueEstimate,
     eps_trend: RawEpsTrend,
@@ -1181,7 +1188,7 @@ fn project_earnings_estimate(
     currency: AnalystCurrencyRef<'_>,
 ) -> Result<EarningsEstimate, YfError> {
     Ok(EarningsEstimate {
-        avg: optional_price_f64_with_currency_issue(
+        avg: optional_price_decimal_with_currency_issue(
             ctx,
             "earningsTrend[].earningsEstimate.avg",
             diagnostic_key(period_key),
@@ -1190,7 +1197,7 @@ fn project_earnings_estimate(
             raw.avg,
             "analyst price value",
         )?,
-        low: optional_price_f64_with_currency_issue(
+        low: optional_price_decimal_with_currency_issue(
             ctx,
             "earningsTrend[].earningsEstimate.low",
             diagnostic_key(period_key),
@@ -1199,7 +1206,7 @@ fn project_earnings_estimate(
             raw.low,
             "analyst price value",
         )?,
-        high: optional_price_f64_with_currency_issue(
+        high: optional_price_decimal_with_currency_issue(
             ctx,
             "earningsTrend[].earningsEstimate.high",
             diagnostic_key(period_key),
@@ -1208,7 +1215,7 @@ fn project_earnings_estimate(
             raw.high,
             "analyst price value",
         )?,
-        year_ago_eps: optional_price_f64_with_currency_issue(
+        year_ago_eps: optional_price_decimal_with_currency_issue(
             ctx,
             "earningsTrend[].earningsEstimate.yearAgoEps",
             diagnostic_key(period_key),
@@ -1217,20 +1224,14 @@ fn project_earnings_estimate(
             raw.year_ago_eps,
             "analyst price value",
         )?,
-        num_analysts: optional_u32_from_raw_f64(
+        num_analysts: optional_u32_from_raw_u64(
             ctx,
             "earningsTrend[].earningsEstimate.numberOfAnalysts",
             diagnostic_key(period_key),
             "numberOfAnalysts",
             raw.num_analysts,
         )?,
-        growth: optional_decimal_f64(
-            ctx,
-            "earningsTrend[].earningsEstimate.growth",
-            diagnostic_key(period_key),
-            raw.growth,
-            "earnings estimate growth",
-        )?,
+        growth: raw.growth,
     })
 }
 
@@ -1277,20 +1278,14 @@ fn project_revenue_estimate(
             raw.year_ago_revenue,
             "analyst monetary value",
         )?,
-        num_analysts: optional_u32_from_raw_f64(
+        num_analysts: optional_u32_from_raw_u64(
             ctx,
             "earningsTrend[].revenueEstimate.numberOfAnalysts",
             diagnostic_key(period_key),
             "numberOfAnalysts",
             raw.num_analysts,
         )?,
-        growth: optional_decimal_f64(
-            ctx,
-            "earningsTrend[].revenueEstimate.growth",
-            diagnostic_key(period_key),
-            raw.growth,
-            "revenue estimate growth",
-        )?,
+        growth: raw.growth,
     })
 }
 
@@ -1301,9 +1296,9 @@ fn push_eps_trend_point(
     currency: AnalystCurrencyRef<'_>,
     period: &str,
     path: &'static str,
-    value: Option<f64>,
+    value: Option<Decimal>,
 ) -> Result<(), YfError> {
-    if let Some(value) = optional_price_f64_with_currency_issue(
+    if let Some(value) = optional_price_decimal_with_currency_issue(
         ctx,
         path,
         diagnostic_key(period_key),
@@ -1325,7 +1320,7 @@ fn project_eps_trend(
     raw: &RawEpsTrend,
     currency: AnalystCurrencyRef<'_>,
 ) -> Result<EpsTrend, YfError> {
-    let current = optional_price_f64_with_currency_issue(
+    let current = optional_price_decimal_with_currency_issue(
         ctx,
         "earningsTrend[].epsTrend.current",
         diagnostic_key(period_key),
@@ -1421,28 +1416,28 @@ fn project_eps_revisions(
     period_key: Option<&str>,
     raw: &RawEpsRevisions,
 ) -> Result<EpsRevisions, YfError> {
-    let up_last_7_days = optional_u32_from_raw_f64(
+    let up_last_7_days = optional_u32_from_raw_u64(
         ctx,
         "earningsTrend[].epsRevisions.upLast7days",
         diagnostic_key(period_key),
         "upLast7days",
         raw.up_7d,
     )?;
-    let up_last_30_days = optional_u32_from_raw_f64(
+    let up_last_30_days = optional_u32_from_raw_u64(
         ctx,
         "earningsTrend[].epsRevisions.upLast30days",
         diagnostic_key(period_key),
         "upLast30days",
         raw.up_30d,
     )?;
-    let down_last_7_days = optional_u32_from_raw_f64(
+    let down_last_7_days = optional_u32_from_raw_u64(
         ctx,
         "earningsTrend[].epsRevisions.downLast7days",
         diagnostic_key(period_key),
         "downLast7days",
         raw.down_7d,
     )?;
-    let down_last_30_days = optional_u32_from_raw_f64(
+    let down_last_30_days = optional_u32_from_raw_u64(
         ctx,
         "earningsTrend[].epsRevisions.downLast30days",
         diagnostic_key(period_key),
@@ -1497,13 +1492,7 @@ fn project_earnings_trend_row(
 
     Ok(EarningsTrendRow {
         period,
-        growth: optional_decimal_f64(
-            ctx,
-            "earningsTrend[].growth",
-            diagnostic_key(period_key),
-            raw.growth,
-            "earnings trend growth",
-        )?,
+        growth: raw.growth,
         earnings_estimate: project_earnings_estimate(
             ctx,
             period_key,

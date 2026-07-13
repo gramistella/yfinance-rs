@@ -57,8 +57,8 @@ async fn quote_v7_happy_path() {
             .map(std::string::ToString::to_string),
         Some("REGULAR".to_string())
     );
-    assert!((money_to_f64(&q.price.unwrap()) - 190.25).abs() < 1e-9);
-    assert!((money_to_f64(&q.previous_close.unwrap()) - 189.50).abs() < 1e-9);
+    assert_eq!(q.price.unwrap().as_decimal().to_string(), "190.25");
+    assert_eq!(q.previous_close.unwrap().as_decimal().to_string(), "189.50");
 }
 
 #[tokio::test]
@@ -224,7 +224,7 @@ async fn quote_v7_usd_crypto_price_keeps_provider_precision() {
           {
             "symbol":"XRPUSD",
             "regularMarketPrice": 0.612345,
-            "regularMarketPreviousClose": 0.600001,
+            "regularMarketPreviousClose": 0.6000010000000000000000000001,
             "currency": "USD",
             "quoteType": "CRYPTOCURRENCY"
           }
@@ -253,6 +253,10 @@ async fn quote_v7_usd_crypto_price_keeps_provider_precision() {
 
     let price = q.price.as_ref().unwrap();
     assert_eq!(price.as_decimal().to_string(), "0.612345");
+    assert_eq!(
+        q.previous_close.as_ref().unwrap().as_decimal().to_string(),
+        "0.6000010000000000000000000001"
+    );
     assert_eq!(q.currency.to_string(), "USD");
 }
 

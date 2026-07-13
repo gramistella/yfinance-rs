@@ -706,7 +706,7 @@ async fn price_target_accepts_override_currency_in_strict_mode() {
 }
 
 #[tokio::test]
-async fn analyst_count_fractional_rounding_is_diagnostic() {
+async fn fractional_analyst_count_is_rejected_without_rounding() {
     let sym = "MSFT";
     let server = MockServer::start();
 
@@ -744,11 +744,15 @@ async fn analyst_count_fractional_rounding_is_diagnostic() {
         .await
         .unwrap();
 
-    assert_eq!(response.data.number_of_analysts, Some(13));
+    assert_eq!(response.data.number_of_analysts, None);
     assert!(response.diagnostics.warnings.iter().any(|warning| matches!(
         warning,
-        YfWarning::CoercedPresentField {
+        YfWarning::OmittedPresentField {
             path: "financialData.numberOfAnalystOpinions",
+            reason: ProjectionIssue::InvalidField {
+                field: "numberOfAnalystOpinions",
+                ..
+            },
             ..
         }
     )));

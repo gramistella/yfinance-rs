@@ -1,8 +1,17 @@
 use httpmock::Method::GET;
 use httpmock::MockServer;
+use paft::Decimal;
 use url::Url;
 use yfinance_rs::YfClient;
-use yfinance_rs::core::conversions::money_to_f64;
+
+fn json_decimal(value: &serde_json::Value) -> Decimal {
+    value
+        .as_number()
+        .expect("fixture decimal")
+        .to_string()
+        .parse()
+        .expect("valid fixture decimal")
+}
 
 #[tokio::test]
 async fn quote_v7_bid_ask_are_mapped_to_book_levels() {
@@ -13,9 +22,9 @@ async fn quote_v7_bid_ask_are_mapped_to_book_levels() {
         .as_array()
         .and_then(|quotes| quotes.first())
         .expect("quote fixture should contain AAPL");
-    let expected_bid = raw_quote["bid"].as_f64().expect("fixture bid");
+    let expected_bid = json_decimal(&raw_quote["bid"]);
     let expected_bid_size = raw_quote["bidSize"].as_u64().expect("fixture bid size");
-    let expected_ask = raw_quote["ask"].as_f64().expect("fixture ask");
+    let expected_ask = json_decimal(&raw_quote["ask"]);
     let expected_ask_size = raw_quote["askSize"].as_u64().expect("fixture ask size");
 
     let mock = server.mock(|when, then| {
@@ -43,12 +52,12 @@ async fn quote_v7_bid_ask_are_mapped_to_book_levels() {
     let bid = quote.bid.as_ref().expect("bid should be mapped");
     let ask = quote.ask.as_ref().expect("ask should be mapped");
 
-    assert!((money_to_f64(&bid.price) - expected_bid).abs() < 1e-9);
+    assert_eq!(bid.price.as_decimal(), &expected_bid);
     assert_eq!(
         bid.size.as_ref().map(ToString::to_string),
         Some(expected_bid_size.to_string())
     );
-    assert!((money_to_f64(&ask.price) - expected_ask).abs() < 1e-9);
+    assert_eq!(ask.price.as_decimal(), &expected_ask);
     assert_eq!(
         ask.size.as_ref().map(ToString::to_string),
         Some(expected_ask_size.to_string())

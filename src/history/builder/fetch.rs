@@ -1,3 +1,4 @@
+use crate::core::wire::{JsonDecimal, WireValue};
 use crate::core::{
     CallOptions, Interval, Range, YfError,
     client::{CacheEndpoint, SymbolEndpoint, normalize_symbol},
@@ -18,7 +19,7 @@ enum ChartTimeQuery {
 pub struct Fetched {
     pub ts: Vec<i64>,
     pub quote: QuoteBlock,
-    pub adjclose: Vec<Option<f64>>,
+    pub adjclose: Vec<WireValue<JsonDecimal>>,
     pub events: Option<Events>,
     pub meta: Option<MetaNode>,
 }

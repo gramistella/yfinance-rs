@@ -1,34 +1,8 @@
 use crate::core::{
-    ProjectionContext, ProjectionIssue, YfError, conversions::decimal_from_f64,
-    currency_resolver::ResolvedCurrencyUnit, diagnostics::optional_projected,
+    ProjectionContext, ProjectionIssue, YfError, currency_resolver::ResolvedCurrencyUnit,
+    diagnostics::optional_projected,
 };
-use paft::{Decimal, Ratio};
-
-pub fn optional_decimal_f64(
-    ctx: &mut ProjectionContext,
-    path: &'static str,
-    key: Option<&str>,
-    value: Option<f64>,
-    target: &'static str,
-) -> Result<Option<Decimal>, YfError> {
-    optional_projected(ctx, path, key, value, |value| {
-        decimal_from_f64(value).ok_or(ProjectionIssue::ConversionFailed { target })
-    })
-}
-
-pub fn optional_ratio_f64(
-    ctx: &mut ProjectionContext,
-    path: &'static str,
-    key: Option<&str>,
-    value: Option<f64>,
-    target: &'static str,
-) -> Result<Option<Ratio>, YfError> {
-    optional_projected(ctx, path, key, value, |value| {
-        let decimal =
-            decimal_from_f64(value).ok_or(ProjectionIssue::ConversionFailed { target })?;
-        Ratio::new(decimal).map_err(|_| ProjectionIssue::ConversionFailed { target })
-    })
-}
+use paft::Decimal;
 
 pub fn optional_money_u64_with_currency_issue(
     ctx: &mut ProjectionContext,
@@ -105,13 +79,13 @@ pub fn optional_money_decimal_with_currency_issue(
     )
 }
 
-pub fn optional_price_f64_with_currency_issue(
+pub fn optional_price_decimal_with_currency_issue(
     ctx: &mut ProjectionContext,
     path: &'static str,
     key: Option<&str>,
     unit: Option<&ResolvedCurrencyUnit>,
     currency_issue: Option<&ProjectionIssue>,
-    value: Option<f64>,
+    value: Option<Decimal>,
     target: &'static str,
 ) -> Result<Option<paft::money::Price>, YfError> {
     optional_with_unit_with_currency_issue(
@@ -124,7 +98,7 @@ pub fn optional_price_f64_with_currency_issue(
         },
         value,
         target,
-        ResolvedCurrencyUnit::price_from_f64,
+        ResolvedCurrencyUnit::price_from_decimal,
     )
 }
 

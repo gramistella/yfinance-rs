@@ -13,9 +13,9 @@ use crate::{
             CurrencyHints, CurrencyPurpose, ResolvedCurrencyUnit, TradingCurrencyEvidence,
             project_currency_resolution,
         },
-        diagnostics::{WireProjection, optional_decimal_f64, required_wire_value},
+        diagnostics::{WireProjection, required_wire_value},
         net,
-        wire::{JsonU64, WireValue},
+        wire::{JsonDecimal, JsonU64, WireValue},
         yahoo_vocab::{first_parsed_yahoo_exchange, parse_yahoo_quote_type},
     },
 };
@@ -279,7 +279,7 @@ fn project_option_contract(
         )?;
         return Ok(None);
     };
-    let Some(strike) = currency.price_from_f64(strike_raw) else {
+    let Some(strike) = currency.price_from_decimal(strike_raw.into_decimal()) else {
         ctx.dropped_item(
             "option_contract",
             key_for_diag.as_deref(),
@@ -364,7 +364,7 @@ fn project_option_contract(
         )?,
         volume,
         open_interest,
-        implied_volatility: optional_non_negative_decimal_f64(
+        implied_volatility: optional_non_negative_decimal(
             ctx,
             "impliedVolatility",
             key_for_diag.as_deref(),
@@ -416,27 +416,27 @@ fn optional_option_price(
     path: &'static str,
     key: Option<&str>,
     currency: &ResolvedCurrencyUnit,
-    value: Option<f64>,
+    value: Option<JsonDecimal>,
     target: &'static str,
 ) -> Result<Option<PriceAmount>, YfError> {
     let Some(value) = value else {
         return Ok(None);
     };
-    let Some(price) = currency.price_amount_from_f64(value) else {
+    let Some(price) = currency.price_amount_from_decimal(value.into_decimal()) else {
         ctx.omitted_present_field(path, key, ProjectionIssue::ConversionFailed { target })?;
         return Ok(None);
     };
     Ok(Some(price))
 }
 
-fn optional_non_negative_decimal_f64(
+fn optional_non_negative_decimal(
     ctx: &mut ProjectionContext,
     path: &'static str,
     key: Option<&str>,
-    value: Option<f64>,
+    value: Option<JsonDecimal>,
     target: &'static str,
 ) -> Result<Option<NonNegativeDecimal>, YfError> {
-    let Some(decimal) = optional_decimal_f64(ctx, path, key, value, target)? else {
+    let Some(decimal) = value.map(JsonDecimal::into_decimal) else {
         return Ok(None);
     };
     if let Ok(value) = NonNegativeDecimal::new(decimal) {
@@ -489,7 +489,7 @@ fn option_contract_diag_key(
                 contract
                     .strike
                     .as_ref()
-                    .map_or_else(|| "?".to_string(), ToString::to_string),
+                    .map_or_else(|| "?".to_string(), |value| value.into_decimal().to_string()),
                 contract
                     .expiration
                     .as_ref()
@@ -709,14 +709,14 @@ struct OptContractNode {
     #[serde(default)]
     last_trade_date: WireValue<i64>,
     #[serde(default)]
-    strike: WireValue<f64>,
+    strike: WireValue<JsonDecimal>,
     #[serde(rename = "lastPrice")]
     #[serde(default)]
-    last_price: WireValue<f64>,
+    last_price: WireValue<JsonDecimal>,
     #[serde(default)]
-    bid: WireValue<f64>,
+    bid: WireValue<JsonDecimal>,
     #[serde(default)]
-    ask: WireValue<f64>,
+    ask: WireValue<JsonDecimal>,
     #[serde(default)]
     volume: WireValue<JsonU64>,
     #[serde(rename = "openInterest")]
@@ -724,7 +724,7 @@ struct OptContractNode {
     open_interest: WireValue<JsonU64>,
     #[serde(rename = "impliedVolatility")]
     #[serde(default)]
-    implied_volatility: WireValue<f64>,
+    implied_volatility: WireValue<JsonDecimal>,
     #[serde(rename = "inTheMoney")]
     #[serde(default)]
     in_the_money: WireValue<bool>,
