@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `Ticker::components()` returns an index's member symbols from Yahoo's
+  `components` quoteSummary module (for example `^FCHI` returns `OR.PA`,
+  `MC.PA`, ...). Symbols without components, which Yahoo answers with a 404,
+  return an empty list instead of an error.
+
 ## [0.9.1] - 2026-07-11
 
 ### Fixed
