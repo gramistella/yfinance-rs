@@ -1,3 +1,4 @@
+mod components;
 mod info;
 mod isin;
 mod model;
@@ -446,6 +447,19 @@ impl Ticker {
         }
 
         isin::fetch_isin(&self.client, &symbol, self.options.retry_override()).await
+    }
+
+    /// Fetches the member symbols of an index (for example `^FCHI` returns `OR.PA`, `MC.PA`, ...).
+    ///
+    /// Uses Yahoo's `components` quoteSummary module. Symbols that have no components,
+    /// such as individual equities or ETFs, return an empty list. Yahoo answers unknown
+    /// symbols the same way, so they also return an empty list rather than an error.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if the request fails or the response cannot be parsed.
+    pub async fn components(&self) -> Result<Vec<String>, YfError> {
+        components::fetch_components(&self.client, &self.symbol, &self.options).await
     }
 
     /* ---------------- Options ---------------- */

@@ -1,0 +1,50 @@
+{
+  "quoteSummary": {
+    "error": null,
+    "result": [
+      {
+        "components": {
+          "components": [
+            "OR.PA",
+            "MC.PA",
+            "SU.PA",
+            "AIR.PA",
+            "SAF.PA",
+            "RMS.PA",
+            "AI.PA",
+            "BNP.PA",
+            "CS.PA",
+            "SAN.PA",
+            "EL.PA",
+            "DG.PA",
+            "ENGI.PA",
+            "ACA.PA",
+            "GLE.PA",
+            "HO.PA",
+            "MT.AS",
+            "BN.PA",
+            "LR.PA",
+            "ORA.PA",
+            "SGO.PA",
+            "DSY.PA",
+            "KER.PA",
+            "PUB.PA",
+            "VIE.PA",
+            "CAP.PA",
+            "EN.PA",
+            "RI.PA",
+            "CA.PA",
+            "AC.PA",
+            "SW.PA",
+            "RNO.PA",
+            "VIV.PA",
+            "WLN.PA",
+            "ATO.PA",
+            "ML.PA"
+          ],
+          "maxAge": 1
+        }
+      }
+    ]
+  }
+}
