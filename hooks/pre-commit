@@ -16,5 +16,4 @@ if [ -n "$STAGED_TOML" ]; then
     done
 fi
 
-# Formatting is best-effort; never block the commit.
 exit 0
