@@ -12,15 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Income statements now fill `net_income_from_continuing_operations` from
   Yahoo's `NetIncomeFromContinuingOperations` series.
 - Cash flow statements now fill `cash_dividends_paid` from Yahoo's
-  `CashDividendsPaid` series. Values are negative when cash was paid out,
-  matching `paft`'s sign convention.
-- All three fields are filled for both annual and quarterly statements. The
-  other statement fields added in the `paft` fork stay `None`.
+  `CashDividendsPaid` series.
+- The other statement fields added in the `paft` fork stay `None`.
 
 ### Changed
 
-- `paft` is now a path dependency on the local fork (`../paft/paft`), keeping
-  `version = "0.9.0"` for publishing.
+- `paft` is now a path dependency on the local fork (`../paft/paft`).
 
 ## [0.9.1] - 2026-07-11
 

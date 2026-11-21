@@ -1,0 +1,20 @@
+#!/bin/sh
+# Pre-commit hook: auto-format staged Rust and TOML files.
+# Install: cp hooks/pre-commit .git/hooks/pre-commit
+
+STAGED_RS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.rs$')
+if [ -n "$STAGED_RS" ]; then
+    for file in $STAGED_RS; do
+        rustfmt "$file" 2>/dev/null && git add "$file"
+    done
+fi
+
+STAGED_TOML=$(git diff --cached --name-only --diff-filter=ACM | grep '\.toml$')
+if [ -n "$STAGED_TOML" ]; then
+    for file in $STAGED_TOML; do
+        taplo fmt "$file" 2>/dev/null && git add "$file"
+    done
+fi
+
+# Formatting is best-effort; never block the commit.
+exit 0

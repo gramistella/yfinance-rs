@@ -43,6 +43,12 @@ just fmt
 just lint
 ```
 
+To format staged `.rs` and `.toml` files on every commit, install the pre-commit hook (the TOML step needs [`taplo`](https://taplo.tamasfe.dev/)):
+
+```bash
+cp hooks/pre-commit .git/hooks/pre-commit
+```
+
 ## Commit Messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) for clear history.

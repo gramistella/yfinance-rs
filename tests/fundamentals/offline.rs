@@ -180,8 +180,8 @@ async fn offline_balance_sheet_annual_uses_recorded_fixture() {
     assert!(!rows.is_empty(), "record with YF_RECORD=1 first");
 }
 
-/// `(period, reported value)` points of `{prefix}{field}` in a recorded
-/// timeseries fixture, newest first (the order yfinance-rs returns statement rows in).
+/// `(period, value)` points of `{prefix}{field}` in a fixture,
+/// newest first like statement rows.
 fn fixture_series_newest_first(
     body: &str,
     prefix: &str,
@@ -380,8 +380,7 @@ async fn assert_offline_cashflow_maps_cash_dividends_paid(sym: &str, quarterly: 
         .collect();
     assert_eq!(actual, expected);
 
-    // paft convention: dividends paid out are a cash outflow, so negative
-    // (zero for years without dividends).
+    // paft's sign convention: dividends paid out are negative.
     for (period, paid) in &actual {
         assert!(
             money_to_f64(paid) <= 0.0,
