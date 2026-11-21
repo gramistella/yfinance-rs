@@ -1,0 +1,1042 @@
+{
+  "timeseries": {
+    "error": null,
+    "result": [
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyTotalLiabilitiesNetMinorityInterest"
+          ]
+        },
+        "quarterlyTotalLiabilitiesNetMinorityInterest": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23259,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "273.27B",
+              "raw": 273275000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23259,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "274.43B",
+              "raw": 274427000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23259,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "279.86B",
+              "raw": 279861000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23259,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "315.99B",
+              "raw": 315989000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23259,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "308.89B",
+              "raw": 308894000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyAccountsPayable"
+          ]
+        },
+        "quarterlyAccountsPayable": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23000,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "32.58B",
+              "raw": 32580000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23000,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "37.33B",
+              "raw": 37328000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23000,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "37.51B",
+              "raw": 37513000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23000,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "42.42B",
+              "raw": 42416000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23000,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "42.62B",
+              "raw": 42625000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyGoodwill"
+          ]
+        },
+        "quarterlyGoodwill": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23097,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "119.50B",
+              "raw": 119497000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23097,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "119.62B",
+              "raw": 119622000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23097,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "119.66B",
+              "raw": 119661000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23097,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "119.65B",
+              "raw": 119651000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23097,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "119.65B",
+              "raw": 119646000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyOrdinarySharesNumber"
+          ]
+        },
+        "quarterlyOrdinarySharesNumber": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23393,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "7.43B",
+              "raw": 7433087554.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23393,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "7.43B",
+              "raw": 7428838066.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23393,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "7.43B",
+              "raw": 7429000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23393,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "7.43B",
+              "raw": 7427000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23393,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "7.43B",
+              "raw": 7427000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyTotalAssets"
+          ]
+        },
+        "quarterlyTotalAssets": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23220,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "636.35B",
+              "raw": 636351000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23220,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "665.30B",
+              "raw": 665302000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23220,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "694.23B",
+              "raw": 694228000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23220,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "758.38B",
+              "raw": 758376000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23220,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "779.40B",
+              "raw": 779403000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyCurrentDebt"
+          ]
+        },
+        "quarterlyCurrentDebt": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23045,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "7.83B",
+              "raw": 7832000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23045,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "4.84B",
+              "raw": 4837000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23045,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "8.84B",
+              "raw": 8839000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23045,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "9.23B",
+              "raw": 9227000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23045,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "4.39B",
+              "raw": 4391000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyNetPPE"
+          ]
+        },
+        "quarterlyNetPPE": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23139,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "255.65B",
+              "raw": 255652000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23139,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "286.23B",
+              "raw": 286229000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23139,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "307.63B",
+              "raw": 307631000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23139,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "337.25B",
+              "raw": 337253000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23139,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "377.02B",
+              "raw": 377022000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyOtherIntangibleAssets"
+          ]
+        },
+        "quarterlyOtherIntangibleAssets": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23155,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "21.24B",
+              "raw": 21236000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23155,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "20.29B",
+              "raw": 20289000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23155,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "19.32B",
+              "raw": 19325000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23155,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "18.61B",
+              "raw": 18609000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23155,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "17.75B",
+              "raw": 17751000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyStockholdersEquity"
+          ]
+        },
+        "quarterlyStockholdersEquity": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23215,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "363.08B",
+              "raw": 363076000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23215,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "390.88B",
+              "raw": 390875000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23215,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "414.37B",
+              "raw": 414367000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23215,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "442.39B",
+              "raw": 442387000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23215,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "470.51B",
+              "raw": 470509000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyCurrentAssets"
+          ]
+        },
+        "quarterlyCurrentAssets": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23044,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "189.07B",
+              "raw": 189066000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23044,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "180.19B",
+              "raw": 180190000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23044,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "175.33B",
+              "raw": 175329000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23044,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "207.71B",
+              "raw": 207710000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23044,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "186.14B",
+              "raw": 186137000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyCashAndCashEquivalents"
+          ]
+        },
+        "quarterlyCashAndCashEquivalents": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23030,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "28.85B",
+              "raw": 28849000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23030,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "24.30B",
+              "raw": 24296000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23030,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "32.10B",
+              "raw": 32105000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23030,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "20.93B",
+              "raw": 20935000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23030,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "20.28B",
+              "raw": 20281000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyInventory"
+          ]
+        },
+        "quarterlyInventory": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23108,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "1.13B",
+              "raw": 1130000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23108,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "1.06B",
+              "raw": 1059000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23108,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "1.22B",
+              "raw": 1219000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23108,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "1.40B",
+              "raw": 1397000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23108,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "1.83B",
+              "raw": 1835000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyCurrentLiabilities"
+          ]
+        },
+        "quarterlyCurrentLiabilities": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23047,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "135.00B",
+              "raw": 134996000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23047,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "130.00B",
+              "raw": 130005000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23047,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "136.66B",
+              "raw": 136661000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23047,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "168.82B",
+              "raw": 168825000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23047,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "151.97B",
+              "raw": 151968000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyLongTermDebt"
+          ]
+        },
+        "quarterlyLongTermDebt": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23123,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "35.38B",
+              "raw": 35376000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23123,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "35.42B",
+              "raw": 35425000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23123,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "31.42B",
+              "raw": 31423000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23123,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "31.07B",
+              "raw": 31067000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23123,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "31.09B",
+              "raw": 31090000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "MSFT"
+          ],
+          "type": [
+            "quarterlyAccountsReceivable"
+          ]
+        },
+        "quarterlyAccountsReceivable": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 23001,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "52.89B",
+              "raw": 52894000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 23001,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "56.53B",
+              "raw": 56535000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 23001,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "60.04B",
+              "raw": 60041000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 23001,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "80.88B",
+              "raw": 80876000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 23001,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "62.08B",
+              "raw": 62084000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      }
+    ]
+  }
+}

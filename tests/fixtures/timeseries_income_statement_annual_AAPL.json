@@ -5,60 +5,6 @@
       {
         "annualOperatingIncome": [
           {
-            "asOfDate": "2022-09-30",
-            "currencyCode": "USD",
-            "dataId": 20109,
-            "geographicSegmentData": [
-              {
-                "dataValue": 62683000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Americas, excluding U.S",
-                "segmentType": "Geographic"
-              },
-              {
-                "dataValue": 35233000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Europe",
-                "segmentType": "Geographic"
-              },
-              {
-                "dataValue": 31153000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Greater China",
-                "segmentType": "Geographic"
-              },
-              {
-                "dataValue": 12257000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Japan",
-                "segmentType": "Geographic"
-              },
-              {
-                "dataValue": -7207000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Other corporate expenses, net",
-                "segmentType": "Geographic"
-              },
-              {
-                "dataValue": -26251000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Research and development expense",
-                "segmentType": "Geographic"
-              },
-              {
-                "dataValue": 11569000000.0,
-                "isPrimarySegment": 0,
-                "segmentName": "Rest of Asia Pacific",
-                "segmentType": "Geographic"
-              }
-            ],
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "119.44B",
-              "raw": 119437000000.0
-            }
-          },
-          {
             "asOfDate": "2023-09-30",
             "currencyCode": "USD",
             "dataId": 20109,
@@ -213,6 +159,54 @@
               "fmt": "133.05B",
               "raw": 133050000000.0
             }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20109,
+            "geographicSegmentData": [
+              {
+                "dataValue": 86008000000.0,
+                "isPrimarySegment": 0,
+                "segmentName": "Americas",
+                "segmentType": "Geographic"
+              },
+              {
+                "dataValue": -54405000000.0,
+                "isPrimarySegment": 0,
+                "segmentName": "Corporate",
+                "segmentType": "Geographic"
+              },
+              {
+                "dataValue": 58098000000.0,
+                "isPrimarySegment": 0,
+                "segmentName": "Europe",
+                "segmentType": "Geographic"
+              },
+              {
+                "dataValue": 35326000000.0,
+                "isPrimarySegment": 0,
+                "segmentName": "Greater China (China)",
+                "segmentType": "Geographic"
+              },
+              {
+                "dataValue": 14650000000.0,
+                "isPrimarySegment": 0,
+                "segmentName": "Japan",
+                "segmentType": "Geographic"
+              },
+              {
+                "dataValue": 18386000000.0,
+                "isPrimarySegment": 0,
+                "segmentName": "Rest of Asia Pacific",
+                "segmentType": "Geographic"
+              }
+            ],
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "158.06B",
+              "raw": 158063000000.0
+            }
           }
         ],
         "meta": {
@@ -224,24 +218,14 @@
           ]
         },
         "timestamp": [
-          1664496000,
           1696032000,
           1727654400,
-          1759190400
+          1759190400,
+          1790726400
         ]
       },
       {
         "annualTotalRevenue": [
-          {
-            "asOfDate": "2022-09-30",
-            "currencyCode": "USD",
-            "dataId": 20100,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "394.33B",
-              "raw": 394328000000.0
-            }
-          },
           {
             "asOfDate": "2023-09-30",
             "currencyCode": "USD",
@@ -271,6 +255,16 @@
               "fmt": "416.16B",
               "raw": 416161000000.0
             }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20100,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "478.83B",
+              "raw": 478834000000.0
+            }
           }
         ],
         "meta": {
@@ -282,24 +276,14 @@
           ]
         },
         "timestamp": [
-          1664496000,
           1696032000,
           1727654400,
-          1759190400
+          1759190400,
+          1790726400
         ]
       },
       {
         "annualInterestExpense": [
-          {
-            "asOfDate": "2021-09-30",
-            "currencyCode": "USD",
-            "dataId": 20057,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "2.65B",
-              "raw": 2645000000.0
-            }
-          },
           {
             "asOfDate": "2022-09-30",
             "currencyCode": "USD",
@@ -330,23 +314,12 @@
           ]
         },
         "timestamp": [
-          1632960000,
           1664496000,
           1696032000
         ]
       },
       {
         "annualDepreciationAndAmortization": [
-          {
-            "asOfDate": "2022-09-30",
-            "currencyCode": "USD",
-            "dataId": 26060,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "11.10B",
-              "raw": 11104000000.0
-            }
-          },
           {
             "asOfDate": "2023-09-30",
             "currencyCode": "USD",
@@ -376,6 +349,16 @@
               "fmt": "11.70B",
               "raw": 11698000000.0
             }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 26060,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "13.42B",
+              "raw": 13423000000.0
+            }
           }
         ],
         "meta": {
@@ -387,24 +370,14 @@
           ]
         },
         "timestamp": [
-          1664496000,
           1696032000,
           1727654400,
-          1759190400
+          1759190400,
+          1790726400
         ]
       },
       {
         "annualNetIncome": [
-          {
-            "asOfDate": "2022-09-30",
-            "currencyCode": "USD",
-            "dataId": 20091,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "99.80B",
-              "raw": 99803000000.0
-            }
-          },
           {
             "asOfDate": "2023-09-30",
             "currencyCode": "USD",
@@ -434,6 +407,16 @@
               "fmt": "112.01B",
               "raw": 112010000000.0
             }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20091,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "132.18B",
+              "raw": 132175000000.0
+            }
           }
         ],
         "meta": {
@@ -445,82 +428,14 @@
           ]
         },
         "timestamp": [
-          1664496000,
           1696032000,
           1727654400,
-          1759190400
-        ]
-      },
-      {
-        "annualTaxProvision": [
-          {
-            "asOfDate": "2022-09-30",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "19.30B",
-              "raw": 19300000000.0
-            }
-          },
-          {
-            "asOfDate": "2023-09-30",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "16.74B",
-              "raw": 16741000000.0
-            }
-          },
-          {
-            "asOfDate": "2024-09-30",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "29.75B",
-              "raw": 29749000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-09-30",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "20.72B",
-              "raw": 20719000000.0
-            }
-          }
-        ],
-        "meta": {
-          "symbol": [
-            "AAPL"
-          ],
-          "type": [
-            "annualTaxProvision"
-          ]
-        },
-        "timestamp": [
-          1664496000,
-          1696032000,
-          1727654400,
-          1759190400
+          1759190400,
+          1790726400
         ]
       },
       {
         "annualGrossProfit": [
-          {
-            "asOfDate": "2022-09-30",
-            "currencyCode": "USD",
-            "dataId": 20046,
-            "periodType": "12M",
-            "reportedValue": {
-              "fmt": "170.78B",
-              "raw": 170782000000.0
-            }
-          },
           {
             "asOfDate": "2023-09-30",
             "currencyCode": "USD",
@@ -550,6 +465,16 @@
               "fmt": "195.20B",
               "raw": 195201000000.0
             }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20046,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "233.60B",
+              "raw": 233602000000.0
+            }
           }
         ],
         "meta": {
@@ -561,10 +486,126 @@
           ]
         },
         "timestamp": [
-          1664496000,
           1696032000,
           1727654400,
-          1759190400
+          1759190400,
+          1790726400
+        ]
+      },
+      {
+        "annualTaxProvision": [
+          {
+            "asOfDate": "2023-09-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "16.74B",
+              "raw": 16741000000.0
+            }
+          },
+          {
+            "asOfDate": "2024-09-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "29.75B",
+              "raw": 29749000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "20.72B",
+              "raw": 20719000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "27.06B",
+              "raw": 27062000000.0
+            }
+          }
+        ],
+        "meta": {
+          "symbol": [
+            "AAPL"
+          ],
+          "type": [
+            "annualTaxProvision"
+          ]
+        },
+        "timestamp": [
+          1696032000,
+          1727654400,
+          1759190400,
+          1790726400
+        ]
+      },
+      {
+        "annualNetIncomeFromContinuingOperations": [
+          {
+            "asOfDate": "2023-09-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "97.00B",
+              "raw": 96995000000.0
+            }
+          },
+          {
+            "asOfDate": "2024-09-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "93.74B",
+              "raw": 93736000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "112.01B",
+              "raw": 112010000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "132.18B",
+              "raw": 132175000000.0
+            }
+          }
+        ],
+        "meta": {
+          "symbol": [
+            "AAPL"
+          ],
+          "type": [
+            "annualNetIncomeFromContinuingOperations"
+          ]
+        },
+        "timestamp": [
+          1696032000,
+          1727654400,
+          1759190400,
+          1790726400
         ]
       }
     ]

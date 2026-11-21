@@ -63,13 +63,16 @@ async fn live_fundamentals_for_record() {
     let client = yfinance_rs::YfClient::builder().build().unwrap();
 
     let t1 = yfinance_rs::Ticker::new(&client, "AAPL");
+    let _ = t1.income_stmt(None).await;
     let _ = t1.quarterly_income_stmt(None).await;
 
     let t2 = yfinance_rs::Ticker::new(&client, "MSFT");
     let _ = t2.balance_sheet(None).await;
+    let _ = t2.quarterly_balance_sheet(None).await;
 
     let t3 = yfinance_rs::Ticker::new(&client, "GOOGL");
     let _ = t3.cashflow(None).await;
+    let _ = t3.quarterly_cashflow(None).await;
 
     let t4 = yfinance_rs::Ticker::new(&client, "AMZN");
     let _ = t4.earnings(None).await;

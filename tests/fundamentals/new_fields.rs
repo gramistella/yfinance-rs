@@ -300,7 +300,7 @@ async fn statement_values_without_reported_raw_do_not_create_rows() {
             .query_param("symbol", symbol)
             .query_param(
                 "type",
-                "annualTotalRevenue,annualGrossProfit,annualOperatingIncome,annualNetIncome,annualInterestExpense,annualTaxProvision,annualDepreciationAndAmortization",
+                "annualTotalRevenue,annualGrossProfit,annualOperatingIncome,annualNetIncome,annualNetIncomeFromContinuingOperations,annualInterestExpense,annualTaxProvision,annualDepreciationAndAmortization",
             )
             .query_param("crumb", "crumb")
             .query_param_exists("period1")
@@ -328,7 +328,7 @@ async fn statement_values_without_reported_raw_do_not_create_rows() {
             .query_param("symbol", symbol)
             .query_param(
                 "type",
-                "annualTotalAssets,annualTotalLiabilitiesNetMinorityInterest,annualStockholdersEquity,annualCashAndCashEquivalents,annualLongTermDebt,annualOrdinarySharesNumber,annualCurrentAssets,annualCurrentLiabilities,annualAccountsReceivable,annualInventory,annualAccountsPayable,annualNetPPE,annualGoodwill,annualOtherIntangibleAssets",
+                "annualTotalAssets,annualTotalLiabilitiesNetMinorityInterest,annualStockholdersEquity,annualCashAndCashEquivalents,annualLongTermDebt,annualCurrentDebt,annualOrdinarySharesNumber,annualCurrentAssets,annualCurrentLiabilities,annualAccountsReceivable,annualInventory,annualAccountsPayable,annualNetPPE,annualGoodwill,annualOtherIntangibleAssets",
             )
             .query_param("crumb", "crumb")
             .query_param_exists("period1")
@@ -356,7 +356,7 @@ async fn statement_values_without_reported_raw_do_not_create_rows() {
             .query_param("symbol", symbol)
             .query_param(
                 "type",
-                "annualOperatingCashFlow,annualCapitalExpenditure,annualFreeCashFlow,annualNetIncome,annualDepreciationAndAmortization",
+                "annualOperatingCashFlow,annualCapitalExpenditure,annualFreeCashFlow,annualNetIncome,annualDepreciationAndAmortization,annualCashDividendsPaid",
             )
             .query_param("crumb", "crumb")
             .query_param_exists("period1")

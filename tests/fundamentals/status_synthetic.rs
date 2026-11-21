@@ -368,7 +368,7 @@ async fn fundamentals_timeseries_yahoo_error_returns_api_error() {
             .query_param("symbol", sym)
             .query_param(
                 "type",
-                "annualTotalRevenue,annualGrossProfit,annualOperatingIncome,annualNetIncome,annualInterestExpense,annualTaxProvision,annualDepreciationAndAmortization",
+                "annualTotalRevenue,annualGrossProfit,annualOperatingIncome,annualNetIncome,annualNetIncomeFromContinuingOperations,annualInterestExpense,annualTaxProvision,annualDepreciationAndAmortization",
             )
             .query_param("crumb", "crumb")
             .query_param_exists("period1")
@@ -527,7 +527,7 @@ async fn malformed_timeseries_value_is_reported_without_dropping_valid_periods()
             .query_param("symbol", sym)
             .query_param(
                 "type",
-                "annualTotalRevenue,annualGrossProfit,annualOperatingIncome,annualNetIncome,annualInterestExpense,annualTaxProvision,annualDepreciationAndAmortization",
+                "annualTotalRevenue,annualGrossProfit,annualOperatingIncome,annualNetIncome,annualNetIncomeFromContinuingOperations,annualInterestExpense,annualTaxProvision,annualDepreciationAndAmortization",
             )
             .query_param("crumb", "crumb")
             .query_param_exists("period1")

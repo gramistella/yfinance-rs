@@ -61,6 +61,64 @@
         ]
       },
       {
+        "annualCashDividendsPaid": [
+          {
+            "asOfDate": "2022-12-31",
+            "currencyCode": "USD",
+            "dataId": 26007,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "0.00",
+              "raw": 0.0
+            }
+          },
+          {
+            "asOfDate": "2023-12-31",
+            "currencyCode": "USD",
+            "dataId": 26007,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "0.00",
+              "raw": 0.0
+            }
+          },
+          {
+            "asOfDate": "2024-12-31",
+            "currencyCode": "USD",
+            "dataId": 26007,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "-7.36B",
+              "raw": -7363000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 26007,
+            "periodType": "12M",
+            "reportedValue": {
+              "fmt": "-10.05B",
+              "raw": -10049000000.0
+            }
+          }
+        ],
+        "meta": {
+          "symbol": [
+            "GOOGL"
+          ],
+          "type": [
+            "annualCashDividendsPaid"
+          ]
+        },
+        "timestamp": [
+          1672444800,
+          1703980800,
+          1735603200,
+          1767139200
+        ]
+      },
+      {
         "annualDepreciationAndAmortization": [
           {
             "asOfDate": "2022-12-31",

@@ -8,99 +8,10 @@
             "AAPL"
           ],
           "type": [
-            "quarterlyTaxProvision"
-          ]
-        },
-        "quarterlyTaxProvision": [
-          {
-            "asOfDate": "2025-03-31",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "4.53B",
-              "raw": 4530000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-06-30",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "4.60B",
-              "raw": 4597000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-09-30",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "5.34B",
-              "raw": 5338000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-12-31",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "8.90B",
-              "raw": 8905000000.0
-            }
-          },
-          {
-            "asOfDate": "2026-03-31",
-            "currencyCode": "USD",
-            "dataId": 20145,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "6.25B",
-              "raw": 6255000000.0
-            }
-          }
-        ],
-        "timestamp": [
-          1743379200,
-          1751241600,
-          1759190400,
-          1767139200,
-          1774915200
-        ]
-      },
-      {
-        "meta": {
-          "symbol": [
-            "AAPL"
-          ],
-          "type": [
             "quarterlyGrossProfit"
           ]
         },
         "quarterlyGrossProfit": [
-          {
-            "asOfDate": "2025-03-31",
-            "currencyCode": "USD",
-            "dataId": 20046,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "44.87B",
-              "raw": 44867000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-06-30",
-            "currencyCode": "USD",
-            "dataId": 20046,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "43.72B",
-              "raw": 43718000000.0
-            }
-          },
           {
             "asOfDate": "2025-09-30",
             "currencyCode": "USD",
@@ -130,14 +41,103 @@
               "fmt": "54.78B",
               "raw": 54781000000.0
             }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 20046,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "54.77B",
+              "raw": 54770000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20046,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "54.82B",
+              "raw": 54820000000.0
+            }
           }
         ],
         "timestamp": [
-          1743379200,
-          1751241600,
           1759190400,
           1767139200,
-          1774915200
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "AAPL"
+          ],
+          "type": [
+            "quarterlyTaxProvision"
+          ]
+        },
+        "quarterlyTaxProvision": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "5.34B",
+              "raw": 5338000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "8.90B",
+              "raw": 8905000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "6.25B",
+              "raw": 6255000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "6.48B",
+              "raw": 6478000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20145,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "5.42B",
+              "raw": 5424000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
         ]
       },
       {
@@ -150,26 +150,6 @@
           ]
         },
         "quarterlyDepreciationAndAmortization": [
-          {
-            "asOfDate": "2025-03-31",
-            "currencyCode": "USD",
-            "dataId": 26060,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "2.66B",
-              "raw": 2661000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-06-30",
-            "currencyCode": "USD",
-            "dataId": 26060,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "2.83B",
-              "raw": 2830000000.0
-            }
-          },
           {
             "asOfDate": "2025-09-30",
             "currencyCode": "USD",
@@ -199,83 +179,34 @@
               "fmt": "3.44B",
               "raw": 3439000000.0
             }
-          }
-        ],
-        "timestamp": [
-          1743379200,
-          1751241600,
-          1759190400,
-          1767139200,
-          1774915200
-        ]
-      },
-      {
-        "meta": {
-          "symbol": [
-            "AAPL"
-          ],
-          "type": [
-            "quarterlyTotalRevenue"
-          ]
-        },
-        "quarterlyTotalRevenue": [
+          },
           {
-            "asOfDate": "2025-03-31",
+            "asOfDate": "2026-06-30",
             "currencyCode": "USD",
-            "dataId": 20100,
+            "dataId": 26060,
             "periodType": "3M",
             "reportedValue": {
-              "fmt": "95.36B",
-              "raw": 95359000000.0
+              "fmt": "3.32B",
+              "raw": 3320000000.0
             }
           },
           {
-            "asOfDate": "2025-06-30",
+            "asOfDate": "2026-09-30",
             "currencyCode": "USD",
-            "dataId": 20100,
+            "dataId": 26060,
             "periodType": "3M",
             "reportedValue": {
-              "fmt": "94.04B",
-              "raw": 94036000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-09-30",
-            "currencyCode": "USD",
-            "dataId": 20100,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "102.47B",
-              "raw": 102466000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-12-31",
-            "currencyCode": "USD",
-            "dataId": 20100,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "143.76B",
-              "raw": 143756000000.0
-            }
-          },
-          {
-            "asOfDate": "2026-03-31",
-            "currencyCode": "USD",
-            "dataId": 20100,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "111.18B",
-              "raw": 111184000000.0
+              "fmt": "3.45B",
+              "raw": 3450000000.0
             }
           }
         ],
         "timestamp": [
-          1743379200,
-          1751241600,
           1759190400,
           1767139200,
-          1774915200
+          1774915200,
+          1782777600,
+          1790726400
         ]
       },
       {
@@ -288,26 +219,6 @@
           ]
         },
         "quarterlyOperatingIncome": [
-          {
-            "asOfDate": "2025-03-31",
-            "currencyCode": "USD",
-            "dataId": 20109,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "29.59B",
-              "raw": 29589000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-06-30",
-            "currencyCode": "USD",
-            "dataId": 20109,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "28.20B",
-              "raw": 28202000000.0
-            }
-          },
           {
             "asOfDate": "2025-09-30",
             "currencyCode": "USD",
@@ -337,14 +248,172 @@
               "fmt": "35.88B",
               "raw": 35885000000.0
             }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 20109,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "35.70B",
+              "raw": 35695000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20109,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "35.63B",
+              "raw": 35631000000.0
+            }
           }
         ],
         "timestamp": [
-          1743379200,
-          1751241600,
           1759190400,
           1767139200,
-          1774915200
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "AAPL"
+          ],
+          "type": [
+            "quarterlyTotalRevenue"
+          ]
+        },
+        "quarterlyTotalRevenue": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 20100,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "102.47B",
+              "raw": 102466000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 20100,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "143.76B",
+              "raw": 143756000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 20100,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "111.18B",
+              "raw": 111184000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 20100,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "109.42B",
+              "raw": 109417000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20100,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "114.48B",
+              "raw": 114477000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
+        ]
+      },
+      {
+        "meta": {
+          "symbol": [
+            "AAPL"
+          ],
+          "type": [
+            "quarterlyNetIncomeFromContinuingOperations"
+          ]
+        },
+        "quarterlyNetIncomeFromContinuingOperations": [
+          {
+            "asOfDate": "2025-09-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "27.47B",
+              "raw": 27466000000.0
+            }
+          },
+          {
+            "asOfDate": "2025-12-31",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "42.10B",
+              "raw": 42097000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-03-31",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "29.58B",
+              "raw": 29578000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "29.79B",
+              "raw": 29789000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 26080,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "30.71B",
+              "raw": 30711000000.0
+            }
+          }
+        ],
+        "timestamp": [
+          1759190400,
+          1767139200,
+          1774915200,
+          1782777600,
+          1790726400
         ]
       },
       {
@@ -357,26 +426,6 @@
           ]
         },
         "quarterlyNetIncome": [
-          {
-            "asOfDate": "2025-03-31",
-            "currencyCode": "USD",
-            "dataId": 20091,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "24.78B",
-              "raw": 24780000000.0
-            }
-          },
-          {
-            "asOfDate": "2025-06-30",
-            "currencyCode": "USD",
-            "dataId": 20091,
-            "periodType": "3M",
-            "reportedValue": {
-              "fmt": "23.43B",
-              "raw": 23434000000.0
-            }
-          },
           {
             "asOfDate": "2025-09-30",
             "currencyCode": "USD",
@@ -406,14 +455,34 @@
               "fmt": "29.58B",
               "raw": 29578000000.0
             }
+          },
+          {
+            "asOfDate": "2026-06-30",
+            "currencyCode": "USD",
+            "dataId": 20091,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "29.79B",
+              "raw": 29789000000.0
+            }
+          },
+          {
+            "asOfDate": "2026-09-30",
+            "currencyCode": "USD",
+            "dataId": 20091,
+            "periodType": "3M",
+            "reportedValue": {
+              "fmt": "30.71B",
+              "raw": 30711000000.0
+            }
           }
         ],
         "timestamp": [
-          1743379200,
-          1751241600,
           1759190400,
           1767139200,
-          1774915200
+          1774915200,
+          1782777600,
+          1790726400
         ]
       },
       {

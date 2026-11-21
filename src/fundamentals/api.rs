@@ -753,12 +753,26 @@ const fn empty_income_statement_row(period: ReportingPeriod) -> IncomeStatementR
     IncomeStatementRow {
         period,
         total_revenue: None,
+        cost_of_revenue: None,
         gross_profit: None,
+        research_and_development: None,
+        selling_general_and_administrative: None,
+        operating_expenses: None,
         operating_income: None,
-        net_income: None,
+        interest_income: None,
         interest_expense: None,
+        ebit: None,
+        ebitda: None,
+        pretax_income: None,
         income_tax_expense: None,
         depreciation_and_amortization: None,
+        net_income_from_continuing_operations: None,
+        net_income: None,
+        net_income_common_stockholders: None,
+        basic_eps: None,
+        diluted_eps: None,
+        basic_average_shares: None,
+        diluted_average_shares: None,
     }
 }
 
@@ -768,6 +782,9 @@ fn assign_income_statement_money(row: &mut IncomeStatementRow, field: &str, mone
         "GrossProfit" => row.gross_profit = money,
         "OperatingIncome" => row.operating_income = money,
         "NetIncome" => row.net_income = money,
+        "NetIncomeFromContinuingOperations" => {
+            row.net_income_from_continuing_operations = money;
+        }
         "InterestExpense" => row.interest_expense = money,
         "TaxProvision" => row.income_tax_expense = money,
         "DepreciationAndAmortization" => row.depreciation_and_amortization = money,
@@ -787,6 +804,7 @@ pub(super) async fn income_statement(
         "GrossProfit",
         "OperatingIncome",
         "NetIncome",
+        "NetIncomeFromContinuingOperations",
         "InterestExpense",
         "TaxProvision",
         "DepreciationAndAmortization",
@@ -834,6 +852,17 @@ const fn empty_balance_sheet_row(period: ReportingPeriod) -> BalanceSheetRow {
         net_property_plant_equipment: None,
         goodwill: None,
         intangible_assets: None,
+        total_debt: None,
+        current_debt: None,
+        cash_and_short_term_investments: None,
+        other_current_assets: None,
+        other_current_liabilities: None,
+        retained_earnings: None,
+        common_stock: None,
+        treasury_stock: None,
+        minority_interest: None,
+        working_capital: None,
+        tangible_book_value: None,
     }
 }
 
@@ -844,6 +873,7 @@ fn assign_balance_sheet_money(row: &mut BalanceSheetRow, field: &str, money: Opt
         "StockholdersEquity" => row.total_equity = money,
         "CashAndCashEquivalents" => row.cash = money,
         "LongTermDebt" => row.long_term_debt = money,
+        "CurrentDebt" => row.current_debt = money,
         "CurrentAssets" => row.current_assets = money,
         "CurrentLiabilities" => row.current_liabilities = money,
         "AccountsReceivable" => row.accounts_receivable = money,
@@ -887,6 +917,7 @@ pub(super) async fn balance_sheet(
         "StockholdersEquity",
         "CashAndCashEquivalents",
         "LongTermDebt",
+        "CurrentDebt",
         "OrdinarySharesNumber",
         "CurrentAssets",
         "CurrentLiabilities",
@@ -903,6 +934,7 @@ pub(super) async fn balance_sheet(
         "StockholdersEquity",
         "CashAndCashEquivalents",
         "LongTermDebt",
+        "CurrentDebt",
         "CurrentAssets",
         "CurrentLiabilities",
         "AccountsReceivable",
@@ -938,6 +970,15 @@ const fn empty_cashflow_row(period: ReportingPeriod) -> CashflowRow {
         free_cash_flow: None,
         net_income: None,
         depreciation_and_amortization: None,
+        stock_based_compensation: None,
+        change_in_working_capital: None,
+        investing_cashflow: None,
+        financing_cashflow: None,
+        issuance_of_debt: None,
+        repayment_of_debt: None,
+        repurchase_of_capital_stock: None,
+        cash_dividends_paid: None,
+        end_cash_position: None,
     }
 }
 
@@ -948,6 +989,7 @@ fn assign_cashflow_money(row: &mut CashflowRow, field: &str, money: Option<Money
         "FreeCashFlow" => row.free_cash_flow = money,
         "NetIncome" => row.net_income = money,
         "DepreciationAndAmortization" => row.depreciation_and_amortization = money,
+        "CashDividendsPaid" => row.cash_dividends_paid = money,
         _ => {}
     }
 }
@@ -965,6 +1007,7 @@ pub(super) async fn cashflow(
         "FreeCashFlow",
         "NetIncome",
         "DepreciationAndAmortization",
+        "CashDividendsPaid",
     ];
     let endpoint_name = "cash_flow";
 
